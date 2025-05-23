@@ -47,72 +47,63 @@ async function carregarProdutos() {
   mostrarLoader();
 
   try {
-    // 1. Carrega produtos e produtos_ref (imagem + colecao)
-    const [resProdutos, resRef] = await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&select=*`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-      }),
-      fetch(`${SUPABASE_URL}/rest/v1/produtos_ref?select=sku,imagem,colecao`, {
-        headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-      })
-    ]);
+    // Headers padrão
+    const headers = {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`
+    };
 
-    const linhas = await resProdutos.json();
-    const referencias = await resRef.json();
-    const refMap = new Map(referencias.map(r => [r.sku, r]));
+    // 1. Carrega produtos
+    const resProdutos = await fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&select=*`, { headers });
+    const todosProdutos = await resProdutos.json();
 
-    // 2. Agrupa por SKU
-    const mapaSKUs = {};
-    for (const linha of linhas) {
-      const sku = linha.sku;
-      const qtd = parseInt(linha.qtd || 0);
-      const caixa = (linha.caixa || "").toUpperCase();
-      const endereco = (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
+    // 2. Carrega dados extras (imagem, colecao)
+    const resRef = await fetch(`${SUPABASE_URL}/rest/v1/produtos_ref?select=sku,imagem,colecao`, { headers });
+    const produtosRef = await resRef.json();
+    const mapaRef = new Map(produtosRef.map(p => [p.sku, p]));
 
-      if (!mapaSKUs[sku]) {
-        const infoExtra = refMap.get(sku);
-        const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
-        mapaSKUs[sku] = {
-          ...linha,
-          endereco,
-          imagem: infoExtra?.imagem || "",
-          colecao: infoExtra?.colecao || "—",
-          distribuicao_a: 0,
-          distribuicao_b: 0,
-          distribuicao_c: 0,
-          distribuicao_d: 0,
-          distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
-          distribuicaoOriginal: { A: 0, B: 0, C: 0, D: 0 },
-          ordemEndereco: match ? match.slice(1).map(Number) : [999, 999, 999, 999, 999]
-        };
+    // 3. Carrega retiradas
+    const resRet = await fetch(`${SUPABASE_URL}/rest/v1/retiradas?grupo=eq.${grupo}&select=sku,caixa`, { headers });
+    const retiradas = await resRet.json();
+    const mapaRetiradas = new Map(retiradas.map(r => [r.sku, r.caixa]));
+
+    produtos = [];
+    retirados = [];
+
+    todosProdutos.forEach(p => {
+      const dist = {
+        A: +p.distribuicao_a || 0,
+        B: +p.distribuicao_b || 0,
+        C: +p.distribuicao_c || 0,
+        D: +p.distribuicao_d || 0
+      };
+
+      const extras = mapaRef.get(p.sku) || {};
+
+      const produto = {
+        ...p,
+        imagem: extras.imagem || "",
+        colecao: extras.colecao || "—",
+        distribuicaoAtual: { ...dist },
+        distribuicaoOriginal: { ...dist }
+      };
+
+      if (mapaRetiradas.has(p.sku)) {
+        produto.caixa = mapaRetiradas.get(p.sku);
+        retirados.push(produto);
+      } else {
+        produtos.push(produto);
       }
-
-      const p = mapaSKUs[sku];
-      if (caixa === "A") { p.distribuicao_a += qtd; p.distribuicaoAtual.A += qtd; p.distribuicaoOriginal.A += qtd; }
-      if (caixa === "B") { p.distribuicao_b += qtd; p.distribuicaoAtual.B += qtd; p.distribuicaoOriginal.B += qtd; }
-      if (caixa === "C") { p.distribuicao_c += qtd; p.distribuicaoAtual.C += qtd; p.distribuicaoOriginal.C += qtd; }
-      if (caixa === "D") { p.distribuicao_d += qtd; p.distribuicaoAtual.D += qtd; p.distribuicaoOriginal.D += qtd; }
-    }
-
-    // 3. Ordena
-    produtos = Object.values(mapaSKUs).sort((a, b) => {
-      for (let i = 0; i < a.ordemEndereco.length; i++) {
-        if (a.ordemEndereco[i] !== b.ordemEndereco[i]) {
-          return a.ordemEndereco[i] - b.ordemEndereco[i];
-        }
-      }
-      return 0;
     });
 
-    retirados = [];
     tempoInicio = new Date();
     iniciarCronometro();
     atualizarInterface();
     salvarProgressoLocal();
 
   } catch (err) {
-    console.error("❌ Erro ao carregar dados:", err);
-    mostrarToast("Erro ao carregar dados", "error");
+    console.error("❌ Erro ao carregar produtos:", err);
+    mostrarToast("Erro ao carregar dados do Supabase", "error");
   }
 
   esconderLoader();
