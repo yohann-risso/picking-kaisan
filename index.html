@@ -1,18 +1,1291 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Redirecting...</title>
-    <meta name="theme-color" content="#0d6efd" />
-    <link rel="manifest" href="/manifest.json" />
+<html>
+<head>
+  <link rel="manifest" href="https://picking-kaisan.vercel.app/manifest.json">
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <script>
-      // Redireciona para seu Web App (Google Apps Script)
-      location.replace("https://script.google.com/macros/s/AKfycbyD77OnH2qMBRdEQYiwaneigA1YhajYjoo2fW7QKawl_oRZy7wIkFFFxR6HvQycwB8/exec");
-    </script>
-  </head>
-  <body>
-    Redirecionando...
-  </body>
+  <link rel="apple-touch-icon" href="https://www.kaisan.com.br/skin/frontend/ultimo/default/images/nova/logo-2020-new.png">
+
+  <title>Picking Kaisan</title>
+
+  <!-- Bootstrap 5.3 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Quicksand Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    html, body {
+      touch-action: manipulation;
+      overscroll-behavior: contain;
+    }
+
+    * {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 15px;
+    }
+
+    #cronometro {
+      min-width: 80px;
+      display: inline-block;
+      text-align: left;
+    }
+
+    .pendente-item {
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: white;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .pendente-item .sku {
+      font-weight: bold;
+      color: #dc3545;
+    }
+
+    .pendente-item .descricao {
+      font-weight: 500;
+      color: #343a40;
+    }
+
+    .pendente-item .endereco {
+      color: #0d6efd;
+      font-size: 14px;
+    }
+
+    .card-produto {
+      background-color: #ffecec;
+      border-left: 5px solid #e74c3c;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      min-width: 320px;
+    }
+
+    .card-produto.primary {
+      border-left: 5px solid #0d6efd;
+      background-color: #eaf2ff;
+    }
+
+    .feedback-success {
+      background-color: #d4fcd4 !important;
+    }
+
+    .feedback-error {
+      background-color: #ffdfdf !important;
+    }
+
+    .list {
+      background: #f1f1f1;
+      padding: 10px;
+      border-radius: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .minicard .card-title {
+      font-size: 1rem;
+    }
+
+    .minicard .card {
+      min-width: 40px;
+    }
+
+    #card-tempo .vr {
+      background-color: #dee2e6;
+      width: 1px;
+    }
+
+    #overlayCaixa {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      color: #0d6efd;
+      font-size: 150px;
+      font-weight: bold;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .endereco-label {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .endereco-label i {
+      cursor: pointer;
+      color: #0d6efd;
+    }
+
+    .card-wrapper {
+      flex: 0 0 320px;
+      max-width: 320px;
+    }
+
+    #cards {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+
+    .texto-endereco {
+      font-size: 1.6rem;
+      color: #0d6efd;
+      font-weight: 800;
+    }
+
+    .card-img-produto {
+      width: 200px;
+      height: 320px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .progress-bar {
+      transition: all 0.3s ease;
+    }
+
+    #loaderGlobal {
+      min-height: 100vh;
+    }
+
+    /* ===== RESPONSIVO (MOBILE) ===== */
+    @media (max-width: 768px) {
+      body {
+        font-size: 17px;
+      }
+
+      .card-img-produto {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 6px;
+      }
+
+      .form-label,
+      .card-title,
+      .endereco-label {
+        font-size: 2rem;
+      }
+
+      .btn {
+        font-size: 1.8rem;
+        padding: 1.6rem 2.6rem;
+        width: 100%;
+      }
+
+      .input-group .form-control {
+        font-size: 1.6rem;
+        padding: 1.4rem;
+      }
+
+      .input-group {
+        gap: 0.5rem;
+      }
+
+      .card-produto {
+        font-size: 1.9rem;
+        padding: 2.4rem !important;
+        margin-bottom: 2rem;
+        flex-direction: column;
+        align-items: center;
+        width: 100% !important;
+      }
+
+      .card-produto .d-flex {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .card-produto p,
+      .card-produto .fs-5,
+      .card-produto .fs-6 {
+        font-size: 2rem;
+      }
+
+      .card-produto .fw-bold {
+        font-size: 2.1rem;
+      }
+
+      .card-produto .text-danger {
+        font-size: 2rem;
+        font-weight: bold;
+      }
+
+      .texto-endereco {
+        font-size: 2.6rem;
+        font-weight: 900;
+        color: #0d6efd;
+      }
+
+      .fw-bold.text-muted.small {
+        font-size: 2rem;
+      }
+
+      .fs-4 {
+        font-size: 2.2rem;
+      }
+
+      .minicard .card-title {
+        font-size: 2.6rem;
+        font-weight: bold;
+      }
+
+      .minicard .card {
+        min-width: 90px;
+        padding: 1.8rem;
+        font-size: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        border: 2px solid #dee2e6;
+        border-radius: 0.5rem;
+        background-color: #ffffff;
+      }
+
+      .pendente-item {
+        font-size: 1.6rem;
+        padding: 14px;
+      }
+
+      .pendente-item .sku {
+        font-size: 1.8rem;
+        font-weight: bold;
+      }
+
+      .pendente-item .descricao {
+        font-size: 1.7rem;
+      }
+
+      .list {
+        font-size: 1.5rem;
+        padding: 16px;
+      }
+
+      .progress {
+        height: 24px;
+      }
+
+      .vr {
+        display: none !important;
+      }
+
+      #overlayCaixa {
+        font-size: 80px;
+      }
+
+      #card-tempo {
+        flex-direction: column;
+        gap: 1rem;
+        min-width: 100% !important;
+      }
+
+      #cards {
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 1.5rem;
+      }
+
+      .card-wrapper {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      #cronometro,
+      #ideal {
+        font-size: 1.6rem;
+      }
+    }
+
+    .input-group .form-control {
+      font-size: 1.6rem;
+      padding: 1.5rem;
+    }
+
+    .input-group .btn {
+      font-size: 1.6rem;
+      padding: 1.5rem 2.5rem;
+    }
+
+    .btn {
+      font-size: 1.2rem;
+      padding: 1rem 1.5rem;
+    }
+
+    #cards {
+      gap: 1.2rem;
+    }
+
+    .toast {
+      font-size: 1rem;
+    }
+
+    /* ===== DARK MODE ===== */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121212;
+        color: #f1f1f1;
+      }
+
+      .endereco-label,
+      .texto-endereco,
+      .card-produto p,
+      .card-produto .fw-bold,
+      .pendente-item .descricao {
+        color: #f1f1f1 !important;
+      }
+
+      .card-produto p {
+        color: #ccc !important;
+      }
+
+      .card-produto {
+        background-color: #1e1e1e;
+        border-left-color: #e74c3c;
+      }
+
+      .card-produto.primary {
+        background-color: #1e2b40;
+        border-left-color: #0d6efd;
+      }
+
+      .pendente-item {
+        background-color: #1e1e1e;
+        color: #f1f1f1;
+      }
+
+      .pendente-item .sku {
+        color: #ff6b6b;
+      }
+
+      .pendente-item .descricao {
+        color: #e0e0e0;
+      }
+
+      .pendente-item .endereco {
+        color: #66b2ff;
+      }
+
+      .list {
+        background: #1e1e1e;
+      }
+
+      .text-danger {
+        color: #ff6b6b !important;
+      }
+
+      .text-secondary {
+        color: #cccccc !important;
+      }
+
+      .progress {
+        background-color: #333;
+      }
+
+      .progress-bar.bg-success {
+        background-color: #4caf50 !important;
+      }
+
+      .progress-bar.bg-danger {
+        background-color: #f44336 !important;
+      }
+
+      .progress-bar.bg-warning {
+        background-color: #ff9800 !important;
+      }
+
+      .progress-bar.bg-primary {
+        background-color: #2196f3 !important;
+      }
+
+      #overlayCaixa {
+        background: rgba(18, 18, 18, 0.95);
+        color: #66b2ff;
+      }
+
+      .form-control, .form-select {
+        background-color: #1e1e1e;
+        color: #f1f1f1;
+        border-color: #444;
+      }
+
+      .form-control::placeholder {
+        color: #888;
+      }
+
+      .btn {
+        border: none;
+      }
+
+      .btn-primary {
+        background-color: #0d6efd;
+      }
+
+      .btn-danger {
+        background-color: #dc3545;
+      }
+
+      .btn-success {
+        background-color: #198754;
+      }
+
+      .toast {
+        background-color: #333 !important;
+        color: #f1f1f1 !important;
+      }
+
+      .card-img-produto {
+        border: 1px solid #333;
+      }
+    }
+
+    /* === Ajustes para smartphones muito pequenos (como LG K22+) === */
+    @media (max-width: 380px) {
+      body {
+        font-size: 18px;
+      }
+
+      .card-produto {
+        padding: 2rem !important;
+        font-size: 2rem;
+        box-shadow: none;
+      }
+
+      .card-produto p,
+      .card-produto .fs-5,
+      .card-produto .fs-6 {
+        font-size: 2rem;
+      }
+
+      .card-produto .fw-bold,
+      .texto-endereco {
+        font-size: 2.4rem;
+      }
+
+      .minicard .card {
+        padding: 1.8rem;
+        font-size: 2.2rem;
+        min-width: 100px;
+      }
+
+      .minicard .card-title {
+        font-size: 2rem;
+      }
+
+      .btn {
+        font-size: 2rem;
+        padding: 2rem;
+      }
+
+      .input-group .form-control {
+        font-size: 1.8rem;
+        padding: 1.6rem;
+      }
+
+      #cronometro,
+      #ideal {
+        font-size: 1.6rem;
+      }
+
+      .pendente-item {
+        font-size: 1.7rem;
+        padding: 1.5rem;
+      }
+    }
+
+    /* === Ajustes específicos para tablets (como Tab 9) === */
+    @media (min-width: 768px) {
+      .card-produto {
+        padding: 2.8rem !important;
+        font-size: 1.9rem;
+      }
+
+      .card-produto .texto-endereco {
+        font-size: 2.6rem;
+      }
+
+      .minicard .card {
+        min-width: 90px;
+        padding: 1.6rem;
+        font-size: 2rem;
+      }
+
+      .minicard .card-title {
+        font-size: 2.2rem;
+      }
+
+      .btn {
+        font-size: 1.6rem;
+        padding: 1.6rem 2.6rem;
+      }
+
+      #cronometro,
+      #ideal {
+        font-size: 1.6rem;
+      }
+
+      #cards {
+        flex-wrap: wrap;
+        justify-content: start;
+        gap: 2rem;
+      }
+
+      .card-wrapper {
+        max-width: 340px;
+        flex: 0 0 33.3%;
+      }
+    }
+
+
+    @keyframes fadeScaleIn {
+      0% { opacity: 0; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes fadeScaleOut {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.8); }
+    }
+
+    #overlayCaixa {
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    #overlayCaixa.show {
+      animation: fadeScaleIn 0.5s forwards;
+    }
+
+    #overlayCaixa.hide {
+      animation: fadeScaleOut 0.5s forwards;
+    }
+</style>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<body class="p-4">
+  <div class="container-fluid">
+    <h1 class="mb-4">📦 Sistema de Picking - Kaisan</h1>
+
+    <div class="row row-cols-1 row-cols-md-auto g-3 align-items-center mb-4">
+      <div class="col-auto"><label for="grupo" class="form-label">Grupo:</label></div>
+      <div class="col-auto"><select id="grupo" class="form-select"></select></div>
+      <div class="col-auto">
+        <button id="btnIniciar" class="btn btn-primary" onclick="carregarProdutos()">Iniciar Picking</button>
+      </div>
+      <div class="col-auto"><label for="operador" class="form-label">Operador:</label></div>
+      <div class="col-auto"><select id="operador" class="form-select"></select></div>
+      <div class="col-auto">
+        <button id="btnFinalizar" class="btn btn-danger d-none" onclick="finalizarPicking()">📄 Finalizar Picking</button>
+      </div>
+      <div class="col-auto d-flex align-items-center gap-4">
+        <div id="card-tempo" class="card bg-light border-0 shadow-sm rounded px-4 py-3 d-none" style="min-width: 280px;">
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="text-center">
+              <div class="text-danger fw-bold small mb-1">TEMPO EXECUTADO</div>
+              <div class="fs-5 d-flex align-items-center gap-1 text-dark">
+                <span class="me-1">🕒</span>
+                <span id="cronometro">00:00:00</span>
+              </div>
+            </div>
+            <div class="vr mx-3" style="height: 40px;"></div>
+            <div class="text-center">
+              <div class="text-danger fw-bold small mb-1">TEMPO IDEAL</div>
+              <div class="fs-6 text-dark"><span id="ideal">00:00:00</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="w-100">
+          <label class="fw-bold">Progresso:</label>
+          <div class="progress mb-4">
+            <div id="progressoPicking" class="progress-bar bg-success" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div class="col-auto">
+          <label for="qtdCards" class="form-label">Cards visíveis: <span id="qtdCardsLabel">2</span></label>
+        </div>
+        <div class="col-auto">
+          <input type="range" id="qtdCards" min="1" max="3" value="2" class="form-range" style="width: 80px;" onchange="atualizarQtdCards()">
+        </div>
+      </div>
+    </div>
+
+    <div class="input-group mb-4">
+      <input id="skuInput" type="text" class="form-control" placeholder="Digite ou bip o SKU/EAN" onkeydown="if(event.key==='Enter') biparProduto()">
+      <button class="btn btn-success" onclick="biparProduto()">✔️ Confirmar</button>
+      <span id="loaderBipagem" class="spinner-border spinner-border-sm text-light d-none ms-2" role="status"></span>
+    </div>
+
+    <div class="row g-3 justify-content-center" id="cards"></div>
+    <h3 class="mt-5">🛒 Pendentes</h3>
+    <div class="list mb-4" id="pendentesList"></div>
+    <h3>✅ Retirados</h3>
+    <div class="list" id="retiradosList"></div>
+  </div>
+
+  <div id="overlayCaixa"><span id="letraCaixa">A</span></div>
+
+  <div class="modal fade" id="modalRestaurarPicking" tabindex="-1" aria-labelledby="modalRestaurarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title" id="modalRestaurarLabel">🔄 Restaurar progresso</h5>
+        </div>
+        <div class="modal-body">
+          <p>Foi encontrado um progresso salvo do grupo <strong id="grupoSalvo"></strong>.</p>
+          <p>Deseja restaurar o estado anterior do picking?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="btnCancelarRestaurar">Não</button>
+          <button type="button" class="btn btn-success" id="btnConfirmarRestaurar">Sim, restaurar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    let grupoRestaurado = null;
+    console.log("✅ Script carregado com sucesso");
+    let isMobile = false;
+    window.addEventListener("resize", () => {
+      isMobile = window.innerWidth <= 768;
+      atualizarInterface();
+    });
+    let produtos = [], retirados = [], tempoInicio = null, cronometroInterval;
+
+    google.script.run.withSuccessHandler(function(grupos) {
+      const grupoSel = document.getElementById("grupo");
+      grupos = grupos.sort((a, b) => parseInt(a) - parseInt(b));
+      grupoSel.innerHTML = grupos.map(g => `<option value="${g}">${g}</option>`).join("");
+
+      if (grupoRestaurado && grupos.includes(parseInt(grupoRestaurado))) {
+        grupoSel.value = grupoRestaurado;
+        grupoSel.dispatchEvent(new Event('change')); // força sincronização se necessário
+        console.log("✅ Grupo restaurado no SELECT:", grupoRestaurado);
+      }
+    }).getGruposUnicos();
+    const operadores = [
+      "Alan Ramos", "Anderson Dutra", "Arthur Oliveira",
+      "Felipe Moraes", "Filipe Silva", "Gabriel Lagoa", "João Alves",
+      "Kaique Teixeira", "Marrony Portugal", "Nalbert Pereira",
+      "Rodrigo Novaes", "Rony Côrrea", "Ykaro Oliveira", "Yohann Risso"
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      mostrarLoader();
+
+      const qtdCardsPref = localStorage.getItem("qtdCardsPreferido");
+      if (qtdCardsPref) {
+        document.getElementById("qtdCards").value = qtdCardsPref;
+        document.getElementById("qtdCardsLabel").textContent = qtdCardsPref;
+      }
+
+      const operadorSel = document.getElementById("operador");
+      operadorSel.innerHTML = operadores.map(nome => `<option value="${nome}">${nome}</option>`).join("");
+
+      // Detecta mobile no carregamento
+      isMobile = window.innerWidth <= 768;
+
+      window.addEventListener("resize", () => {
+        isMobile = window.innerWidth <= 768;
+        atualizarInterface();
+      });
+
+      const salvo = localStorage.getItem("pickingProgresso");
+      if (salvo) {
+        const dados = JSON.parse(salvo);
+        grupoRestaurado = dados.grupo;
+        document.getElementById("grupoSalvo").textContent = dados.grupo;
+
+        const modal = new bootstrap.Modal(document.getElementById("modalRestaurarPicking"));
+        modal.show();
+
+        document.getElementById("btnConfirmarRestaurar").onclick = () => {
+          document.getElementById("operador").value = dados.operador;
+          produtos = dados.produtos || [];
+          retirados = (dados.retirados || []).map(p => ({
+            ...p,
+            distribuicaoOriginal: p.distribuicaoOriginal || { A: 0, B: 0, C: 0, D: 0 }
+          }));
+          tempoInicio = dados.tempoInicio ? new Date(dados.tempoInicio) : new Date();
+
+          document.getElementById("grupo").disabled = true;
+          document.getElementById("operador").disabled = true;
+          document.getElementById("btnIniciar").classList.add("d-none");
+          document.getElementById("btnFinalizar").classList.remove("d-none");
+
+          iniciarCronometro();
+          document.getElementById("card-tempo").classList.remove("d-none");
+
+          atualizarInterface();
+
+          modal.hide();
+        };
+
+        document.getElementById("btnCancelarRestaurar").onclick = () => {
+          localStorage.removeItem("pickingProgresso");
+        };
+      }
+
+      esconderLoader();
+
+      function checarModoStandalone() {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        if (!isStandalone) {
+          setTimeout(() => {
+            mostrarToast(
+              "📱 Para melhor experiência, instale este sistema como app: toque no menu (⋮) e escolha 'Instalar app' ou 'Adicionar à tela inicial'.",
+              "warning"
+            );
+          }, 3000); // Aguarda 3 segundos após carregamento
+        } else {
+          console.log("✅ Modo standalone ativo");
+        }
+      }
+
+      checarModoStandalone();
+    });
+
+
+    function iniciarCronometro() {
+      tempoInicio = new Date();
+      atualizarCronometro();
+    }
+
+    function atualizarCronometro() {
+      if (!tempoInicio) return;
+      const diff = new Date(new Date() - tempoInicio);
+      const hh = String(diff.getUTCHours()).padStart(2, "0");
+      const mm = String(diff.getUTCMinutes()).padStart(2, "0");
+      const ss = String(diff.getUTCSeconds()).padStart(2, "0");
+      document.getElementById("cronometro").textContent = `${hh}:${mm}:${ss}`;
+      cronometroInterval = setTimeout(atualizarCronometro, 1000);
+    }
+
+    function mostrarAnimacaoCaixa(letra) {
+      const overlay = document.getElementById("overlayCaixa");
+      const letraBox = document.getElementById("letraCaixa");
+      letraBox.textContent = letra;
+
+      overlay.classList.remove("hide");
+      overlay.classList.add("show");
+      overlay.style.display = "flex";
+
+      setTimeout(() => {
+        overlay.classList.remove("show");
+        overlay.classList.add("hide");
+        setTimeout(() => overlay.style.display = "none", 500);
+      }, 2000);
+    }
+
+    function carregarProdutos() {
+      const grupo = document.getElementById("grupo").value;
+      if (!grupo) {
+        mostrarToast("Selecione um grupo para iniciar o picking.", "warning");
+        return;
+      }
+
+      const btn = document.getElementById("btnIniciar");
+      btn.classList.add("d-none");
+
+      // Desabilita campos e mostra botão de finalizar
+      document.getElementById("grupo").disabled = true;
+      document.getElementById("operador").disabled = true;
+      document.getElementById("btnFinalizar").classList.remove("d-none");
+
+      // Mostra o loader
+      mostrarLoader();
+
+      // Carrega produtos e depois retiradas
+      google.script.run.withSuccessHandler(function(dadosBase) {
+        google.script.run.withSuccessHandler(function(retiradasLog) {
+
+          produtos = [];
+          retirados = [];
+
+          dadosBase.forEach(p => {
+            const dist = {
+              A: p["DISTRIBUIÇÃO A"] || 0,
+              B: p["DISTRIBUIÇÃO B"] || 0,
+              C: p["DISTRIBUIÇÃO C"] || 0,
+              D: p["DISTRIBUIÇÃO D"] || 0
+            };
+
+            const produto = {
+              ...p,
+              distribuicaoAtual: { ...dist },
+              distribuicaoOriginal: { ...dist }
+            };
+
+            // Verifica se SKU foi retirado com base no log
+            const retirado = retiradasLog.find(r => r.SKU === p.SKU);
+            if (retirado) {
+              produto.Grupo = grupo;
+              produto.Caixa = retirado.Caixa;
+              retirados.push(produto);
+            } else {
+              produtos.push(produto);
+            }
+          });
+
+          // Tempo ideal com base em total de peças
+          const totalPecas = produtos.reduce((s, p) => {
+            const d = p.distribuicaoAtual;
+            return s + d.A + d.B + d.C + d.D;
+          }, 0) + retirados.reduce((s, p) => {
+            const d = p.distribuicaoOriginal;
+            return s + d.A + d.B + d.C + d.D;
+          }, 0);
+
+          const tempoIdealSegundos = Math.round(totalPecas * 8.116);
+          mostrarTempoIdeal(tempoIdealSegundos);
+
+          iniciarCronometro();
+          document.getElementById("card-tempo").classList.remove("d-none");
+          atualizarInterface();
+          salvarProgressoLocal();
+
+          // Esconde o loader
+          esconderLoader();
+
+        }).getRetiradasDoGrupo(grupo);
+      }).getProdutosOrdenadosPorEndereco(grupo);
+    }
+
+    function salvarCacheLocal() {
+      const dados = {
+        grupo: document.getElementById("grupo").value,
+        operador: document.getElementById("operador").value,
+        produtos,
+        retirados,
+        tempoInicio: tempoInicio ? tempoInicio.toISOString() : null,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem("cacheProdutos", JSON.stringify(dados));
+
+      console.log("📦 Cache salvo no localStorage:", dados);
+    }
+
+    function biparProduto() {
+      const inputEl = document.getElementById("skuInput");
+      const input = inputEl.value.trim().toUpperCase();
+      if (!input) return;
+
+      const grupo = document.getElementById("grupo").value;
+      const operador = document.getElementById("operador").value;
+
+      // Bloqueia input e botão
+      inputEl.disabled = true;
+      document.querySelector('.input-group .btn').disabled = true;
+      mostrarLoaderInline("loaderBipagem");
+
+      const liberarInput = () => {
+        esconderLoaderInline("loaderBipagem");
+        inputEl.disabled = false;
+        document.querySelector('.input-group .btn').disabled = false;
+        inputEl.focus();
+      };
+
+      const idx = produtos.findIndex(p => p.SKU.toUpperCase() === input);
+      if (idx !== -1) {
+        const produto = produtos[idx];
+        retirarUnidadeDistribuida(produto.SKU);
+        google.script.run.registrarRetirada(produto.SKU, produto.Romaneio, produto.Caixa, grupo, operador);
+        inputEl.value = "";
+        feedbackVisual(produto.SKU, "success");
+        atualizarInterface();
+        liberarInput();
+        return;
+      }
+
+      google.script.run.withSuccessHandler(function(sku) {
+        if (!sku) {
+          mostrarToast("Código não encontrado.");
+          liberarInput();
+          return;
+        }
+
+        const idxEAN = produtos.findIndex(p => p.SKU.toUpperCase() === sku);
+        if (idxEAN !== -1) {
+          retirarUnidadeDistribuida(produtos[idxEAN].SKU);
+          google.script.run.registrarRetirada(produtos[idxEAN].SKU, produtos[idxEAN].Romaneio, produtos[idxEAN].Caixa, grupo, operador);
+          inputEl.value = "";
+          feedbackVisual(produtos[idxEAN].SKU, "success");
+          atualizarInterface();
+        }
+        liberarInput();
+      }).getSKUByEAN(input);
+    }
+
+    function feedbackVisual(sku, tipo) {
+      document.querySelectorAll(".card-produto").forEach(card => {
+        if (!sku || card.innerHTML.includes(sku)) {
+          card.classList.add(`feedback-${tipo}`);
+          setTimeout(() => card.classList.remove(`feedback-${tipo}`), 800);
+        }
+      });
+    }
+
+    function marcarParaZerar(endereco) {
+      const operador = document.getElementById("operador").value;
+      const grupo = grupoRestaurado || document.getElementById("grupo").value;
+      const time = new Date().toLocaleString("pt-BR");
+
+      const loaderId = `loader-zerar-${endereco}`;
+      mostrarLoaderInline(loaderId);
+
+      // Remove produto da lista temporariamente
+      const idx = produtos.findIndex(p => (p["Endereço"]?.split("•")[0]?.trim() || "SEM LOCAL") === endereco);
+      if (idx !== -1) {
+        console.log(`🗑️ Produto com endereço ${endereco} removido temporariamente da lista.`);
+        produtos.splice(idx, 1);
+        atualizarInterface();
+      }
+
+      google.script.run
+        .withSuccessHandler(res => {
+          esconderLoaderInline(loaderId);
+          try {
+            const dados = JSON.parse(res);
+            console.log("🔗 Link gerado para zeramento externo:", dados.url);
+            console.log("📄 Resposta recebida:", dados.resposta);
+            mostrarToast(`✅ Endereço ${endereco} marcado com sucesso. Ele será atualizado ao recarregar a base.`, "success");
+          } catch (e) {
+            console.error("❌ Erro ao interpretar resposta do servidor:", res);
+            mostrarToast("❌ Erro ao interpretar resposta do zeramento.", "error");
+          }
+        })
+        .withFailureHandler(err => {
+          esconderLoaderInline(loaderId);
+          console.error("Erro ao zerar:", err);
+          mostrarToast("❌ Erro ao zerar endereço", "error");
+        })
+        .zerarEnderecoExterno(endereco, operador, time);
+    }
+
+    function atualizarInterface() {
+      console.log("Atualizando interface...")
+      const cardsDiv = document.getElementById("cards");
+      cardsDiv.innerHTML = "";
+
+      const maxCards = parseInt(document.getElementById("qtdCards").value, 10) || 2;
+
+      const visiveis = produtos.slice(0, maxCards);
+      visiveis.forEach((p, i) => {
+        const dist = p.distribuicaoAtual;
+        const qtdTotal = dist.A + dist.B + dist.C + dist.D;
+        const enderecoPrimario = p["Endereço"]?.split("•")[0] || "SEM LOCAL";
+        const enderecoSecundario = p["Endereço"]?.split("•")[1] || "-";
+
+        const miniCards = ['A', 'B', 'C', 'D'].map(caixa => `
+          <div class="col minicard">
+            <div class="card text-center">
+              <div class="card-header fw-bold text-secondary">${caixa}</div>
+              <div class="card-body p-2">
+                <h4 class="card-title fw-bold text-danger m-0 fs-1">${dist[caixa]}</h4>
+              </div>
+            </div>
+          </div>`).join("");
+
+        const col = document.createElement("div");
+        const colSize = (maxCards === 1) ? 'col-12' : 'col-6';
+        col.className = colSize;
+        col.innerHTML = `
+          <div class="card card-produto ${i === 0 ? 'primary' : ''} h-100 p-3">
+            <div class="row g-3">
+              <div class="col-md-4 text-center">
+                <img src="${p["IMAGEM"] || ""}" class="img-fluid rounded shadow-sm card-img-produto" style="max-height: 250px;">
+              </div>
+              <div class="col-md-8">
+                <p class="fw-bold fs-3 mb-1 endereco-label">
+                  ENDEREÇO:
+                  <span class="texto-endereco d-block">${enderecoPrimario}</span>
+                  <span onclick="marcarParaZerar('${enderecoPrimario}')" style="cursor:pointer;" title="Marcar para zerar">
+                    <i class="bi bi-x-circle-fill text-danger ms-2 fs-5"></i>
+                    <span class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status" id="loader-zerar-${enderecoPrimario}"></span>
+                  </span>
+                </p>
+                <p><strong>ENDEREÇO SECUNDÁRIO:</strong><br>${enderecoSecundario}</p>
+                <p class="text-danger fw-bold fs-2 mb-1">SKU: ${p.SKU}</p>
+                <p><strong>PRODUTO:</strong> ${p["Desc. Produto"]}</p>
+                <p><strong>COLEÇÃO:</strong> ${p["COLECAO"] || "—"}</p>
+              </div>
+            </div>
+            <div class="text-center mt-3">
+              <div class="fw-bold text-muted small">QTDE TOTAL</div>
+              <div class="fw-bold fs-1" style="font-size: 3rem;">${qtdTotal}</div>
+              <div class="row mt-2 g-2">${miniCards}</div>
+            </div>
+          </div>`;
+        cardsDiv.appendChild(col);
+      });
+
+      // Lista de pendentes
+      document.getElementById("pendentesList").innerHTML = produtos
+        .map(p => `
+          <div class="pendente-item">
+            <div class="sku">SKU: ${p.SKU}</div>
+            <div class="descricao">${p["Desc. Produto"]} | Ref: ${p["SKU"]?.split("-")[0]}</div>
+            <div class="endereco">${p.Endereço?.split("•")[0] || "Sem endereço"}</div>
+          </div>
+        `).join("");
+
+      // Lista de retirados
+      document.getElementById("retiradosList").innerHTML = retirados
+        .map(p => `
+          <div class="mb-2">
+            ✅ <strong>${p.SKU}</strong>
+            <span class="badge bg-primary rounded-pill ms-2">Grupo ${p.Grupo}</span>
+            <span class="badge bg-secondary rounded-pill ms-2">Caixa ${p.Caixa}</span>
+          </div>
+        `).join("");
+
+      // Cálculo de progresso
+      const contarPecas = (lista, campo) => {
+        return lista.reduce((soma, p) => {
+          const d = p[campo] || { A: 0, B: 0, C: 0, D: 0 };
+          return soma + d.A + d.B + d.C + d.D;
+        }, 0);
+      };
+
+      const totalPecas = contarPecas(produtos, "distribuicaoAtual") + contarPecas(retirados, "distribuicaoOriginal");
+      const pendentesPecas = contarPecas(produtos, "distribuicaoAtual");
+      const retiradasPecas = totalPecas - pendentesPecas;
+
+      const percentual = totalPecas > 0
+        ? Math.round((retiradasPecas / totalPecas) * 100)
+        : 0;
+
+      console.log("🔎 DEBUG:");
+      console.log("Total peças:", totalPecas);
+      console.log("Pendentes:", pendentesPecas);
+      console.log("Retiradas:", retiradasPecas);
+      console.log("Percentual:", percentual);
+
+      const barra = document.getElementById("progressoPicking");
+      barra.offsetWidth; // força reflow
+      barra.style.width = `${percentual}%`;
+      barra.textContent = `${retiradasPecas}/${totalPecas} | ${percentual}%`;
+
+      if (percentual < 30) {
+        barra.className = "progress-bar bg-danger";
+      } else if (percentual < 70) {
+        barra.className = "progress-bar bg-warning text-dark";
+      } else {
+        barra.className = "progress-bar bg-success";
+      }
+
+      if (percentual === 100) {
+        soltarConfete();
+      }
+    }
+
+    function mostrarToast(mensagem, tipo = "info") {
+      const cor = tipo === "success" ? "bg-success" :
+                  tipo === "error" ? "bg-danger" :
+                  tipo === "warning" ? "bg-warning text-dark" : "bg-primary";
+
+      const toast = document.createElement("div");
+      toast.className = `toast fade show align-items-center text-white ${cor} border-0`;
+      toast.setAttribute("role", "alert");
+      toast.setAttribute("aria-live", "assertive");
+      toast.setAttribute("aria-atomic", "true");
+      toast.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">${mensagem}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      `;
+      document.getElementById("toast-container").appendChild(toast);
+
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    function retirarUnidadeDistribuida(sku) {
+      const idx = produtos.findIndex(p => p.SKU === sku);
+      if (idx === -1) return;
+
+      const produto = produtos[idx];
+      const dist = produto.distribuicaoAtual;
+      const copiaDistAntes = { ...dist }; // 📌 salvamos a distribuição ANTES da retirada
+
+      let caixaRetirada = "";
+
+      if (dist.A > 0) { dist.A--; caixaRetirada = "A"; mostrarAnimacaoCaixa("A"); }
+      else if (dist.B > 0) { dist.B--; caixaRetirada = "B"; mostrarAnimacaoCaixa("B"); }
+      else if (dist.C > 0) { dist.C--; caixaRetirada = "C"; mostrarAnimacaoCaixa("C"); }
+      else if (dist.D > 0) { dist.D--; caixaRetirada = "D"; mostrarAnimacaoCaixa("D"); }
+
+      const totalRestante = dist.A + dist.B + dist.C + dist.D;
+
+      if (totalRestante === 0) {
+        const distOriginal = produto.distribuicaoOriginal || { A: 0, B: 0, C: 0, D: 0 };
+        const distAtual = produto.distribuicaoAtual || { A: 0, B: 0, C: 0, D: 0 };
+
+        const retirado = {
+          ...produto,
+          Grupo: document.getElementById("grupo").value,
+          Caixa: caixaRetirada,
+          distribuicaoOriginal: copiaDistAntes
+        };
+
+        retirados.unshift(retirado);
+        produtos.splice(idx, 1);
+      }
+
+      salvarProgressoLocal();
+      salvarCacheLocal();
+    }
+
+    function finalizarPicking() {
+      mostrarLoader();
+      // 1. Para o cronômetro
+      clearTimeout(cronometroInterval);
+
+      const operador = document.getElementById("operador").value;
+      const grupo = document.getElementById("grupo").value;
+
+      const resumo = {
+        operador,
+        grupo,
+        tempoExecucao: calcularDuracao(),
+        retirados,
+        pendentes: produtos,
+      };
+
+      document.getElementById("card-tempo").classList.add("d-none");
+
+      // 2. Gera o PDF
+      google.script.run.gerarResumoPDF(resumo);
+      mostrarToast("Resumo enviado para gerar PDF!", "success");
+
+      // 3. Limpa os dados e reseta interface
+      localStorage.removeItem("pickingProgresso");
+      produtos = [];
+      retirados = [];
+      tempoInicio = null;
+
+      document.getElementById("grupo").disabled = false;
+      document.getElementById("operador").disabled = false;
+      document.getElementById("btnIniciar").classList.remove("d-none");
+      document.getElementById("btnFinalizar").classList.add("d-none");
+      document.getElementById("cards").innerHTML = "";
+      document.getElementById("pendentesList").innerHTML = "";
+      document.getElementById("retiradosList").innerHTML = "";
+      document.getElementById("cronometro").textContent = "00:00:00";
+      document.getElementById("ideal").textContent = "";
+      document.getElementById("progressoPicking").style.width = "0%";
+      document.getElementById("progressoPicking").textContent = "0%";
+
+      mostrarToast("Pronto para iniciar novo picking! 🚀", "success");
+
+      localStorage.removeItem("cacheProdutos");
+
+      esconderLoader();
+    }
+
+    function calcularDuracao() {
+      const agora = new Date();
+      const diff = new Date(agora - tempoInicio);
+      const hh = String(diff.getUTCHours()).padStart(2, "0");
+      const mm = String(diff.getUTCMinutes()).padStart(2, "0");
+      const ss = String(diff.getUTCSeconds()).padStart(2, "0");
+      return `${hh}:${mm}:${ss}`;
+    }
+
+    function mostrarTempoIdeal(segundos) {
+      const hh = String(Math.floor(segundos / 3600)).padStart(2, "0");
+      const mm = String(Math.floor((segundos % 3600) / 60)).padStart(2, "0");
+      const ss = String(segundos % 60).padStart(2, "0");
+      document.getElementById("ideal").textContent = `${hh}:${mm}:${ss}`;
+    }
+
+    function salvarProgressoLocal() {
+      const dados = {
+        grupo: document.getElementById("grupo").value,
+        operador: document.getElementById("operador").value,
+        produtos,
+        retirados,
+        tempoInicio: tempoInicio ? tempoInicio.toISOString() : null,
+      };
+      localStorage.setItem("pickingProgresso", JSON.stringify(dados));
+    }
+
+    function soltarConfete() {
+      confetti({
+        particleCount: 250,
+        spread: 90,
+        origin: { y: 0.6 }
+      });
+    }
+
+    function checarMobile() {
+      return window.matchMedia("(max-width: 768px)").matches;
+    }
+
+    function mostrarLoader() {
+      document.getElementById("loaderGlobal").style.display = "flex";
+    }
+
+    function esconderLoader() {
+      document.getElementById("loaderGlobal").style.display = "none";
+    }
+
+    function mostrarLoaderInline(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove("d-none");
+    }
+
+    function esconderLoaderInline(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add("d-none");
+    }
+
+    function atualizarQtdCards() {
+      const qtd = parseInt(document.getElementById("qtdCards").value, 10);
+      document.getElementById("qtdCardsLabel").textContent = qtd;
+      localStorage.setItem("qtdCardsPreferido", qtd);
+      atualizarInterface();
+    }
+
+  </script>
+    <!-- Toast container -->
+    <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;"></div>
+
+    <div id="loaderGlobal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 99999; justify-content: center; align-items: center;">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+    </div>
+</body>
 </html>
