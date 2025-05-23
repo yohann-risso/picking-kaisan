@@ -1,6 +1,6 @@
 // Supabase config
-const SUPABASE_URL = window.env?.VITE_SUPABASE_URL || "";
-const SUPABASE_KEY = window.env?.VITE_SUPABASE_KEY || "";
+const SUPABASE_URL = window.env.SUPABASE_URL || "";
+const SUPABASE_KEY = window.env.SUPABASE_KEY || "";
 
 let produtos = [], retirados = [], tempoInicio = null, cronometroInterval = null;
 
