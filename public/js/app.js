@@ -111,10 +111,9 @@ async function carregarProdutos() {
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
 
       const ref = mapaRef.get(sku);
-      console.log("🔍 SKU:", sku, "Imagem:", ref?.imagem);
+      console.log("📦 SKU:", sku, "| Imagem:", ref?.imagem || "❌ Não encontrada");
 
       if (!mapaSKUs[sku]) {
-        const ref = mapaRef.get(sku);
         const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
         mapaSKUs[sku] = {
           ...linha,
@@ -141,7 +140,7 @@ async function carregarProdutos() {
         (p.distribuicaoAtual.D += qtd), (p.distribuicaoOriginal.D += qtd);
     }
 
-    // 5. Distribuir entre pendentes e retirados
+    // 5. Separar entre pendentes e retirados
     for (const produto of Object.values(mapaSKUs)) {
       if (mapaRetiradas.has(produto.sku)) {
         produto.caixa = mapaRetiradas.get(produto.sku);
@@ -151,7 +150,7 @@ async function carregarProdutos() {
       }
     }
 
-    // 6. Ordenar por endereço lógico
+    // 6. Ordenar por endereço
     produtos.sort((a, b) => {
       for (let i = 0; i < a.ordemEndereco.length; i++) {
         if (a.ordemEndereco[i] !== b.ordemEndereco[i]) {
