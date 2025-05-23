@@ -46,30 +46,57 @@ async function carregarProdutos() {
   document.getElementById("card-tempo").classList.remove("d-none");
   mostrarLoader();
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&status=neq.RETIRADO&select=*`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
-  });
-  const base = await res.json();
-  produtos = base.map(p => ({
-    ...p,
-    distribuicaoAtual: {
-      A: +p.distribuicao_a || 0,
-      B: +p.distribuicao_b || 0,
-      C: +p.distribuicao_c || 0,
-      D: +p.distribuicao_d || 0
-    },
-    distribuicaoOriginal: {
-      A: +p.distribuicao_a || 0,
-      B: +p.distribuicao_b || 0,
-      C: +p.distribuicao_c || 0,
-      D: +p.distribuicao_d || 0
-    }
-  }));
+  try {
+    // 1. Carrega todos os produtos do grupo
+    const resProdutos = await fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&select=*`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    const todosProdutos = await resProdutos.json();
 
-  tempoInicio = new Date();
-  iniciarCronometro();
-  atualizarInterface();
-  salvarProgressoLocal();
+    // 2. Carrega os retirados
+    const resRetirados = await fetch(`${SUPABASE_URL}/rest/v1/retiradas?grupo=eq.${grupo}&select=sku,caixa`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    });
+    const retiradas = await resRetirados.json();
+
+    // 3. Separa produtos retirados e pendentes
+    produtos = [];
+    retirados = [];
+
+    todosProdutos.forEach(p => {
+      const dist = {
+        A: +p.distribuicao_a || 0,
+        B: +p.distribuicao_b || 0,
+        C: +p.distribuicao_c || 0,
+        D: +p.distribuicao_d || 0
+      };
+
+      const produto = {
+        ...p,
+        distribuicaoAtual: { ...dist },
+        distribuicaoOriginal: { ...dist }
+      };
+
+      const foiRetirado = retiradas.find(r => r.sku === p.sku);
+      if (foiRetirado) {
+        produto.caixa = foiRetirado.caixa;
+        retirados.push(produto);
+      } else {
+        produtos.push(produto);
+      }
+    });
+
+    // 4. Tempo e interface
+    tempoInicio = new Date();
+    iniciarCronometro();
+    atualizarInterface();
+    salvarProgressoLocal();
+
+  } catch (err) {
+    console.error("❌ Erro ao carregar dados:", err);
+    mostrarToast("Erro ao carregar dados", "error");
+  }
+
   esconderLoader();
 }
 
