@@ -2,197 +2,314 @@
 const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
 
-let produtos = [], retirados = [], tempoInicio = null;
+let produtos = [], retirados = [], tempoInicio = null, cronometroInterval = null;
 
-// === 1. Carrega GRUPOS dinâmicos do Supabase ===
-async function carregarGrupos() {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/produtos?select=grupo`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
-      }
-    });
-
-    const dados = await res.json();
-    const gruposUnicos = [...new Set(dados.map(d => parseInt(d.grupo, 10)))].sort((a, b) => a - b);
-    const select = document.getElementById("grupo");
-
-    select.innerHTML = gruposUnicos.map(g => `<option value="${g}">${g}</option>`).join("");
-    console.log("✅ Grupos carregados:", gruposUnicos);
-  } catch (err) {
-    console.error("❌ Erro ao carregar grupos:", err);
-  }
-}
-
-// === 2. Carrega OPERADORES fixos ===
-const operadores = [
-  "Alan Ramos", "Anderson Dutra", "Arthur Oliveira", "Felipe Moraes",
-  "Filipe Silva", "Gabriel Lagoa", "João Alves", "Kaique Teixeira",
-  "Marrony Portugal", "Nalbert Pereira", "Rodrigo Novaes",
-  "Rony Côrrea", "Ykaro Oliveira", "Yohann Risso"
-];
+// 🚀 Ao carregar página
+document.addEventListener("DOMContentLoaded", () => {
+  carregarOperadores();
+  carregarGrupos();
+  restaurarCacheLocal();
+  checarModoStandalone();
+});
 
 function carregarOperadores() {
+  const operadores = [
+    "Alan Ramos", "Anderson Dutra", "Arthur Oliveira", "Felipe Moraes",
+    "Filipe Silva", "Gabriel Lagoa", "João Alves", "Kaique Teixeira",
+    "Marrony Portugal", "Nalbert Pereira", "Rodrigo Novaes", "Rony Côrrea",
+    "Ykaro Oliveira", "Yohann Risso"
+  ];
   const select = document.getElementById("operador");
   select.innerHTML = operadores.map(op => `<option value="${op}">${op}</option>`).join("");
 }
 
-// === 3. Carrega produtos de um grupo específico ===
+async function carregarGrupos() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/produtos?select=grupo`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  });
+  const dados = await res.json();
+  const grupos = [...new Set(dados.map(d => parseInt(d.grupo)))].sort((a, b) => a - b);
+  const select = document.getElementById("grupo");
+  select.innerHTML = grupos.map(g => `<option value="${g}">${g}</option>`).join("");
+}
+
+// Iniciar picking
 async function carregarProdutos() {
   const grupo = document.getElementById("grupo").value;
   const operador = document.getElementById("operador").value;
+  if (!grupo || !operador) return mostrarToast("Preencha grupo e operador", "warning");
 
-  if (!grupo || !operador) return alert("⚠️ Selecione grupo e operador");
+  document.getElementById("grupo").disabled = true;
+  document.getElementById("operador").disabled = true;
+  document.getElementById("btnIniciar").classList.add("d-none");
+  document.getElementById("btnFinalizar").classList.remove("d-none");
+  document.getElementById("card-tempo").classList.remove("d-none");
+  mostrarLoader();
 
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&status=neq.RETIRADO&select=*`, {
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`
-      }
-    });
-
-    produtos = ordenarPorEndereco(await res.json());
-    retirados = [];
-    tempoInicio = new Date();
-    atualizarInterface();
-
-    console.log("✅ Produtos carregados:", produtos.length);
-  } catch (err) {
-    console.error("❌ Erro ao carregar produtos:", err);
-    alert("Erro ao buscar dados do Supabase");
-  }
-}
-
-// === 4. Ordenação por endereço lógico ===
-function ordenarPorEndereco(lista) {
-  return lista.sort((a, b) => {
-    const e = p => {
-      const m = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(p.endereco || "");
-      return m ? m.slice(1).map(Number) : [999, 999, 999, 999, 999];
-    };
-    const ea = e(a), eb = e(b);
-    for (let i = 0; i < ea.length; i++) {
-      if (ea[i] !== eb[i]) return ea[i] - eb[i];
-    }
-    return 0;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&status=neq.RETIRADO&select=*`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
   });
+  const base = await res.json();
+  produtos = base.map(p => ({
+    ...p,
+    distribuicaoAtual: {
+      A: +p.distribuicao_a || 0,
+      B: +p.distribuicao_b || 0,
+      C: +p.distribuicao_c || 0,
+      D: +p.distribuicao_d || 0
+    },
+    distribuicaoOriginal: {
+      A: +p.distribuicao_a || 0,
+      B: +p.distribuicao_b || 0,
+      C: +p.distribuicao_c || 0,
+      D: +p.distribuicao_d || 0
+    }
+  }));
+
+  tempoInicio = new Date();
+  iniciarCronometro();
+  atualizarInterface();
+  salvarProgressoLocal();
+  esconderLoader();
 }
 
-// === 5. Bipagem de produto (via SKU ou EAN) ===
 function biparProduto() {
-  const input = document.getElementById("skuInput").value.trim().toUpperCase();
+  const input = document.getElementById("skuInput");
+  const valor = input.value.trim().toUpperCase();
   const grupo = document.getElementById("grupo").value;
   const operador = document.getElementById("operador").value;
 
-  const produto = produtos.find(p => p.sku?.toUpperCase() === input || p.ean?.toUpperCase() === input);
-  if (!produto) return alert("❌ Produto não encontrado.");
+  input.disabled = true;
+  document.querySelector('.input-group .btn').disabled = true;
+  mostrarLoaderInline("loaderBipagem");
 
-  registrarRetirada(produto, operador, grupo);
-  retirados.push(produto);
-  produtos = produtos.filter(p => p.sku !== produto.sku);
+  const liberarInput = () => {
+    esconderLoaderInline("loaderBipagem");
+    input.disabled = false;
+    document.querySelector('.input-group .btn').disabled = false;
+    input.value = "";
+    input.focus();
+  };
 
-  document.getElementById("skuInput").value = "";
+  let idx = produtos.findIndex(p => p.sku.toUpperCase() === valor || (p.ean || "").toUpperCase() === valor);
+  if (idx === -1) return mostrarToast("Produto não encontrado", "error"), liberarInput();
+
+  const produto = produtos[idx];
+  const dist = produto.distribuicaoAtual;
+  let caixa = "";
+
+  if (dist.A > 0) { dist.A--; caixa = "A"; mostrarAnimacaoCaixa("A"); }
+  else if (dist.B > 0) { dist.B--; caixa = "B"; mostrarAnimacaoCaixa("B"); }
+  else if (dist.C > 0) { dist.C--; caixa = "C"; mostrarAnimacaoCaixa("C"); }
+  else if (dist.D > 0) { dist.D--; caixa = "D"; mostrarAnimacaoCaixa("D"); }
+
+  const totalRestante = dist.A + dist.B + dist.C + dist.D;
+  if (totalRestante === 0) {
+    retirados.unshift({ ...produto, caixa, grupo, distribuicaoOriginal: { ...produto.distribuicaoOriginal } });
+    produtos.splice(idx, 1);
+  }
+
+  registrarRetirada(produto, operador, grupo, caixa);
+  feedbackVisual(produto.sku, "success");
   atualizarInterface();
+  salvarProgressoLocal();
+  liberarInput();
 }
 
-// === 6. Registrar retirada ===
-async function registrarRetirada(p, operador, grupo) {
+async function registrarRetirada(prod, operador, grupo, caixa) {
   const payload = {
     timestamp: new Date().toISOString(),
     operador,
-    sku: p.sku,
-    romaneio: p.romaneio,
-    caixa: p.caixa,
+    sku: prod.sku,
+    romaneio: prod.romaneio,
+    caixa,
     grupo: parseInt(grupo),
     status: "RETIRADO"
   };
-
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/retiradas`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!res.ok) throw new Error("Falha ao registrar retirada");
-    console.log("✅ Retirada registrada:", p.sku);
-  } catch (err) {
-    alert("❌ Erro ao registrar retirada.");
-    console.error(err);
-  }
-}
-
-// === 7. Atualiza cards e barra de progresso ===
-function atualizarInterface() {
-  const div = document.getElementById("cards");
-  div.innerHTML = "";
-
-  produtos.forEach(p => {
-    const total = ['a', 'b', 'c', 'd'].reduce((s, c) => s + (+p[`distribuicao_${c}`] || 0), 0);
-
-    const el = document.createElement("div");
-    el.className = "card card-produto mb-3 p-3";
-    el.innerHTML = `
-      <div class="row">
-        <div class="col-md-4 text-center">
-          <img src="${p.imagem || 'https://via.placeholder.com/150'}" class="img-fluid card-img-produto" />
-        </div>
-        <div class="col-md-8">
-          <p class="texto-endereco">📦 ${p.endereco || "Sem endereço"}</p>
-          <p><strong>SKU:</strong> ${p.sku}</p>
-          <p><strong>Produto:</strong> ${p.descricao || "—"}</p>
-          <p><strong>Coleção:</strong> ${p.colecao || "—"}</p>
-          <p><strong>Total:</strong> ${total}</p>
-        </div>
-      </div>
-    `;
-    div.appendChild(el);
-  });
-
-  const total = produtos.length + retirados.length;
-  const perc = total ? Math.round((retirados.length / total) * 100) : 0;
-  const barra = document.getElementById("progressoPicking");
-  barra.style.width = `${perc}%`;
-  barra.textContent = `${retirados.length}/${total} • ${perc}%`;
-}
-
-// === 8. Retirada reversa ===
-async function desfazerRetirada(sku, romaneio, grupo) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/retiradas?sku=eq.${sku}&romaneio=eq.${romaneio}&grupo=eq.${grupo}`, {
-    method: "DELETE",
+  await fetch(`${SUPABASE_URL}/rest/v1/retiradas`, {
+    method: "POST",
     headers: {
       apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`
-    }
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      "Content-Type": "application/json",
+      Prefer: "return=minimal"
+    },
+    body: JSON.stringify(payload)
+  });
+}
+
+function atualizarInterface() {
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+
+  const maxCards = parseInt(document.getElementById("qtdCards").value, 10) || 2;
+  const visiveis = produtos.slice(0, maxCards);
+
+  visiveis.forEach((p, i) => {
+    const qtdTotal = Object.values(p.distribuicaoAtual).reduce((a, b) => a + b, 0);
+    const end1 = p.endereco?.split("•")[0] || "SEM LOCAL";
+    const end2 = p.endereco?.split("•")[1] || "—";
+
+    const miniCards = ['A', 'B', 'C', 'D'].map(caixa => `
+      <div class="col minicard">
+        <div class="card text-center">
+          <div class="card-header fw-bold text-secondary">${caixa}</div>
+          <div class="card-body p-2">
+            <h4 class="card-title text-danger m-0">${p.distribuicaoAtual[caixa]}</h4>
+          </div>
+        </div>
+      </div>`).join("");
+
+    const col = document.createElement("div");
+    col.className = maxCards === 1 ? 'col-12' : 'col-6';
+    col.innerHTML = `
+      <div class="card card-produto ${i === 0 ? 'primary' : ''} h-100 p-3">
+        <div class="row g-3">
+          <div class="col-md-4 text-center">
+            <img src="${p.imagem || ''}" class="img-fluid rounded shadow-sm card-img-produto" style="max-height: 250px;">
+          </div>
+          <div class="col-md-8">
+            <p class="fw-bold fs-3 mb-1 endereco-label">
+              ENDEREÇO: <span class="texto-endereco d-block">${end1}</span>
+            </p>
+            <p><strong>ENDEREÇO SECUNDÁRIO:</strong><br>${end2}</p>
+            <p class="text-danger fw-bold fs-2 mb-1">SKU: ${p.sku}</p>
+            <p><strong>PRODUTO:</strong> ${p.descricao}</p>
+            <p><strong>COLEÇÃO:</strong> ${p.colecao || "—"}</p>
+          </div>
+        </div>
+        <div class="text-center mt-3">
+          <div class="fw-bold text-muted small">QTDE TOTAL</div>
+          <div class="fw-bold fs-1">${qtdTotal}</div>
+          <div class="row mt-2 g-2">${miniCards}</div>
+        </div>
+      </div>`;
+    cards.appendChild(col);
   });
 
-  if (res.ok) alert("🗑️ Retirada desfeita");
-  else alert("❌ Falha ao desfazer retirada");
+  document.getElementById("pendentesList").innerHTML = produtos.map(p => `
+    <div class="pendente-item">
+      <div class="sku">SKU: ${p.sku}</div>
+      <div class="descricao">${p.descricao} | Ref: ${p.sku.split("-")[0]}</div>
+      <div class="endereco">${p.endereco?.split("•")[0]}</div>
+    </div>`).join("");
+
+  document.getElementById("retiradosList").innerHTML = retirados.map(p => `
+    <div class="mb-2">
+      ✅ <strong>${p.sku}</strong>
+      <span class="badge bg-primary">Grupo ${p.grupo}</span>
+      <span class="badge bg-secondary">Caixa ${p.caixa}</span>
+    </div>`).join("");
+
+  const total = produtos.concat(retirados).reduce((acc, p) => {
+    const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
+    return acc + (dist?.A || 0) + (dist?.B || 0) + (dist?.C || 0) + (dist?.D || 0);
+  }, 0);
+
+  const retiradasPecas = retirados.reduce((acc, p) => {
+    const d = p.distribuicaoOriginal;
+    return acc + d.A + d.B + d.C + d.D;
+  }, 0);
+
+  const percentual = total > 0 ? Math.round((retiradasPecas / total) * 100) : 0;
+
+  const barra = document.getElementById("progressoPicking");
+  barra.style.width = `${percentual}%`;
+  barra.textContent = `${retiradasPecas}/${total} • ${percentual}%`;
+
+  if (percentual < 30) barra.className = "progress-bar bg-danger";
+  else if (percentual < 70) barra.className = "progress-bar bg-warning text-dark";
+  else barra.className = "progress-bar bg-success";
+
+  if (percentual === 100) soltarConfete();
 }
 
-// === 9. Zerar endereço via GAS externo ===
-function zerarEndereco(endereco, operador) {
-  const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
-  if (!match) return alert("Endereço inválido");
-
-  const ws = `${match[1]}-${match[2]}-${match[3]}`;
-  const url = `https://script.google.com/macros/s/AKfycbzTnmicSr-pLNzLN5BmZmU31Bd3Fem2QZqbHAlMC78yDfNeWdJXfPtF9w/exec?ID=1CuMvGDxbquqG9oKR45tHwuHtpxZLAgDayvbPCdPpTCQ&WS=${ws}&func=Update&ENDERECO=${encodeURIComponent(endereco)}&SKU=VAZIO&OPERADOR=${encodeURIComponent(operador)}&TIME=${encodeURIComponent(new Date().toISOString())}`;
-
-  fetch(url)
-    .then(r => r.text())
-    .then(() => alert("✅ Endereço zerado"))
-    .catch(() => alert("❌ Erro ao zerar endereço"));
+// Confete 🎉
+function soltarConfete() {
+  confetti({ particleCount: 250, spread: 90, origin: { y: 0.6 } });
 }
 
-// === 10. Executa na inicialização ===
-document.addEventListener("DOMContentLoaded", () => {
-  carregarGrupos();
-  carregarOperadores();
-});
+// Cronômetro
+function iniciarCronometro() {
+  tempoInicio = new Date();
+  const cronometro = () => {
+    const diff = new Date(new Date() - tempoInicio);
+    const hh = String(diff.getUTCHours()).padStart(2, "0");
+    const mm = String(diff.getUTCMinutes()).padStart(2, "0");
+    const ss = String(diff.getUTCSeconds()).padStart(2, "0");
+    document.getElementById("cronometro").textContent = `${hh}:${mm}:${ss}`;
+    cronometroInterval = setTimeout(cronometro, 1000);
+  };
+  cronometro();
+}
+
+// Restaurar cache
+function restaurarCacheLocal() {
+  const salvo = localStorage.getItem("pickingProgresso");
+  if (!salvo) return;
+  const dados = JSON.parse(salvo);
+  document.getElementById("grupo").value = dados.grupo;
+  document.getElementById("operador").value = dados.operador;
+  produtos = dados.produtos || [];
+  retirados = dados.retirados || [];
+  tempoInicio = dados.tempoInicio ? new Date(dados.tempoInicio) : null;
+  iniciarCronometro();
+  document.getElementById("card-tempo").classList.remove("d-none");
+  atualizarInterface();
+}
+
+// Save
+function salvarProgressoLocal() {
+  const dados = {
+    grupo: document.getElementById("grupo").value,
+    operador: document.getElementById("operador").value,
+    produtos,
+    retirados,
+    tempoInicio: tempoInicio ? tempoInicio.toISOString() : null
+  };
+  localStorage.setItem("pickingProgresso", JSON.stringify(dados));
+}
+
+// Helpers
+function mostrarLoader() {
+  document.getElementById("loaderGlobal").style.display = "flex";
+}
+function esconderLoader() {
+  document.getElementById("loaderGlobal").style.display = "none";
+}
+function mostrarLoaderInline(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove("d-none");
+}
+function esconderLoaderInline(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add("d-none");
+}
+function mostrarToast(msg, tipo = "info") {
+  const cor = tipo === "success" ? "bg-success" : tipo === "error" ? "bg-danger" : tipo === "warning" ? "bg-warning text-dark" : "bg-primary";
+  const toast = document.createElement("div");
+  toast.className = `toast fade show align-items-center text-white ${cor} border-0`;
+  toast.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${msg}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>`;
+  document.getElementById("toast-container").appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+function checarModoStandalone() {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (!standalone) {
+    setTimeout(() => {
+      mostrarToast("📱 Para instalar este sistema como app: toque no menu (⋮) e escolha 'Instalar app'.", "warning");
+    }, 3000);
+  }
+}
+function feedbackVisual(sku, tipo) {
+  document.querySelectorAll(".card-produto").forEach(card => {
+    if (!sku || card.innerHTML.includes(sku)) {
+      card.classList.add(`feedback-${tipo}`);
+      setTimeout(() => card.classList.remove(`feedback-${tipo}`), 800);
+    }
+  });
+}
