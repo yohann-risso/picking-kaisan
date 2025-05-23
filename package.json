@@ -1,17 +1,8 @@
 {
   "name": "picking-kaisan",
   "version": "1.0.0",
-  "description": "Sistema de picking web para operações de logística.",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "echo 'Static build'"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
-  "type": "module",
-  "devDependencies": {
-    "vite": "^5.0.0"
-  }
+  "license": "MIT"
 }
