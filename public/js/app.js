@@ -47,53 +47,80 @@ async function carregarProdutos() {
   mostrarLoader();
 
   try {
-    // Headers padrão
     const headers = {
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`
     };
 
-    // 1. Carrega produtos
+    // 1. Produtos do grupo
     const resProdutos = await fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&select=*`, { headers });
-    const todosProdutos = await resProdutos.json();
+    const linhas = await resProdutos.json();
 
-    // 2. Carrega dados extras (imagem, colecao)
+    // 2. Referências de imagem e coleção
     const resRef = await fetch(`${SUPABASE_URL}/rest/v1/produtos_ref?select=sku,imagem,colecao`, { headers });
-    const produtosRef = await resRef.json();
-    const mapaRef = new Map(produtosRef.map(p => [p.sku, p]));
+    const refs = await resRef.json();
+    const mapaRef = new Map(refs.map(p => [p.sku.toUpperCase(), p]));
 
-    // 3. Carrega retiradas
+    // 3. Retiradas do grupo
     const resRet = await fetch(`${SUPABASE_URL}/rest/v1/retiradas?grupo=eq.${grupo}&select=sku,caixa`, { headers });
     const retiradas = await resRet.json();
-    const mapaRetiradas = new Map(retiradas.map(r => [r.sku, r.caixa]));
+    const mapaRetiradas = new Map(retiradas.map(r => [r.sku.toUpperCase(), r.caixa]));
 
     produtos = [];
     retirados = [];
 
-    todosProdutos.forEach(p => {
-      const dist = {
-        A: +p.distribuicao_a || 0,
-        B: +p.distribuicao_b || 0,
-        C: +p.distribuicao_c || 0,
-        D: +p.distribuicao_d || 0
-      };
+    // 4. Agrupar por SKU
+    const mapaSKUs = {};
 
-      const extras = mapaRef.get(p.sku) || {};
+    for (const linha of linhas) {
+      const sku = (linha.sku || "").toUpperCase();
+      const caixa = (linha.caixa || "").toUpperCase();
+      const qtd = parseInt(linha.qtd || 0);
+      const endereco = (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
 
-      const produto = {
-        ...p,
-        imagem: extras.imagem || "",
-        colecao: extras.colecao || "—",
-        distribuicaoAtual: { ...dist },
-        distribuicaoOriginal: { ...dist }
-      };
+      const ref = mapaRef.get(sku);
+      console.log("🔍 SKU:", sku, "Imagem:", ref?.imagem);
 
-      if (mapaRetiradas.has(p.sku)) {
-        produto.caixa = mapaRetiradas.get(p.sku);
+      if (!mapaSKUs[sku]) {
+        const ref = mapaRef.get(sku);
+        const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
+        mapaSKUs[sku] = {
+          ...linha,
+          sku,
+          endereco,
+          imagem: ref?.imagem || "",
+          colecao: ref?.colecao || "—",
+          distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
+          distribuicaoOriginal: { A: 0, B: 0, C: 0, D: 0 },
+          ordemEndereco: match ? match.slice(1).map(Number) : [999, 999, 999, 999, 999]
+        };
+      }
+
+      const p = mapaSKUs[sku];
+      if (caixa === "A") p.distribuicaoAtual.A += qtd, p.distribuicaoOriginal.A += qtd;
+      if (caixa === "B") p.distribuicaoAtual.B += qtd, p.distribuicaoOriginal.B += qtd;
+      if (caixa === "C") p.distribuicaoAtual.C += qtd, p.distribuicaoOriginal.C += qtd;
+      if (caixa === "D") p.distribuicaoAtual.D += qtd, p.distribuicaoOriginal.D += qtd;
+    }
+
+    // 5. Distribuir entre pendentes e retirados
+    for (const produto of Object.values(mapaSKUs)) {
+      if (mapaRetiradas.has(produto.sku)) {
+        produto.caixa = mapaRetiradas.get(produto.sku);
         retirados.push(produto);
       } else {
         produtos.push(produto);
       }
+    }
+
+    // 6. Ordenar por endereço lógico
+    produtos.sort((a, b) => {
+      for (let i = 0; i < a.ordemEndereco.length; i++) {
+        if (a.ordemEndereco[i] !== b.ordemEndereco[i]) {
+          return a.ordemEndereco[i] - b.ordemEndereco[i];
+        }
+      }
+      return 0;
     });
 
     tempoInicio = new Date();
