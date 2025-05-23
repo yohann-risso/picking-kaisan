@@ -1,8 +1,8 @@
 {
-  "name": "picking-kaisan",
-  "version": "1.0.0",
-  "scripts": {
-    "build": "echo 'Static build'"
-  },
-  "license": "MIT"
+    "name": "picking-kaisan",
+    "version": "1.0.0",
+    "scripts": {
+        "build": "echo 'Static build'"
+    },
+    "license": "MIT"
 }

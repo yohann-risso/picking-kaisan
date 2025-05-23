@@ -2,7 +2,10 @@
 const SUPABASE_URL = window.env.SUPABASE_URL || "";
 const SUPABASE_KEY = window.env.SUPABASE_KEY || "";
 
-let produtos = [], retirados = [], tempoInicio = null, cronometroInterval = null;
+let produtos = [],
+  retirados = [],
+  tempoInicio = null,
+  cronometroInterval = null;
 
 // 🚀 Ao carregar página
 document.addEventListener("DOMContentLoaded", () => {
@@ -14,30 +17,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function carregarOperadores() {
   const operadores = [
-    "Alan Ramos", "Anderson Dutra", "Arthur Oliveira", "Felipe Moraes",
-    "Filipe Silva", "Gabriel Lagoa", "João Alves", "Kaique Teixeira",
-    "Marrony Portugal", "Nalbert Pereira", "Rodrigo Novaes", "Rony Côrrea",
-    "Ykaro Oliveira", "Yohann Risso"
+    "Alan Ramos",
+    "Anderson Dutra",
+    "Arthur Oliveira",
+    "Felipe Moraes",
+    "Filipe Silva",
+    "Gabriel Lagoa",
+    "João Alves",
+    "Kaique Teixeira",
+    "Marrony Portugal",
+    "Nalbert Pereira",
+    "Rodrigo Novaes",
+    "Rony Côrrea",
+    "Ykaro Oliveira",
+    "Yohann Risso",
   ];
   const select = document.getElementById("operador");
-  select.innerHTML = operadores.map(op => `<option value="${op}">${op}</option>`).join("");
+  select.innerHTML = operadores
+    .map((op) => `<option value="${op}">${op}</option>`)
+    .join("");
 }
 
 async function carregarGrupos() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/produtos?select=grupo`, {
-    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
   });
   const dados = await res.json();
-  const grupos = [...new Set(dados.map(d => parseInt(d.grupo)))].sort((a, b) => a - b);
+  const grupos = [...new Set(dados.map((d) => parseInt(d.grupo)))].sort(
+    (a, b) => a - b
+  );
   const select = document.getElementById("grupo");
-  select.innerHTML = grupos.map(g => `<option value="${g}">${g}</option>`).join("");
+  select.innerHTML = grupos
+    .map((g) => `<option value="${g}">${g}</option>`)
+    .join("");
 }
 
 // Iniciar picking
 async function carregarProdutos() {
   const grupo = document.getElementById("grupo").value;
   const operador = document.getElementById("operador").value;
-  if (!grupo || !operador) return mostrarToast("Preencha grupo e operador", "warning");
+  if (!grupo || !operador)
+    return mostrarToast("Preencha grupo e operador", "warning");
 
   document.getElementById("grupo").disabled = true;
   document.getElementById("operador").disabled = true;
@@ -49,22 +69,33 @@ async function carregarProdutos() {
   try {
     const headers = {
       apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`
+      Authorization: `Bearer ${SUPABASE_KEY}`,
     };
 
     // 1. Produtos do grupo
-    const resProdutos = await fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&select=*`, { headers });
+    const resProdutos = await fetch(
+      `${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&select=*`,
+      { headers }
+    );
     const linhas = await resProdutos.json();
 
     // 2. Referências de imagem e coleção
-    const resRef = await fetch(`${SUPABASE_URL}/rest/v1/produtos_ref?select=sku,imagem,colecao`, { headers });
+    const resRef = await fetch(
+      `${SUPABASE_URL}/rest/v1/produtos_ref?select=sku,imagem,colecao`,
+      { headers }
+    );
     const refs = await resRef.json();
-    const mapaRef = new Map(refs.map(p => [p.sku.toUpperCase(), p]));
+    const mapaRef = new Map(refs.map((p) => [p.sku.toUpperCase(), p]));
 
     // 3. Retiradas do grupo
-    const resRet = await fetch(`${SUPABASE_URL}/rest/v1/retiradas?grupo=eq.${grupo}&select=sku,caixa`, { headers });
+    const resRet = await fetch(
+      `${SUPABASE_URL}/rest/v1/retiradas?grupo=eq.${grupo}&select=sku,caixa`,
+      { headers }
+    );
     const retiradas = await resRet.json();
-    const mapaRetiradas = new Map(retiradas.map(r => [r.sku.toUpperCase(), r.caixa]));
+    const mapaRetiradas = new Map(
+      retiradas.map((r) => [r.sku.toUpperCase(), r.caixa])
+    );
 
     produtos = [];
     retirados = [];
@@ -76,7 +107,8 @@ async function carregarProdutos() {
       const sku = (linha.sku || "").toUpperCase();
       const caixa = (linha.caixa || "").toUpperCase();
       const qtd = parseInt(linha.qtd || 0);
-      const endereco = (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
+      const endereco =
+        (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
 
       const ref = mapaRef.get(sku);
       console.log("🔍 SKU:", sku, "Imagem:", ref?.imagem);
@@ -92,15 +124,21 @@ async function carregarProdutos() {
           colecao: ref?.colecao || "—",
           distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
           distribuicaoOriginal: { A: 0, B: 0, C: 0, D: 0 },
-          ordemEndereco: match ? match.slice(1).map(Number) : [999, 999, 999, 999, 999]
+          ordemEndereco: match
+            ? match.slice(1).map(Number)
+            : [999, 999, 999, 999, 999],
         };
       }
 
       const p = mapaSKUs[sku];
-      if (caixa === "A") p.distribuicaoAtual.A += qtd, p.distribuicaoOriginal.A += qtd;
-      if (caixa === "B") p.distribuicaoAtual.B += qtd, p.distribuicaoOriginal.B += qtd;
-      if (caixa === "C") p.distribuicaoAtual.C += qtd, p.distribuicaoOriginal.C += qtd;
-      if (caixa === "D") p.distribuicaoAtual.D += qtd, p.distribuicaoOriginal.D += qtd;
+      if (caixa === "A")
+        (p.distribuicaoAtual.A += qtd), (p.distribuicaoOriginal.A += qtd);
+      if (caixa === "B")
+        (p.distribuicaoAtual.B += qtd), (p.distribuicaoOriginal.B += qtd);
+      if (caixa === "C")
+        (p.distribuicaoAtual.C += qtd), (p.distribuicaoOriginal.C += qtd);
+      if (caixa === "D")
+        (p.distribuicaoAtual.D += qtd), (p.distribuicaoOriginal.D += qtd);
     }
 
     // 5. Distribuir entre pendentes e retirados
@@ -127,7 +165,6 @@ async function carregarProdutos() {
     iniciarCronometro();
     atualizarInterface();
     salvarProgressoLocal();
-
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
     mostrarToast("Erro ao carregar dados do Supabase", "error");
@@ -143,37 +180,62 @@ function biparProduto() {
   const operador = document.getElementById("operador").value;
 
   input.disabled = true;
-  document.querySelector('.input-group .btn').disabled = true;
+  document.querySelector(".input-group .btn").disabled = true;
   mostrarLoaderInline("loaderBipagem");
 
   const liberarInput = () => {
     esconderLoaderInline("loaderBipagem");
     input.disabled = false;
-    document.querySelector('.input-group .btn').disabled = false;
+    document.querySelector(".input-group .btn").disabled = false;
     input.value = "";
     input.focus();
   };
 
-  let idx = produtos.findIndex(p => p.sku.toUpperCase() === valor || (p.ean || "").toUpperCase() === valor);
-  if (idx === -1) return mostrarToast("Produto não encontrado", "error"), liberarInput();
+  let idx = produtos.findIndex(
+    (p) =>
+      p.sku.toUpperCase() === valor || (p.ean || "").toUpperCase() === valor
+  );
+  if (idx === -1)
+    return mostrarToast("Produto não encontrado", "error"), liberarInput();
 
   const produto = produtos[idx];
   const dist = produto.distribuicaoAtual;
   let caixa = "";
 
-  if (dist.A > 0) { dist.A--; caixa = "A"; mostrarAnimacaoCaixa("A"); }
-  else if (dist.B > 0) { dist.B--; caixa = "B"; mostrarAnimacaoCaixa("B"); }
-  else if (dist.C > 0) { dist.C--; caixa = "C"; mostrarAnimacaoCaixa("C"); }
-  else if (dist.D > 0) { dist.D--; caixa = "D"; mostrarAnimacaoCaixa("D"); }
+  if (dist.A > 0) {
+    dist.A--;
+    caixa = "A";
+    mostrarAnimacaoCaixa("A");
+  } else if (dist.B > 0) {
+    dist.B--;
+    caixa = "B";
+    mostrarAnimacaoCaixa("B");
+  } else if (dist.C > 0) {
+    dist.C--;
+    caixa = "C";
+    mostrarAnimacaoCaixa("C");
+  } else if (dist.D > 0) {
+    dist.D--;
+    caixa = "D";
+    mostrarAnimacaoCaixa("D");
+  }
 
-  if (!caixa) return mostrarToast("Produto sem caixa para retirar", "error"), liberarInput();
+  if (!caixa)
+    return (
+      mostrarToast("Produto sem caixa para retirar", "error"), liberarInput()
+    );
 
   // ✅ passa a caixa aqui:
   registrarRetirada(produto, operador, grupo, caixa);
 
   const totalRestante = dist.A + dist.B + dist.C + dist.D;
   if (totalRestante === 0) {
-    retirados.unshift({ ...produto, caixa, grupo, distribuicaoOriginal: { ...produto.distribuicaoOriginal } });
+    retirados.unshift({
+      ...produto,
+      caixa,
+      grupo,
+      distribuicaoOriginal: { ...produto.distribuicaoOriginal },
+    });
     produtos.splice(idx, 1);
   }
 
@@ -191,7 +253,7 @@ async function registrarRetirada(prod, operador, grupo, caixa) {
     romaneio: prod.romaneio,
     caixa,
     grupo: parseInt(grupo),
-    status: "RETIRADO"
+    status: "RETIRADO",
   };
   await fetch(`${SUPABASE_URL}/rest/v1/retiradas`, {
     method: "POST",
@@ -199,9 +261,9 @@ async function registrarRetirada(prod, operador, grupo, caixa) {
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`,
       "Content-Type": "application/json",
-      Prefer: "return=minimal"
+      Prefer: "return=minimal",
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 }
 
@@ -213,11 +275,16 @@ function atualizarInterface() {
   const visiveis = produtos.slice(0, maxCards);
 
   visiveis.forEach((p, i) => {
-    const qtdTotal = Object.values(p.distribuicaoAtual).reduce((a, b) => a + b, 0);
+    const qtdTotal = Object.values(p.distribuicaoAtual).reduce(
+      (a, b) => a + b,
+      0
+    );
     const end1 = p.endereco?.split("•")[0] || "SEM LOCAL";
     const end2 = p.endereco?.split("•")[1] || "—";
 
-    const miniCards = ['A', 'B', 'C', 'D'].map(caixa => `
+    const miniCards = ["A", "B", "C", "D"]
+      .map(
+        (caixa) => `
       <div class="col minicard">
         <div class="card text-center">
           <div class="card-header fw-bold text-secondary">${caixa}</div>
@@ -225,15 +292,19 @@ function atualizarInterface() {
             <h4 class="card-title text-danger m-0">${p.distribuicaoAtual[caixa]}</h4>
           </div>
         </div>
-      </div>`).join("");
+      </div>`
+      )
+      .join("");
 
     const col = document.createElement("div");
-    col.className = maxCards === 1 ? 'col-12' : 'col-6';
+    col.className = maxCards === 1 ? "col-12" : "col-6";
     col.innerHTML = `
-      <div class="card card-produto ${i === 0 ? 'primary' : ''} h-100 p-3">
+      <div class="card card-produto ${i === 0 ? "primary" : ""} h-100 p-3">
         <div class="row g-3">
           <div class="col-md-4 text-center">
-            <img src="${p.imagem || ''}" alt="${p.descricao || 'Imagem do produto'}" class="img-fluid rounded shadow-sm card-img-produto" style="max-height: 250px;">
+            <img src="${p.imagem || ""}" alt="${
+      p.descricao || "Imagem do produto"
+    }" class="img-fluid rounded shadow-sm card-img-produto" style="max-height: 250px;">
           </div>
           <div class="col-md-8">
             <p class="fw-bold fs-3 mb-1 endereco-label">
@@ -254,23 +325,33 @@ function atualizarInterface() {
     cards.appendChild(col);
   });
 
-  document.getElementById("pendentesList").innerHTML = produtos.map(p => `
+  document.getElementById("pendentesList").innerHTML = produtos
+    .map(
+      (p) => `
     <div class="pendente-item">
       <div class="sku">SKU: ${p.sku}</div>
       <div class="descricao">${p.descricao} | Ref: ${p.sku.split("-")[0]}</div>
       <div class="endereco">${p.endereco?.split("•")[0]}</div>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 
-  document.getElementById("retiradosList").innerHTML = retirados.map(p => `
+  document.getElementById("retiradosList").innerHTML = retirados
+    .map(
+      (p) => `
     <div class="mb-2">
       ✅ <strong>${p.sku}</strong>
       <span class="badge bg-primary">Grupo ${p.grupo}</span>
       <span class="badge bg-secondary">Caixa ${p.caixa}</span>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 
   const total = produtos.concat(retirados).reduce((acc, p) => {
     const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
-    return acc + (dist?.A || 0) + (dist?.B || 0) + (dist?.C || 0) + (dist?.D || 0);
+    return (
+      acc + (dist?.A || 0) + (dist?.B || 0) + (dist?.C || 0) + (dist?.D || 0)
+    );
   }, 0);
 
   const retiradasPecas = retirados.reduce((acc, p) => {
@@ -285,7 +366,8 @@ function atualizarInterface() {
   barra.textContent = `${retiradasPecas}/${total} • ${percentual}%`;
 
   if (percentual < 30) barra.className = "progress-bar bg-danger";
-  else if (percentual < 70) barra.className = "progress-bar bg-warning text-dark";
+  else if (percentual < 70)
+    barra.className = "progress-bar bg-warning text-dark";
   else barra.className = "progress-bar bg-success";
 
   if (percentual === 100) soltarConfete();
@@ -326,7 +408,9 @@ function restaurarCacheLocal() {
   const dados = JSON.parse(salvo);
   document.getElementById("grupoSalvo").textContent = dados.grupo;
 
-  const modal = new bootstrap.Modal(document.getElementById("modalRestaurarPicking"));
+  const modal = new bootstrap.Modal(
+    document.getElementById("modalRestaurarPicking")
+  );
   modal.show();
 
   document.getElementById("btnConfirmarRestaurar").onclick = () => {
@@ -359,7 +443,7 @@ function salvarProgressoLocal() {
     operador: document.getElementById("operador").value,
     produtos,
     retirados,
-    tempoInicio: tempoInicio ? tempoInicio.toISOString() : null
+    tempoInicio: tempoInicio ? tempoInicio.toISOString() : null,
   };
   localStorage.setItem("pickingProgresso", JSON.stringify(dados));
 }
@@ -380,7 +464,14 @@ function esconderLoaderInline(id) {
   if (el) el.classList.add("d-none");
 }
 function mostrarToast(msg, tipo = "info") {
-  const cor = tipo === "success" ? "bg-success" : tipo === "error" ? "bg-danger" : tipo === "warning" ? "bg-warning text-dark" : "bg-primary";
+  const cor =
+    tipo === "success"
+      ? "bg-success"
+      : tipo === "error"
+      ? "bg-danger"
+      : tipo === "warning"
+      ? "bg-warning text-dark"
+      : "bg-primary";
   const toast = document.createElement("div");
   toast.className = `toast fade show align-items-center text-white ${cor} border-0`;
   toast.innerHTML = `
@@ -392,15 +483,20 @@ function mostrarToast(msg, tipo = "info") {
   setTimeout(() => toast.remove(), 4000);
 }
 function checarModoStandalone() {
-  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const standalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone;
   if (!standalone) {
     setTimeout(() => {
-      mostrarToast("📱 Para instalar este sistema como app: toque no menu (⋮) e escolha 'Instalar app'.", "warning");
+      mostrarToast(
+        "📱 Para instalar este sistema como app: toque no menu (⋮) e escolha 'Instalar app'.",
+        "warning"
+      );
     }, 3000);
   }
 }
 function feedbackVisual(sku, tipo) {
-  document.querySelectorAll(".card-produto").forEach(card => {
+  document.querySelectorAll(".card-produto").forEach((card) => {
     if (!sku || card.innerHTML.includes(sku)) {
       card.classList.add(`feedback-${tipo}`);
       setTimeout(() => card.classList.remove(`feedback-${tipo}`), 800);
@@ -428,7 +524,7 @@ function mostrarAnimacaoCaixa(letra) {
   setTimeout(() => {
     overlay.classList.remove("show");
     overlay.classList.add("hide");
-    setTimeout(() => overlay.style.display = "none", 500);
+    setTimeout(() => (overlay.style.display = "none"), 500);
   }, 2000);
 }
 
@@ -446,7 +542,7 @@ function finalizarPicking() {
     grupo,
     tempoExecucao: calcularDuracao(),
     retirados,
-    pendentes: produtos
+    pendentes: produtos,
   };
 
   // 2. Gera o PDF no navegador
@@ -492,7 +588,13 @@ function gerarPDF(resumo) {
 
   doc.text("✅ Retirados:", 20, 70);
   resumo.retirados.forEach((p, i) => {
-    doc.text(`${i + 1}. SKU: ${p.sku} | Produto: ${p.descricao || "-"} | Caixa: ${p.caixa}`, 20, 80 + i * 7);
+    doc.text(
+      `${i + 1}. SKU: ${p.sku} | Produto: ${p.descricao || "-"} | Caixa: ${
+        p.caixa
+      }`,
+      20,
+      80 + i * 7
+    );
   });
 
   doc.save(`Picking_Grupo${resumo.grupo}_${resumo.operador}.pdf`);

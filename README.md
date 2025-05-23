@@ -3,6 +3,7 @@
 Sistema de picking web para operações de logística.
 
 ## Tecnologias
+
 - HTML/CSS/JS (Vanilla)
 - Supabase (PostgreSQL + Auth)
 - Bootstrap 5
