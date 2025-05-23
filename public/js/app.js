@@ -504,12 +504,12 @@ function feedbackVisual(sku, tipo) {
   });
 }
 
-function atualizarQtdCards() {
+window.atualizarQtdCards = function atualizarQtdCards() {
   const qtd = parseInt(document.getElementById("qtdCards").value, 10);
   document.getElementById("qtdCardsLabel").textContent = qtd;
   localStorage.setItem("qtdCardsPreferido", qtd);
   atualizarInterface();
-}
+};
 
 function mostrarAnimacaoCaixa(letra) {
   const overlay = document.getElementById("overlayCaixa");
