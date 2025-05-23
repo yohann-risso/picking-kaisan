@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0d6efd" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="apple-touch-icon" href="/img/logo.png" />
   <title>Picking Kaisan</title>
@@ -50,6 +50,37 @@
 
     <div id="cards"></div>
   </div>
+
+  <!-- Toasts -->
+  <div id="toast-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;"></div>
+
+  <!-- Loader -->
+  <div id="loaderGlobal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 99999; justify-content: center; align-items: center;">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Carregando...</span>
+    </div>
+  </div>
+
+  <!-- Card tempo -->
+  <div id="card-tempo" class="card bg-light border-0 shadow-sm rounded px-4 py-3 d-none my-4" style="min-width: 280px;">
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="text-center">
+        <div class="text-danger fw-bold small mb-1">TEMPO EXECUTADO</div>
+        <div class="fs-5 d-flex align-items-center gap-1 text-dark">
+          <span class="me-1">🕒</span>
+          <span id="cronometro">00:00:00</span>
+        </div>
+      </div>
+      <div class="vr mx-3" style="height: 40px;"></div>
+      <div class="text-center">
+        <div class="text-danger fw-bold small mb-1">TEMPO IDEAL</div>
+        <div class="fs-6 text-dark"><span id="ideal">00:00:00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botão oculto final -->
+  <button id="btnFinalizar" class="btn btn-danger d-none" onclick="finalizarPicking()">📄 Finalizar Picking</button>
 
   <!-- jsPDF for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
