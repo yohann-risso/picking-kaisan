@@ -282,6 +282,15 @@ function iniciarCronometro() {
   cronometro();
 }
 
+function calcularDuracao() {
+  if (!tempoInicio) return "00:00:00";
+  const diff = new Date(new Date() - tempoInicio);
+  const hh = String(diff.getUTCHours()).padStart(2, "0");
+  const mm = String(diff.getUTCMinutes()).padStart(2, "0");
+  const ss = String(diff.getUTCSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+}
+
 // Restaurar cache
 function restaurarCacheLocal() {
   const salvo = localStorage.getItem("pickingProgresso");
