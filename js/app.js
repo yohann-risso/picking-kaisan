@@ -280,7 +280,6 @@ function soltarConfete() {
 
 // Cronômetro
 function iniciarCronometro() {
-  tempoInicio = new Date();
   const cronometro = () => {
     const diff = new Date(new Date() - tempoInicio);
     const hh = String(diff.getUTCHours()).padStart(2, "0");
@@ -309,6 +308,7 @@ function restaurarCacheLocal() {
     produtos = dados.produtos || [];
     retirados = dados.retirados || [];
     tempoInicio = dados.tempoInicio ? new Date(dados.tempoInicio) : new Date();
+    iniciarCronometro();
 
     document.getElementById("grupo").disabled = true;
     document.getElementById("operador").disabled = true;
@@ -316,7 +316,6 @@ function restaurarCacheLocal() {
     document.getElementById("btnFinalizar").classList.remove("d-none");
     document.getElementById("card-tempo").classList.remove("d-none");
 
-    iniciarCronometro();
     atualizarInterface();
     modal.hide();
   };
