@@ -206,7 +206,7 @@ function atualizarInterface() {
       <div class="card card-produto ${i === 0 ? 'primary' : ''} h-100 p-3">
         <div class="row g-3">
           <div class="col-md-4 text-center">
-            <img src="${p.imagem || ''}" class="img-fluid rounded shadow-sm card-img-produto" style="max-height: 250px;">
+            <img src="${p.imagem || ''}" alt="${p.descricao || 'Imagem do produto'}" class="img-fluid rounded shadow-sm card-img-produto" style="max-height: 250px;">
           </div>
           <div class="col-md-8">
             <p class="fw-bold fs-3 mb-1 endereco-label">
@@ -280,6 +280,15 @@ function iniciarCronometro() {
     cronometroInterval = setTimeout(cronometro, 1000);
   };
   cronometro();
+}
+
+function calcularDuracao() {
+  if (!tempoInicio) return "00:00:00";
+  const diff = new Date(new Date() - tempoInicio);
+  const hh = String(diff.getUTCHours()).padStart(2, "0");
+  const mm = String(diff.getUTCMinutes()).padStart(2, "0");
+  const ss = String(diff.getUTCSeconds()).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
 }
 
 // Restaurar cache
