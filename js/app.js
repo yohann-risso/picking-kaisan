@@ -1,26 +1,43 @@
 // Supabase config
 const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
+const SUPABASE_KEY = "SUA_CHAVE_AQUI";
 
 let produtos = [], retirados = [], tempoInicio = null;
 
 function carregarProdutos() {
   const grupo = document.getElementById("grupo").value;
   const operador = document.getElementById("operador").value;
-  if (!grupo || !operador) return alert("Selecione grupo e operador.");
 
-  fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&status=neq.RETIRADO&select=*`, {
+  if (!grupo || !operador) {
+    alert("⚠️ Selecione grupo e operador");
+    return;
+  }
+
+  const url = `${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&status=neq.RETIRADO&select=*`;
+
+  console.log("🔍 Carregando dados de:", url);
+
+  fetch(url, {
     headers: {
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`
     }
   })
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error(`Erro HTTP ${r.status}`);
+      return r.json();
+    })
     .then(data => {
+      if (!Array.isArray(data)) throw new Error("Resposta não é uma lista.");
+      console.log("✅ Produtos recebidos:", data);
       produtos = ordenarPorEndereco(data);
       retirados = [];
       tempoInicio = new Date();
       atualizarInterface();
+    })
+    .catch(err => {
+      console.error("❌ Erro ao carregar produtos:", err);
+      alert("Erro ao conectar no Supabase. Veja o console (F12)");
     });
 }
 
