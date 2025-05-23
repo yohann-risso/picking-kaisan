@@ -44,7 +44,7 @@ function carregarProdutos() {
 function ordenarPorEndereco(lista) {
   return lista.sort((a, b) => {
     const ord = e => {
-      const m = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec((e["endereco"] || "").split("•")[0]);
+      const m = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec((e.endereco || "").split("•")[0]);
       return m ? m.slice(1).map(Number) : [999,999,999,999,999];
     };
     const o1 = ord(a), o2 = ord(b);
@@ -63,7 +63,10 @@ function biparProduto() {
   let produto = produtos.find(p => p.sku.toUpperCase() === input) ||
                 produtos.find(p => (p.ean || "").toUpperCase() === input);
 
-  if (!produto) return alert("Produto não encontrado.");
+  if (!produto) {
+    alert("❌ Produto não encontrado.");
+    return;
+  }
 
   registrarRetirada(produto, operador, grupo);
   retirados.push(produto);
@@ -97,7 +100,9 @@ async function registrarRetirada(prod, operador, grupo) {
   if (res.ok) {
     console.log(`✅ Retirada registrada: ${prod.sku}`);
   } else {
-    alert("❌ Erro ao registrar no Supabase.");
+    const erro = await res.text();
+    console.error("❌ Erro ao registrar retirada:", erro);
+    alert("❌ Erro ao registrar no Supabase");
   }
 }
 
@@ -108,11 +113,11 @@ function atualizarInterface() {
   produtos.forEach(p => {
     const total = ['a', 'b', 'c', 'd'].reduce((s, c) => s + (+p[`distribuicao_${c}`] || 0), 0);
     const card = document.createElement("div");
-    card.className = "card card-produto";
+    card.className = "card card-produto mb-3";
     card.innerHTML = `
-      <div class="row">
+      <div class="row g-3">
         <div class="col-md-4 text-center">
-          <img src="${p.imagem || 'https://via.placeholder.com/120'}" class="card-img-produto">
+          <img src="${p.imagem || 'https://via.placeholder.com/120'}" class="card-img-produto" style="max-height:200px;">
         </div>
         <div class="col-md-8">
           <p class="texto-endereco">📍 ${p.endereco || "Sem endereço"}</p>
@@ -141,7 +146,7 @@ function gerarPDF() {
   doc.setFont("helvetica", "normal");
 
   retirados.forEach((p, i) => {
-    doc.text(`${i+1}. SKU: ${p.sku} • Produto: ${p.descricao || "—"} • Caixa: ${p.caixa}`, 20, 30 + i * 8);
+    doc.text(`${i + 1}. SKU: ${p.sku} • Produto: ${p.descricao || "—"} • Caixa: ${p.caixa}`, 20, 30 + i * 8);
   });
 
   doc.save("resumo_picking.pdf");
