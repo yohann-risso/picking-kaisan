@@ -247,15 +247,34 @@ function iniciarCronometro() {
 function restaurarCacheLocal() {
   const salvo = localStorage.getItem("pickingProgresso");
   if (!salvo) return;
+
   const dados = JSON.parse(salvo);
-  document.getElementById("grupo").value = dados.grupo;
-  document.getElementById("operador").value = dados.operador;
-  produtos = dados.produtos || [];
-  retirados = dados.retirados || [];
-  tempoInicio = dados.tempoInicio ? new Date(dados.tempoInicio) : null;
-  iniciarCronometro();
-  document.getElementById("card-tempo").classList.remove("d-none");
-  atualizarInterface();
+  document.getElementById("grupoSalvo").textContent = dados.grupo;
+
+  const modal = new bootstrap.Modal(document.getElementById("modalRestaurarPicking"));
+  modal.show();
+
+  document.getElementById("btnConfirmarRestaurar").onclick = () => {
+    document.getElementById("grupo").value = dados.grupo;
+    document.getElementById("operador").value = dados.operador;
+    produtos = dados.produtos || [];
+    retirados = dados.retirados || [];
+    tempoInicio = dados.tempoInicio ? new Date(dados.tempoInicio) : new Date();
+
+    document.getElementById("grupo").disabled = true;
+    document.getElementById("operador").disabled = true;
+    document.getElementById("btnIniciar").classList.add("d-none");
+    document.getElementById("btnFinalizar").classList.remove("d-none");
+    document.getElementById("card-tempo").classList.remove("d-none");
+
+    iniciarCronometro();
+    atualizarInterface();
+    modal.hide();
+  };
+
+  document.getElementById("btnCancelarRestaurar").onclick = () => {
+    localStorage.removeItem("pickingProgresso");
+  };
 }
 
 // Save
