@@ -111,7 +111,7 @@ async function carregarProdutos() {
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
 
       const ref = mapaRef.get(sku);
-      console.log("📦 SKU:", sku, "| Imagem:", imagem || "❌ Não encontrada");
+      console.log("📦 SKU:", sku, "| Imagem:", ref?.imagem || "❌ Não encontrada");
 
       if (!mapaSKUs[sku]) {
         const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
@@ -119,8 +119,8 @@ async function carregarProdutos() {
           ...linha,
           sku,
           endereco,
-          imagem: imagem || "",
-          colecao: colecao || "—",
+          imagem: ref?.imagem || "",
+          colecao: ref?.colecao || "—",
           distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
           distribuicaoOriginal: { A: 0, B: 0, C: 0, D: 0 },
           ordemEndereco: match
