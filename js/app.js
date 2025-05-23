@@ -4,52 +4,49 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 let produtos = [], retirados = [], tempoInicio = null;
 
-function carregarProdutos() {
+async function carregarProdutos() {
   const grupo = document.getElementById("grupo").value;
   const operador = document.getElementById("operador").value;
 
   if (!grupo || !operador) {
-    alert("⚠️ Selecione grupo e operador");
+    alert("⚠️ Selecione grupo e operador.");
     return;
   }
 
-  const url = `${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&status=neq.RETIRADO&select=*`;
-
-  console.log("🔍 Carregando dados de:", url);
-
-  fetch(url, {
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`
-    }
-  })
-    .then(r => {
-      if (!r.ok) throw new Error(`Erro HTTP ${r.status}`);
-      return r.json();
-    })
-    .then(data => {
-      if (!Array.isArray(data)) throw new Error("Resposta não é uma lista.");
-      console.log("✅ Produtos recebidos:", data);
-      produtos = ordenarPorEndereco(data);
-      retirados = [];
-      tempoInicio = new Date();
-      atualizarInterface();
-    })
-    .catch(err => {
-      console.error("❌ Erro ao carregar produtos:", err);
-      alert("Erro ao conectar no Supabase. Veja o console (F12)");
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&status=neq.RETIRADO&select=*`, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`
+      }
     });
+
+    if (!res.ok) throw new Error(`Erro HTTP: ${res.status}`);
+    const data = await res.json();
+
+    produtos = ordenarPorEndereco(data);
+    retirados = [];
+    tempoInicio = new Date();
+
+    console.log("✅ Produtos carregados:", produtos);
+    atualizarInterface();
+
+  } catch (err) {
+    console.error("❌ Erro ao carregar produtos:", err.message);
+    alert("Erro ao buscar produtos no Supabase.");
+  }
 }
 
 function ordenarPorEndereco(lista) {
   return lista.sort((a, b) => {
-    const ord = e => {
-      const m = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec((e.endereco || "").split("•")[0]);
-      return m ? m.slice(1).map(Number) : [999,999,999,999,999];
+    const parse = (e) => {
+      const m = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(e?.endereco || "");
+      return m ? m.slice(1).map(Number) : [999, 999, 999, 999, 999];
     };
-    const o1 = ord(a), o2 = ord(b);
-    for (let i = 0; i < o1.length; i++) {
-      if (o1[i] !== o2[i]) return o1[i] - o2[i];
+    const aOrd = parse(a);
+    const bOrd = parse(b);
+    for (let i = 0; i < aOrd.length; i++) {
+      if (aOrd[i] !== bOrd[i]) return aOrd[i] - bOrd[i];
     }
     return 0;
   });
@@ -60,75 +57,69 @@ function biparProduto() {
   const operador = document.getElementById("operador").value;
   const grupo = document.getElementById("grupo").value;
 
-  let produto = produtos.find(p => p.sku.toUpperCase() === input) ||
-                produtos.find(p => (p.ean || "").toUpperCase() === input);
-
-  if (!produto) {
-    alert("❌ Produto não encontrado.");
-    return;
-  }
+  let produto = produtos.find(p => p.sku?.toUpperCase() === input || p.ean?.toUpperCase() === input);
+  if (!produto) return alert("SKU ou EAN não encontrado.");
 
   registrarRetirada(produto, operador, grupo);
   retirados.push(produto);
   produtos = produtos.filter(p => p.sku !== produto.sku);
+
   document.getElementById("skuInput").value = "";
   atualizarInterface();
 }
 
-async function registrarRetirada(prod, operador, grupo) {
+async function registrarRetirada(produto, operador, grupo) {
   const payload = {
     timestamp: new Date().toISOString(),
-    operador: operador,
-    sku: prod.sku,
-    romaneio: prod.romaneio,
-    caixa: prod.caixa,
+    operador,
+    sku: produto.sku,
+    romaneio: produto.romaneio,
+    caixa: produto.caixa,
     grupo: parseInt(grupo),
     status: "RETIRADO"
   };
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/retiradas`, {
-    method: "POST",
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      "Content-Type": "application/json",
-      Prefer: "return=representation"
-    },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/retiradas`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation"
+      },
+      body: JSON.stringify(payload)
+    });
 
-  if (res.ok) {
-    console.log(`✅ Retirada registrada: ${prod.sku}`);
-  } else {
-    const erro = await res.text();
-    console.error("❌ Erro ao registrar retirada:", erro);
-    alert("❌ Erro ao registrar no Supabase");
+    if (!res.ok) throw new Error(await res.text());
+    console.log("✅ Retirada registrada:", produto.sku);
+
+  } catch (err) {
+    console.error("❌ Erro ao registrar retirada:", err.message);
+    alert("Erro ao registrar retirada no Supabase.");
   }
 }
 
 function atualizarInterface() {
-  const div = document.getElementById("cards");
-  div.innerHTML = "";
+  const cardsDiv = document.getElementById("cards");
+  cardsDiv.innerHTML = "";
 
   produtos.forEach(p => {
-    const total = ['a', 'b', 'c', 'd'].reduce((s, c) => s + (+p[`distribuicao_${c}`] || 0), 0);
     const card = document.createElement("div");
-    card.className = "card card-produto mb-3";
+    card.className = "card card-produto mb-4 p-3";
     card.innerHTML = `
-      <div class="row g-3">
-        <div class="col-md-4 text-center">
-          <img src="${p.imagem || 'https://via.placeholder.com/120'}" class="card-img-produto" style="max-height:200px;">
+      <div class="row">
+        <div class="col-md-4">
+          <img src="${p.imagem || 'https://via.placeholder.com/120'}" class="img-fluid card-img-produto">
         </div>
         <div class="col-md-8">
-          <p class="texto-endereco">📍 ${p.endereco || "Sem endereço"}</p>
+          <p class="texto-endereco">${p.endereco || "Sem endereço"}</p>
           <p><strong>SKU:</strong> ${p.sku}</p>
           <p><strong>Produto:</strong> ${p.descricao || "—"}</p>
           <p><strong>Coleção:</strong> ${p.colecao || "—"}</p>
-          <p><strong>Total:</strong> ${total}</p>
         </div>
-      </div>
-    `;
-    div.appendChild(card);
+      </div>`;
+    cardsDiv.appendChild(card);
   });
 
   const total = produtos.length + retirados.length;
