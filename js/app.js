@@ -67,10 +67,10 @@ async function carregarProdutos() {
 
     todosProdutos.forEach(p => {
       const dist = {
-        A: +p.distribuicao_a || 0,
-        B: +p.distribuicao_b || 0,
-        C: +p.distribuicao_c || 0,
-        D: +p.distribuicao_d || 0
+        A: Number(p.distribuicao_a) || 0,
+        B: Number(p.distribuicao_b) || 0,
+        C: Number(p.distribuicao_c) || 0,
+        D: Number(p.distribuicao_d) || 0
       };
 
       const produto = {
