@@ -58,6 +58,8 @@ async function carregarProdutos() {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
     });
     const retiradas = await resRetirados.json();
+    const mapaRetiradas = new Map();
+    retiradas.forEach(r => mapaRetiradas.set(r.sku, r.caixa));
 
     // 3. Separa produtos retirados e pendentes
     produtos = [];
@@ -77,16 +79,14 @@ async function carregarProdutos() {
         distribuicaoOriginal: { ...dist }
       };
 
-      const foiRetirado = retiradas.find(r => r.sku === p.sku);
-      if (foiRetirado) {
-        produto.caixa = foiRetirado.caixa;
+      if (mapaRetiradas.has(p.sku)) {
+        produto.caixa = mapaRetiradas.get(p.sku);
         retirados.push(produto);
       } else {
         produtos.push(produto);
       }
     });
-
-    // 4. Tempo e interface
+        // 4. Tempo e interface
     tempoInicio = new Date();
     iniciarCronometro();
     atualizarInterface();
@@ -130,13 +130,17 @@ function biparProduto() {
   else if (dist.C > 0) { dist.C--; caixa = "C"; mostrarAnimacaoCaixa("C"); }
   else if (dist.D > 0) { dist.D--; caixa = "D"; mostrarAnimacaoCaixa("D"); }
 
+  if (!caixa) return mostrarToast("Produto sem caixa para retirar", "error"), liberarInput();
+
+  // ✅ passa a caixa aqui:
+  registrarRetirada(produto, operador, grupo, caixa);
+
   const totalRestante = dist.A + dist.B + dist.C + dist.D;
   if (totalRestante === 0) {
     retirados.unshift({ ...produto, caixa, grupo, distribuicaoOriginal: { ...produto.distribuicaoOriginal } });
     produtos.splice(idx, 1);
   }
 
-  registrarRetirada(produto, operador, grupo, caixa);
   feedbackVisual(produto.sku, "success");
   atualizarInterface();
   salvarProgressoLocal();
