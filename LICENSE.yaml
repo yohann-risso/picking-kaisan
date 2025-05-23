@@ -1,0 +1,13 @@
+
+---
+
+### 4. ⚠️ **Acessibilidade – `<img>` sem `alt`**
+
+**Impacto:**  
+Pessoas com leitores de tela não recebem contexto das imagens.
+
+**Solução:**  
+Use:
+
+```html
+<img src="${p.imagem}" alt="${p.descricao || 'Imagem do produto'}" class="..." />

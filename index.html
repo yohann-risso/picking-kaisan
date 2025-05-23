@@ -124,6 +124,13 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <!-- App Script -->
-  <script src="/js/app.js"></script>
+  <script>
+  window.env = {
+    SUPABASE_URL: "__SUPABASE_URL__",
+    SUPABASE_KEY: "__SUPABASE_KEY__"
+  };
+</script>
+<script src="/js/app.js"></script>
+<script src="/api/env.js"></script>
 </body>
 </html>
