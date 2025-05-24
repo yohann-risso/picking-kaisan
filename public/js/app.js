@@ -204,6 +204,7 @@ async function carregarProdutos() {
     tempoInicio = new Date();
     iniciarCronometro();
     atualizarInterface();
+    atualizarInterface();
     salvarProgressoLocal();
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
@@ -280,6 +281,7 @@ function biparProduto() {
   }
 
   feedbackVisual(produto.sku, "success");
+  moverProdutoParaTopo(produto.sku);
   atualizarInterface();
   salvarProgressoLocal();
   liberarInput();
@@ -479,7 +481,10 @@ function restaurarCacheLocal() {
     document.getElementById("card-tempo").classList.remove("d-none");
 
     atualizarInterface();
+
     modal.hide();
+
+    calcularTempoIdeal();
   };
 
   document.getElementById("btnCancelarRestaurar").onclick = () => {
@@ -693,15 +698,18 @@ async function desfazerRetirada(sku, romaneio, caixa, grupo) {
 async function zerarEnderecoExterno(endereco) {
   const enderecoLimpo = endereco.trim();
   const match = enderecoLimpo.match(/A(\d+)-B(\d+)-R(\d+)/);
-  if (!match) throw new Error("Endereço inválido para extração do WS.");
-  const ws = `${match[1]}-${match[2]}-${match[3]}`;
+  if (!match) {
+    mostrarToast("❌ Endereço inválido", "error");
+    return;
+  }
 
   const operador = encodeURIComponent(
     document.getElementById("operador").value
   );
   const time = encodeURIComponent(new Date().toLocaleString());
+  const ws = `${match[1]}-${match[2]}-${match[3]}`;
+  const loaderId = `loader-zerar-${endereco}`;
 
-  // aqui NÃO usamos ? de novo, só & para todos os params
   const url =
     `${window.env.GAS_ZERAR_URL}` +
     `&WS=${encodeURIComponent(ws)}` +
@@ -711,14 +719,65 @@ async function zerarEnderecoExterno(endereco) {
     `&OPERADOR=${operador}` +
     `&TIME=${time}`;
 
+  mostrarLoaderInline(loaderId);
+
   try {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(await res.text());
     const txt = await res.text();
-    console.log("zerarEnderecoExterno:", url, txt);
+    if (!res.ok) throw new Error(txt);
+
+    console.log("📤 Zeramento enviado:", url);
+    console.log("📩 Resposta:", txt);
     mostrarToast(`✅ Endereço ${endereco} marcado para zeramento.`, "success");
+
+    moverProdutoParaFimPorEndereco(endereco);
+    calcularTempoIdeal();
   } catch (e) {
-    console.error("Erro zerarEnderecoExterno:", e);
+    console.error("❌ Falha ao zerar:", e);
     mostrarToast("❌ Falha ao marcar zeramento.", "error");
+  } finally {
+    esconderLoaderInline(loaderId);
+  }
+}
+
+function moverProdutoParaFimPorEndereco(endereco) {
+  const idx = produtos.findIndex((p) => {
+    const enderecoPrimario = p.endereco?.split("•")[0]?.trim();
+    return enderecoPrimario === endereco;
+  });
+
+  if (idx !== -1) {
+    const [produto] = produtos.splice(idx, 1);
+    produtos.push(produto); // fim da lista
+    console.log(`🔄 SKU ${produto.sku} movido para o fim.`);
+    atualizarInterface();
+    salvarProgressoLocal();
+    calcularTempoIdeal();
+  } else {
+    console.warn("⚠️ Produto com endereço não encontrado:", endereco);
+  }
+}
+
+function calcularTempoIdeal() {
+  const totalPecas = produtos.concat(retirados).reduce((acc, p) => {
+    const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
+    return acc + dist.A + dist.B + dist.C + dist.D;
+  }, 0);
+
+  const segundosTotais = Math.round(totalPecas * 8.116);
+  const hh = String(Math.floor(segundosTotais / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((segundosTotais % 3600) / 60)).padStart(2, "0");
+  const ss = String(segundosTotais % 60).padStart(2, "0");
+
+  document.getElementById("ideal").textContent = `${hh}:${mm}:${ss}`;
+}
+
+function moverProdutoParaTopo(sku) {
+  const idx = produtos.findIndex(
+    (p) => p.sku.toUpperCase() === sku.toUpperCase()
+  );
+  if (idx !== -1) {
+    const [item] = produtos.splice(idx, 1);
+    produtos.unshift(item);
   }
 }
