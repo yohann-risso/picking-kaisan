@@ -350,9 +350,9 @@ function atualizarInterface() {
             <p class="fw-bold fs-3 mb-1 endereco-label">
               ENDEREÇO: <span class="texto-endereco d-block">${end1}</span>
             </p>
-            <span onclick="zerarEnderecoExterno('${enderecoPrimario}')" style="cursor:pointer;" title="Zerar Endereço">
+            <span onclick="zerarEnderecoExterno('${end1}')" style="cursor:pointer;" title="Zerar Endereço">
             <i class="bi bi-x-circle-fill text-danger ms-2 fs-5"></i>
-            <span class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status" id="loader-zerar-${enderecoPrimario}"></span>
+            <span class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status" id="loader-zerar-${end1}"></span>
             </span>
             <p><strong>ENDEREÇO SECUNDÁRIO:</strong><br>${end2}</p>
             <p class="text-danger fw-bold fs-2 mb-1">SKU: ${p.sku}</p>
