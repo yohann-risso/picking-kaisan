@@ -79,37 +79,53 @@ async function carregarProdutos() {
     );
     const linhas = await resProdutos.json();
 
-    // 2. Referências de imagem e coleção
-    const resRef = await fetch(
-      `${SUPABASE_URL}/rest/v1/produtos_ref?select=sku,imagem,colecao`,
-      { headers }
-    );
-    const refs = await resRef.json();
+    // 2. Extrai apenas os SKUs únicos que precisamos
+    const skus = [
+      ...new Set(
+        linhas
+          .map(l => (l.sku || "").trim().toUpperCase())
+          .filter(Boolean)
+      )
+    ];
+
+    // monta o filtro in.('SKU1','SKU2',...)
+    const skusFilter = skus.map(s => `'${s}'`).join(",");
+
+    // 3. Buscar só essas referências
+    const urlRef = `${SUPABASE_URL}/rest/v1/produtos_ref`
+      + `?select=sku,imagem,colecao`
+      + `&sku=in.(${skusFilter})`;
+
+    const resRef = await fetch(urlRef, { headers });
+    const refs   = await resRef.json();
     console.log("🔍 produtos_ref raw:", refs);
-    const mapaRef = new Map(refs.map((p) => [p.sku?.trim().toUpperCase(), p]));
+
+    const mapaRef = new Map(
+      refs.map(p => [p.sku.trim().toUpperCase(), p])
+    );
     console.log("🔑 chave do mapaRef:", Array.from(mapaRef.keys()));
 
-    // 3. Retiradas do grupo
+    // 4. Retiradas do grupo
     const resRet = await fetch(
       `${SUPABASE_URL}/rest/v1/retiradas?grupo=eq.${grupo}&select=sku,caixa`,
       { headers }
     );
     const retiradas = await resRet.json();
     const mapaRetiradas = new Map(
-      retiradas.map((r) => [r.sku.toUpperCase(), r.caixa])
+      retiradas.map(r => [r.sku.trim().toUpperCase(), r.caixa])
     );
 
     produtos = [];
     retirados = [];
 
-    // 4. Agrupar por SKU
+    // 5. Agrupar por SKU
     const mapaSKUs = {};
 
     for (const linha of linhas) {
-      const rawSku = linha.sku || "";
-      const sku    = rawSku.trim().toUpperCase();
-      const caixa = (linha.caixa || "").toUpperCase();
-      const qtd = parseInt(linha.qtd || 0);
+      const rawSku  = linha.sku || "";
+      const sku     = rawSku.trim().toUpperCase();
+      const caixa   = (linha.caixa || "").toUpperCase();
+      const qtd     = parseInt(linha.qtd || 0, 10);
       const endereco =
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
 
@@ -133,17 +149,13 @@ async function carregarProdutos() {
       }
 
       const p = mapaSKUs[sku];
-      if (caixa === "A")
-        (p.distribuicaoAtual.A += qtd), (p.distribuicaoOriginal.A += qtd);
-      if (caixa === "B")
-        (p.distribuicaoAtual.B += qtd), (p.distribuicaoOriginal.B += qtd);
-      if (caixa === "C")
-        (p.distribuicaoAtual.C += qtd), (p.distribuicaoOriginal.C += qtd);
-      if (caixa === "D")
-        (p.distribuicaoAtual.D += qtd), (p.distribuicaoOriginal.D += qtd);
+      if (caixa === "A") (p.distribuicaoAtual.A += qtd), (p.distribuicaoOriginal.A += qtd);
+      if (caixa === "B") (p.distribuicaoAtual.B += qtd), (p.distribuicaoOriginal.B += qtd);
+      if (caixa === "C") (p.distribuicaoAtual.C += qtd), (p.distribuicaoOriginal.C += qtd);
+      if (caixa === "D") (p.distribuicaoAtual.D += qtd), (p.distribuicaoOriginal.D += qtd);
     }
 
-    // 5. Separar entre pendentes e retirados
+    // 6. Separar entre pendentes e retirados
     for (const produto of Object.values(mapaSKUs)) {
       if (mapaRetiradas.has(produto.sku)) {
         produto.caixa = mapaRetiradas.get(produto.sku);
@@ -153,7 +165,7 @@ async function carregarProdutos() {
       }
     }
 
-    // 6. Ordenar por endereço
+    // 7. Ordenar por endereço
     produtos.sort((a, b) => {
       for (let i = 0; i < a.ordemEndereco.length; i++) {
         if (a.ordemEndereco[i] !== b.ordemEndereco[i]) {
@@ -163,6 +175,7 @@ async function carregarProdutos() {
       return 0;
     });
 
+    // 8. Inicia cronômetro e atualiza UI
     tempoInicio = new Date();
     iniciarCronometro();
     atualizarInterface();
