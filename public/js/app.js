@@ -45,7 +45,7 @@ async function carregarTodosRefs() {
 
   // constrói o mapa global
   window.mapaRefGlobal = new Map(
-    allRefs.map(p => [p.sku.trim().toUpperCase(), p])
+    allRefs.map((p) => [p.sku.trim().toUpperCase(), p])
   );
   console.log("✅ mapaRefGlobal carregado:", window.mapaRefGlobal.size, "refs");
 }
@@ -117,7 +117,9 @@ async function carregarProdutos() {
 
     // 2) já temos o mapaRefGlobal, só conferir se está carregado
     if (!window.mapaRefGlobal) {
-      console.warn("⚠️ mapaRefGlobal ainda não carregado — espere alguns instantes e tente de novo.");
+      console.warn(
+        "⚠️ mapaRefGlobal ainda não carregado — espere alguns instantes e tente de novo."
+      );
     }
     const mapaRef = window.mapaRefGlobal || new Map();
 
@@ -128,7 +130,7 @@ async function carregarProdutos() {
     );
     const retiradas = await resRet.json();
     const mapaRetiradas = new Map(
-      retiradas.map(r => [r.sku.trim().toUpperCase(), r.caixa])
+      retiradas.map((r) => [r.sku.trim().toUpperCase(), r.caixa])
     );
 
     produtos = [];
@@ -137,13 +139,19 @@ async function carregarProdutos() {
 
     // 4) agrupa, decrementa e aplica ref.imagem/ref.colecao
     for (const linha of linhas) {
-      const sku    = (linha.sku || "").trim().toUpperCase();
-      const caixa  = (linha.caixa || "").toUpperCase();
-      const qtd    = parseInt(linha.qtd || 0, 10);
-      const endereco = (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
-      const ref    = mapaRef.get(sku);
+      const sku = (linha.sku || "").trim().toUpperCase();
+      const caixa = (linha.caixa || "").toUpperCase();
+      const qtd = parseInt(linha.qtd || 0, 10);
+      const endereco =
+        (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
+      const ref = mapaRef.get(sku);
 
-      console.log("📦 SKU:", sku, "| Imagem:", ref?.imagem ?? "❌ Não encontrada");
+      console.log(
+        "📦 SKU:",
+        sku,
+        "| Imagem:",
+        ref?.imagem ?? "❌ Não encontrada"
+      );
 
       if (!mapaSKUs[sku]) {
         const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
@@ -153,17 +161,23 @@ async function carregarProdutos() {
           endereco,
           imagem: ref?.imagem || "",
           colecao: ref?.colecao || "—",
-          distribuicaoAtual: { A:0, B:0, C:0, D:0 },
-          distribuicaoOriginal: { A:0, B:0, C:0, D:0 },
-          ordemEndereco: match ? match.slice(1).map(Number) : [999,999,999,999,999],
+          distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
+          distribuicaoOriginal: { A: 0, B: 0, C: 0, D: 0 },
+          ordemEndereco: match
+            ? match.slice(1).map(Number)
+            : [999, 999, 999, 999, 999],
         };
       }
 
       const p = mapaSKUs[sku];
-      if (caixa === "A") (p.distribuicaoAtual.A += qtd, p.distribuicaoOriginal.A += qtd);
-      if (caixa === "B") (p.distribuicaoAtual.B += qtd, p.distribuicaoOriginal.B += qtd);
-      if (caixa === "C") (p.distribuicaoAtual.C += qtd, p.distribuicaoOriginal.C += qtd);
-      if (caixa === "D") (p.distribuicaoAtual.D += qtd, p.distribuicaoOriginal.D += qtd);
+      if (caixa === "A")
+        (p.distribuicaoAtual.A += qtd), (p.distribuicaoOriginal.A += qtd);
+      if (caixa === "B")
+        (p.distribuicaoAtual.B += qtd), (p.distribuicaoOriginal.B += qtd);
+      if (caixa === "C")
+        (p.distribuicaoAtual.C += qtd), (p.distribuicaoOriginal.C += qtd);
+      if (caixa === "D")
+        (p.distribuicaoAtual.D += qtd), (p.distribuicaoOriginal.D += qtd);
     }
 
     // 5) pendentes vs retirados
@@ -191,7 +205,6 @@ async function carregarProdutos() {
     iniciarCronometro();
     atualizarInterface();
     salvarProgressoLocal();
-
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
     mostrarToast("Erro ao carregar dados do Supabase", "error");
@@ -337,6 +350,10 @@ function atualizarInterface() {
             <p class="fw-bold fs-3 mb-1 endereco-label">
               ENDEREÇO: <span class="texto-endereco d-block">${end1}</span>
             </p>
+            <span onclick="zerarEnderecoExterno('${enderecoPrimario}')" style="cursor:pointer;" title="Zerar Endereço">
+            <i class="bi bi-x-circle-fill text-danger ms-2 fs-5"></i>
+            <span class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status" id="loader-zerar-${enderecoPrimario}"></span>
+            </span>
             <p><strong>ENDEREÇO SECUNDÁRIO:</strong><br>${end2}</p>
             <p class="text-danger fw-bold fs-2 mb-1">SKU: ${p.sku}</p>
             <p><strong>PRODUTO:</strong> ${p.descricao}</p>
@@ -370,6 +387,13 @@ function atualizarInterface() {
       ✅ <strong>${p.sku}</strong>
       <span class="badge bg-primary">Grupo ${p.grupo}</span>
       <span class="badge bg-secondary">Caixa ${p.caixa}</span>
+      <button
+        class="btn btn-sm btn-outline-light ms-3"
+        title="Desfazer"
+        onclick="desfazerRetirada('${p.sku}', ${p.romaneio}, '${p.caixa}', ${p.grupo})"
+      >
+        🔄
+      </button>
     </div>`
     )
     .join("");
@@ -625,4 +649,65 @@ function gerarPDF(resumo) {
   });
 
   doc.save(`Picking_Grupo${resumo.grupo}_${resumo.operador}.pdf`);
+}
+
+async function desfazerRetirada(sku, romaneio, caixa, grupo) {
+  try {
+    // 1) chama o DELETE no Supabase
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/retiradas?sku=eq.${sku}&romaneio=eq.${romaneio}&caixa=eq.${caixa}&grupo=eq.${grupo}`,
+      {
+        method: "DELETE",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          Prefer: "return=minimal",
+        },
+      }
+    );
+    if (!res.ok) throw new Error(await res.text());
+
+    // 2) atualiza o estado local: tira de retirados e volta para produtos
+    const idx = retirados.findIndex(
+      (p) =>
+        p.sku === sku &&
+        p.romaneio === romaneio &&
+        p.caixa === caixa &&
+        p.grupo === grupo
+    );
+    if (idx !== -1) {
+      const item = retirados.splice(idx, 1)[0];
+      // restaura distribuição original
+      item.distribuicaoAtual = { ...item.distribuicaoOriginal };
+      produtos.unshift(item);
+      salvarProgressoLocal();
+      atualizarInterface();
+      mostrarToast(`✔️ Retirada de ${sku} desfeita.`, "success");
+    }
+  } catch (e) {
+    console.error("Erro desfazerRetirada:", e);
+    mostrarToast("❌ Não foi possível desfazer.", "error");
+  }
+}
+
+async function zerarEnderecoExterno(endereco) {
+  try {
+    const url =
+      `${window.env.GAS_ZERAR_URL}` +
+      `?ENDERECO=${encodeURIComponent(endereco)}` +
+      `&OPERADOR=${encodeURIComponent(
+        document.getElementById("operador").value
+      )}` +
+      `&TIME=${encodeURIComponent(new Date().toLocaleString())}` +
+      `&func=Update`; // conforme seu doGet no GAS
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(await res.text());
+    const txt = await res.text();
+    console.log("zerarEnderecoExterno:", txt);
+    mostrarToast(`✅ Endereço ${endereco} marcado para zeramento.`, "success");
+  } catch (e) {
+    console.error("Erro zerarEnderecoExterno:", e);
+    mostrarToast("❌ Falha ao marcar zeramento.", "error");
+  }
 }
