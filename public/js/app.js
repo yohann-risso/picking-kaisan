@@ -705,6 +705,7 @@ async function zerarEnderecoExterno(endereco) {
     if (!res.ok) throw new Error(await res.text());
     const txt = await res.text();
     console.log("zerarEnderecoExterno:", txt);
+    console.log(url, txt);
     mostrarToast(`✅ Endereço ${endereco} marcado para zeramento.`, "success");
   } catch (e) {
     console.error("Erro zerarEnderecoExterno:", e);
