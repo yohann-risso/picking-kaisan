@@ -13,7 +13,42 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarGrupos();
   restaurarCacheLocal();
   checarModoStandalone();
+
+  carregarTodosRefs();
 });
+
+async function carregarTodosRefs() {
+  const headers = {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`,
+  };
+
+  const allRefs = [];
+  const limit = 1000;
+  let from = 0;
+
+  while (true) {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/produtos_ref?select=sku,imagem,colecao`,
+      {
+        headers: {
+          ...headers,
+          Range: `${from}-${from + limit - 1}`,
+        },
+      }
+    );
+    const chunk = await res.json();
+    allRefs.push(...chunk);
+    if (chunk.length < limit) break;
+    from += limit;
+  }
+
+  // constrói o mapa global
+  window.mapaRefGlobal = new Map(
+    allRefs.map(p => [p.sku.trim().toUpperCase(), p])
+  );
+  console.log("✅ mapaRefGlobal carregado:", window.mapaRefGlobal.size, "refs");
+}
 
 function carregarOperadores() {
   const operadores = [
@@ -59,6 +94,7 @@ async function carregarProdutos() {
   if (!grupo || !operador)
     return mostrarToast("Preencha grupo e operador", "warning");
 
+  // desabilita UI e mostra loader…
   document.getElementById("grupo").disabled = true;
   document.getElementById("operador").disabled = true;
   document.getElementById("btnIniciar").classList.add("d-none");
@@ -72,40 +108,20 @@ async function carregarProdutos() {
       Authorization: `Bearer ${SUPABASE_KEY}`,
     };
 
-    // 1. Produtos do grupo
+    // 1) busca produtos do grupo
     const resProdutos = await fetch(
       `${SUPABASE_URL}/rest/v1/produtos?grupo=eq.${grupo}&select=*`,
       { headers }
     );
     const linhas = await resProdutos.json();
 
-    // 2. Extrai apenas os SKUs únicos que precisamos
-    const skus = [
-      ...new Set(
-        linhas
-          .map(l => (l.sku || "").trim().toUpperCase())
-          .filter(Boolean)
-      )
-    ];
+    // 2) já temos o mapaRefGlobal, só conferir se está carregado
+    if (!window.mapaRefGlobal) {
+      console.warn("⚠️ mapaRefGlobal ainda não carregado — espere alguns instantes e tente de novo.");
+    }
+    const mapaRef = window.mapaRefGlobal || new Map();
 
-    // monta o filtro in.('SKU1','SKU2',...)
-    const skusFilter = skus.map(s => `'${s}'`).join(",");
-
-    // 3. Buscar só essas referências
-    const urlRef = `${SUPABASE_URL}/rest/v1/produtos_ref`
-      + `?select=sku,imagem,colecao`
-      + `&sku=in.(${skusFilter})`;
-
-    const resRef = await fetch(urlRef, { headers });
-    const refs   = await resRef.json();
-    console.log("🔍 produtos_ref raw:", refs);
-
-    const mapaRef = new Map(
-      refs.map(p => [p.sku.trim().toUpperCase(), p])
-    );
-    console.log("🔑 chave do mapaRef:", Array.from(mapaRef.keys()));
-
-    // 4. Retiradas do grupo
+    // 3) retiradas
     const resRet = await fetch(
       `${SUPABASE_URL}/rest/v1/retiradas?grupo=eq.${grupo}&select=sku,caixa`,
       { headers }
@@ -117,20 +133,17 @@ async function carregarProdutos() {
 
     produtos = [];
     retirados = [];
-
-    // 5. Agrupar por SKU
     const mapaSKUs = {};
 
+    // 4) agrupa, decrementa e aplica ref.imagem/ref.colecao
     for (const linha of linhas) {
-      const rawSku  = linha.sku || "";
-      const sku     = rawSku.trim().toUpperCase();
-      const caixa   = (linha.caixa || "").toUpperCase();
-      const qtd     = parseInt(linha.qtd || 0, 10);
-      const endereco =
-        (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
+      const sku    = (linha.sku || "").trim().toUpperCase();
+      const caixa  = (linha.caixa || "").toUpperCase();
+      const qtd    = parseInt(linha.qtd || 0, 10);
+      const endereco = (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
+      const ref    = mapaRef.get(sku);
 
-      const ref = mapaRef.get(sku);
-      console.log("📦 SKU:", sku, "| Imagem:", ref?.imagem || "❌ Não encontrada");
+      console.log("📦 SKU:", sku, "| Imagem:", ref?.imagem ?? "❌ Não encontrada");
 
       if (!mapaSKUs[sku]) {
         const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
@@ -140,32 +153,30 @@ async function carregarProdutos() {
           endereco,
           imagem: ref?.imagem || "",
           colecao: ref?.colecao || "—",
-          distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
-          distribuicaoOriginal: { A: 0, B: 0, C: 0, D: 0 },
-          ordemEndereco: match
-            ? match.slice(1).map(Number)
-            : [999, 999, 999, 999, 999],
+          distribuicaoAtual: { A:0, B:0, C:0, D:0 },
+          distribuicaoOriginal: { A:0, B:0, C:0, D:0 },
+          ordemEndereco: match ? match.slice(1).map(Number) : [999,999,999,999,999],
         };
       }
 
       const p = mapaSKUs[sku];
-      if (caixa === "A") (p.distribuicaoAtual.A += qtd), (p.distribuicaoOriginal.A += qtd);
-      if (caixa === "B") (p.distribuicaoAtual.B += qtd), (p.distribuicaoOriginal.B += qtd);
-      if (caixa === "C") (p.distribuicaoAtual.C += qtd), (p.distribuicaoOriginal.C += qtd);
-      if (caixa === "D") (p.distribuicaoAtual.D += qtd), (p.distribuicaoOriginal.D += qtd);
+      if (caixa === "A") (p.distribuicaoAtual.A += qtd, p.distribuicaoOriginal.A += qtd);
+      if (caixa === "B") (p.distribuicaoAtual.B += qtd, p.distribuicaoOriginal.B += qtd);
+      if (caixa === "C") (p.distribuicaoAtual.C += qtd, p.distribuicaoOriginal.C += qtd);
+      if (caixa === "D") (p.distribuicaoAtual.D += qtd, p.distribuicaoOriginal.D += qtd);
     }
 
-    // 6. Separar entre pendentes e retirados
-    for (const produto of Object.values(mapaSKUs)) {
-      if (mapaRetiradas.has(produto.sku)) {
-        produto.caixa = mapaRetiradas.get(produto.sku);
-        retirados.push(produto);
+    // 5) pendentes vs retirados
+    for (const prod of Object.values(mapaSKUs)) {
+      if (mapaRetiradas.has(prod.sku)) {
+        prod.caixa = mapaRetiradas.get(prod.sku);
+        retirados.push(prod);
       } else {
-        produtos.push(produto);
+        produtos.push(prod);
       }
     }
 
-    // 7. Ordenar por endereço
+    // 6) ordena
     produtos.sort((a, b) => {
       for (let i = 0; i < a.ordemEndereco.length; i++) {
         if (a.ordemEndereco[i] !== b.ordemEndereco[i]) {
@@ -175,11 +186,12 @@ async function carregarProdutos() {
       return 0;
     });
 
-    // 8. Inicia cronômetro e atualiza UI
+    // 7) finaliza
     tempoInicio = new Date();
     iniciarCronometro();
     atualizarInterface();
     salvarProgressoLocal();
+
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
     mostrarToast("Erro ao carregar dados do Supabase", "error");
