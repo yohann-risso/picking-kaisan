@@ -693,8 +693,6 @@ async function desfazerRetirada(sku, romaneio, caixa, grupo) {
 async function zerarEnderecoExterno(endereco) {
     // Limpa espaços extras
   const enderecoLimpo = endereco.trim();
-  const operadorLimpo = operador ? operador.trim() : "";
-  const timeLimpo = time ? time.trim() : "";
 
   // Extrai WS no formato 2-1-11 a partir de A2-B1-R11-C11-N5
   const match = enderecoLimpo.match(/A(\d+)-B(\d+)-R(\d+)/);
@@ -714,7 +712,7 @@ async function zerarEnderecoExterno(endereco) {
       `&OPERADOR=${encodeURIComponent(
         document.getElementById("operador").value
       )}` +
-      `&TIME=${encodeURIComponent(new Date().toLocaleString())}`; // conforme seu doGet no GAS
+      `&TIME=${encodeURIComponent(new Date().toLocaleString())}`;
 
     const res = await fetch(url);
     if (!res.ok) throw new Error(await res.text());
