@@ -691,34 +691,31 @@ async function desfazerRetirada(sku, romaneio, caixa, grupo) {
 }
 
 async function zerarEnderecoExterno(endereco) {
-    // Limpa espaços extras
   const enderecoLimpo = endereco.trim();
-
-  // Extrai WS no formato 2-1-11 a partir de A2-B1-R11-C11-N5
   const match = enderecoLimpo.match(/A(\d+)-B(\d+)-R(\d+)/);
-  if (!match) {
-    throw new Error("Endereço inválido para extração do WS.");
-  }
-
+  if (!match) throw new Error("Endereço inválido para extração do WS.");
   const ws = `${match[1]}-${match[2]}-${match[3]}`;
 
-  try {
-    const url =
-      `${window.env.GAS_ZERAR_URL}` +
-      `&WS=${ws}` +
-      `&func=Update` +
-      `?ENDERECO=${encodeURIComponent(endereco)}` +
-      `&SKU=VAZIO` +
-      `&OPERADOR=${encodeURIComponent(
-        document.getElementById("operador").value
-      )}` +
-      `&TIME=${encodeURIComponent(new Date().toLocaleString())}`;
+  const operador = encodeURIComponent(
+    document.getElementById("operador").value
+  );
+  const time = encodeURIComponent(new Date().toLocaleString());
 
+  // aqui NÃO usamos ? de novo, só & para todos os params
+  const url =
+    `${window.env.GAS_ZERAR_URL}` +
+    `&WS=${encodeURIComponent(ws)}` +
+    `&func=Update` +
+    `&ENDERECO=${encodeURIComponent(enderecoLimpo)}` +
+    `&SKU=VAZIO` +
+    `&OPERADOR=${operador}` +
+    `&TIME=${time}`;
+
+  try {
     const res = await fetch(url);
     if (!res.ok) throw new Error(await res.text());
     const txt = await res.text();
-    console.log("zerarEnderecoExterno:", txt);
-    console.log(url, txt);
+    console.log("zerarEnderecoExterno:", url, txt);
     mostrarToast(`✅ Endereço ${endereco} marcado para zeramento.`, "success");
   } catch (e) {
     console.error("Erro zerarEnderecoExterno:", e);

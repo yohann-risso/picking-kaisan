@@ -4,4 +4,4 @@ window.env = {
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io",
 };
 
-window.env.GAS_ZERAR_URL = "https://script.google.com/macros/s/AKfycbzTnmicSr-pLNzLN5BmZmU31Bd3Fem2QZqbHAlMC78yDfNeWdJXfPtF9w/exec";
+window.env.GAS_ZERAR_URL = "https://script.google.com/macros/s/AKfycbzTnmicSr-pLNzLN5BmZmU31Bd3Fem2QZqbHAlMC78yDfNeWdJXfPtF9w/exec?ID=1CuMvGDxbquqG9oKR45tHwuHtpxZLAgDayvbPCdPpTCQ";
