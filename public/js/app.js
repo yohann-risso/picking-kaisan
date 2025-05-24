@@ -626,3 +626,15 @@ function gerarPDF(resumo) {
 
   doc.save(`Picking_Grupo${resumo.grupo}_${resumo.operador}.pdf`);
 }
+
+function finalizarPicking() {
+  clearTimeout(cronometroInterval);
+  // monta o objeto resumo…
+  gerarPDF(resumo);
+  // limpa UI, localStorage, reabilita botões…
+}
+function gerarPDF(resumo) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  // título, lista de retirados, doc.save()
+}
