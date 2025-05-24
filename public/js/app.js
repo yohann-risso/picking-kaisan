@@ -85,6 +85,7 @@ async function carregarProdutos() {
       { headers }
     );
     const refs = await resRef.json();
+    const mapaRef = new Map(refs.map((p) => [p.sku?.trim().toUpperCase(), p]));
 
     // 3. Retiradas do grupo
     const resRet = await fetch(
