@@ -85,7 +85,9 @@ async function carregarProdutos() {
       { headers }
     );
     const refs = await resRef.json();
+    console.log("🔍 produtos_ref raw:", refs);
     const mapaRef = new Map(refs.map((p) => [p.sku?.trim().toUpperCase(), p]));
+    console.log("🔑 chave do mapaRef:", Array.from(mapaRef.keys()));
 
     // 3. Retiradas do grupo
     const resRet = await fetch(
@@ -104,7 +106,8 @@ async function carregarProdutos() {
     const mapaSKUs = {};
 
     for (const linha of linhas) {
-      const sku = (linha.sku || "").toUpperCase();
+      const rawSku = linha.sku || "";
+      const sku    = rawSku.trim().toUpperCase();
       const caixa = (linha.caixa || "").toUpperCase();
       const qtd = parseInt(linha.qtd || 0);
       const endereco =
