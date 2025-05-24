@@ -691,15 +691,30 @@ async function desfazerRetirada(sku, romaneio, caixa, grupo) {
 }
 
 async function zerarEnderecoExterno(endereco) {
+    // Limpa espaços extras
+  const enderecoLimpo = endereco.trim();
+  const operadorLimpo = operador ? operador.trim() : "";
+  const timeLimpo = time ? time.trim() : "";
+
+  // Extrai WS no formato 2-1-11 a partir de A2-B1-R11-C11-N5
+  const match = enderecoLimpo.match(/A(\d+)-B(\d+)-R(\d+)/);
+  if (!match) {
+    throw new Error("Endereço inválido para extração do WS.");
+  }
+
+  const ws = `${match[1]}-${match[2]}-${match[3]}`;
+
   try {
     const url =
       `${window.env.GAS_ZERAR_URL}` +
+      `&WS=${ws}` +
+      `&func=Update` +
       `?ENDERECO=${encodeURIComponent(endereco)}` +
+      `&SKU=VAZIO` +
       `&OPERADOR=${encodeURIComponent(
         document.getElementById("operador").value
       )}` +
-      `&TIME=${encodeURIComponent(new Date().toLocaleString())}` +
-      `&func=Update`; // conforme seu doGet no GAS
+      `&TIME=${encodeURIComponent(new Date().toLocaleString())}`; // conforme seu doGet no GAS
 
     const res = await fetch(url);
     if (!res.ok) throw new Error(await res.text());
