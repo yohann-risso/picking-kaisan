@@ -298,7 +298,7 @@ function atualizarInterface() {
   const cards = document.getElementById("cards");
   cards.innerHTML = "";
 
-  const maxCards = parseInt(document.getElementById("qtdCards").value, 10) || 2;
+  const maxCards = parseInt(document.getElementById("qtdCards").value, 10) || 1;
   const visiveis = produtos.slice(0, maxCards);
 
   visiveis.forEach((p, i) => {
