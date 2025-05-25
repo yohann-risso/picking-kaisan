@@ -1,13 +1,17 @@
-import { state, getHeaders } from '../config.js';
-import { atualizarInterface } from '../utils/interface.js';
-import { salvarProgressoLocal } from '../utils/storage.js';
-import { toast } from '../components/Toast.js';
+import { state, getHeaders } from "../config.js";
+import { atualizarInterface } from "../utils/interface.js";
+import { salvarProgressoLocal } from "../utils/storage.js";
+import { toast } from "../components/Toast.js";
 
 export async function carregarGrupos() {
-  const res = await fetch('/api/proxy?endpoint=/rest/v1/produtos?select=grupo');
+  const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo");
   const dados = await res.json();
-  const grupos = [...new Set(dados.map(d => parseInt(d.grupo)))].sort((a, b) => a - b);
-  document.getElementById("grupo").innerHTML = grupos.map(g => `<option value="${g}">${g}</option>`).join("");
+  const grupos = [...new Set(dados.map((d) => parseInt(d.grupo)))].sort(
+    (a, b) => a - b
+  );
+  document.getElementById("grupo").innerHTML = grupos
+    .map((g) => `<option value="${g}">${g}</option>`)
+    .join("");
 }
 
 export async function carregarTodosRefs() {
@@ -18,7 +22,7 @@ export async function carregarTodosRefs() {
 
   while (true) {
     const res = await fetch(
-      '/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao',
+      "/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao",
       { headers: { ...headers, Range: `${from}-${from + limit - 1}` } }
     );
     const chunk = await res.json();
@@ -27,7 +31,9 @@ export async function carregarTodosRefs() {
     from += limit;
   }
 
-  window.mapaRefGlobal = new Map(refs.map(p => [p.sku.trim().toUpperCase(), p]));
+  window.mapaRefGlobal = new Map(
+    refs.map((p) => [p.sku.trim().toUpperCase(), p])
+  );
 }
 
 export async function registrarRetirada(prod, operador, grupo, caixa) {
@@ -38,26 +44,33 @@ export async function registrarRetirada(prod, operador, grupo, caixa) {
     romaneio: prod.romaneio,
     caixa,
     grupo: parseInt(grupo),
-    status: "RETIRADO"
+    status: "RETIRADO",
   };
-  await fetch('/api/proxy?endpoint=/rest/v1/retiradas', {
+  await fetch("/api/proxy?endpoint=/rest/v1/retiradas", {
     method: "POST",
     headers: getHeaders(),
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 }
 
 export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
   try {
     const query = `/rest/v1/retiradas?sku=eq.${sku}&romaneio=eq.${romaneio}&caixa=eq.${caixa}&grupo=eq.${grupo}`;
-    const res = await fetch(`/api/proxy?endpoint=${encodeURIComponent(query)}`, {
-      method: "DELETE",
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `/api/proxy?endpoint=${encodeURIComponent(query)}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
     if (!res.ok) throw new Error(await res.text());
 
     const idx = state.retirados.findIndex(
-      (p) => p.sku === sku && p.romaneio === romaneio && p.caixa === caixa && p.grupo === grupo
+      (p) =>
+        p.sku === sku &&
+        p.romaneio === romaneio &&
+        p.caixa === caixa &&
+        p.grupo === grupo
     );
 
     if (idx !== -1) {
