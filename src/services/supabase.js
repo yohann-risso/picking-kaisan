@@ -1,0 +1,49 @@
+import { state, getHeaders } from '../config.js';
+import { iniciarCronometro } from '../utils/cronometro.js';
+import { atualizarInterface } from '../utils/interface.js';
+import { salvarProgressoLocal } from '../utils/storage.js';
+import { toast } from '../components/Toast.js';
+
+export async function carregarGrupos() {
+  const res = await fetch('/api/proxy?endpoint=/rest/v1/produtos?select=grupo');
+  const dados = await res.json();
+  const grupos = [...new Set(dados.map(d => parseInt(d.grupo)))].sort((a, b) => a - b);
+  document.getElementById("grupo").innerHTML = grupos.map(g => `<option value="${g}">${g}</option>`).join("");
+}
+
+export async function carregarTodosRefs() {
+  const headers = getHeaders();
+  const refs = [];
+  const limit = 1000;
+  let from = 0;
+
+  while (true) {
+    const res = await fetch(
+      '/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao',
+      { headers: { ...headers, Range: `${from}-${from + limit - 1}` } }
+    );
+    const chunk = await res.json();
+    refs.push(...chunk);
+    if (chunk.length < limit) break;
+    from += limit;
+  }
+
+  window.mapaRefGlobal = new Map(refs.map(p => [p.sku.trim().toUpperCase(), p]));
+}
+
+export async function registrarRetirada(prod, operador, grupo, caixa) {
+  const payload = {
+    timestamp: new Date().toISOString(),
+    operador,
+    sku: prod.sku,
+    romaneio: prod.romaneio,
+    caixa,
+    grupo: parseInt(grupo),
+    status: "RETIRADO"
+  };
+  await fetch('/api/proxy?endpoint=/rest/v1/retiradas', {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify(payload)
+  });
+}
