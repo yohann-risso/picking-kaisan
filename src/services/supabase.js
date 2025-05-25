@@ -3,6 +3,7 @@ import { iniciarCronometro } from '../utils/cronometro.js';
 import { atualizarInterface } from '../utils/interface.js';
 import { salvarProgressoLocal } from '../utils/storage.js';
 import { toast } from '../components/Toast.js';
+import { desfazerRetirada } from '../services/supabase.js';
 
 export async function carregarGrupos() {
   const res = await fetch('/api/proxy?endpoint=/rest/v1/produtos?select=grupo');
@@ -46,4 +47,31 @@ export async function registrarRetirada(prod, operador, grupo, caixa) {
     headers: getHeaders(),
     body: JSON.stringify(payload)
   });
+}
+
+export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
+  try {
+    const query = `/rest/v1/retiradas?sku=eq.${sku}&romaneio=eq.${romaneio}&caixa=eq.${caixa}&grupo=eq.${grupo}`;
+    const res = await fetch(`/api/proxy?endpoint=${encodeURIComponent(query)}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    const idx = state.retirados.findIndex(
+      (p) => p.sku === sku && p.romaneio === romaneio && p.caixa === caixa && p.grupo === grupo
+    );
+
+    if (idx !== -1) {
+      const item = state.retirados.splice(idx, 1)[0];
+      item.distribuicaoAtual = { ...item.distribuicaoOriginal };
+      state.produtos.unshift(item);
+      salvarProgressoLocal();
+      atualizarInterface();
+      toast(`✔️ Retirada de ${sku} desfeita.`, "success");
+    }
+  } catch (e) {
+    console.error("Erro ao desfazer retirada:", e);
+    toast("❌ Não foi possível desfazer.", "error");
+  }
 }

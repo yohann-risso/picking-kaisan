@@ -28,3 +28,9 @@ export function checarModoStandalone() {
     }, 3000);
   }
 }
+
+export function soltarConfete() {
+  if (window.confetti) {
+    window.confetti({ particleCount: 250, spread: 90, origin: { y: 0.6 } });
+  }
+}

@@ -1,6 +1,11 @@
 import { toast } from '../components/Toast.js';
 import { mostrarLoaderInline, esconderLoaderInline } from '../utils/interface.js';
 import { calcularTempoIdeal } from '../utils/format.js';
+import { state } from '../config.js';
+import { atualizarInterface } from '../utils/interface.js';
+import { salvarProgressoLocal } from '../utils/storage.js';
+import { calcularTempoIdeal } from '../utils/format.js';
+import { moverProdutoParaFimPorEndereco } from './googleSheet.js';
 
 export async function zerarEnderecoExterno(endereco) {
   const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
@@ -24,5 +29,23 @@ export async function zerarEnderecoExterno(endereco) {
   } finally {
     esconderLoaderInline(loaderId);
     calcularTempoIdeal(); // depende do seu fluxo
+  }
+}
+
+export function moverProdutoParaFimPorEndereco(endereco) {
+  const idx = state.produtos.findIndex((p) => {
+    const enderecoPrimario = p.endereco?.split("•")[0]?.trim();
+    return enderecoPrimario === endereco;
+  });
+
+  if (idx !== -1) {
+    const [produto] = state.produtos.splice(idx, 1);
+    state.produtos.push(produto);
+    console.log(`🔄 SKU ${produto.sku} movido para o fim.`);
+    atualizarInterface();
+    salvarProgressoLocal();
+    calcularTempoIdeal();
+  } else {
+    console.warn("⚠️ Produto com endereço não encontrado:", endereco);
   }
 }

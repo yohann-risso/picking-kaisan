@@ -3,6 +3,7 @@ import { mostrarToast, feedbackVisual } from './interface.js';
 import { registrarRetirada } from '../services/supabase.js';
 import { atualizarInterface } from './interface.js';
 import { salvarProgressoLocal } from '../utils/storage.js';
+import { moverProdutoParaTopo } from './picking.js';
 
 export function carregarOperadores() {
   const ops = [
@@ -66,4 +67,14 @@ export function biparProduto() {
   atualizarInterface();
   salvarProgressoLocal();
   liberar();
+}
+
+export function moverProdutoParaTopo(sku) {
+  const idx = state.produtos.findIndex(
+    (p) => p.sku.toUpperCase() === sku.toUpperCase()
+  );
+  if (idx !== -1) {
+    const [item] = state.produtos.splice(idx, 1);
+    state.produtos.unshift(item);
+  }
 }
