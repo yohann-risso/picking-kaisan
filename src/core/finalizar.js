@@ -1,7 +1,7 @@
-import { state } from '../config.js';
-import { salvarProgressoLocal } from '../utils/storage.js';
-import { toast } from '../components/Toast.js';
-import { calcularDuracao } from './cronometro.js';
+import { state } from "../config.js";
+import { salvarProgressoLocal } from "../utils/storage.js";
+import { toast } from "../components/Toast.js";
+import { calcularDuracao } from "./cronometro.js";
 
 export function finalizarPicking() {
   clearTimeout(state.cronometroInterval);
@@ -57,7 +57,9 @@ function gerarPDF(resumo) {
   doc.text("✅ Retirados:", 20, 70);
   resumo.retirados.forEach((p, i) => {
     doc.text(
-      `${i + 1}. SKU: ${p.sku} | Produto: ${p.descricao || "-"} | Caixa: ${p.caixa}`,
+      `${i + 1}. SKU: ${p.sku} | Produto: ${p.descricao || "-"} | Caixa: ${
+        p.caixa
+      }`,
       20,
       80 + i * 7
     );

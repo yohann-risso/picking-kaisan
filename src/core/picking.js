@@ -1,18 +1,29 @@
-import { state } from '../config.js';
-import { mostrarToast, feedbackVisual } from './interface.js';
-import { registrarRetirada } from '../services/supabase.js';
-import { atualizarInterface } from './interface.js';
-import { salvarProgressoLocal } from '../utils/storage.js';
+import { state } from "../config.js";
+import { mostrarToast, feedbackVisual } from "./interface.js";
+import { registrarRetirada } from "../services/supabase.js";
+import { atualizarInterface } from "./interface.js";
+import { salvarProgressoLocal } from "../utils/storage.js";
 
 export function carregarOperadores() {
   const ops = [
-    "Alan Ramos", "Anderson Dutra", "Arthur Oliveira", "Felipe Moraes",
-    "Filipe Silva", "Gabriel Lagoa", "João Alves", "Kaique Teixeira",
-    "Marrony Portugal", "Nalbert Pereira", "Rodrigo Novaes",
-    "Rony Côrrea", "Ykaro Oliveira", "Yohann Risso"
+    "Alan Ramos",
+    "Anderson Dutra",
+    "Arthur Oliveira",
+    "Felipe Moraes",
+    "Filipe Silva",
+    "Gabriel Lagoa",
+    "João Alves",
+    "Kaique Teixeira",
+    "Marrony Portugal",
+    "Nalbert Pereira",
+    "Rodrigo Novaes",
+    "Rony Côrrea",
+    "Ykaro Oliveira",
+    "Yohann Risso",
   ];
   document.getElementById("operador").innerHTML = ops
-    .map(op => `<option value="${op}">${op}</option>`).join("");
+    .map((op) => `<option value="${op}">${op}</option>`)
+    .join("");
 }
 
 export function biparProduto() {
@@ -32,7 +43,8 @@ export function biparProduto() {
   };
 
   const idx = state.produtos.findIndex(
-    (p) => p.sku.toUpperCase() === valor || (p.ean || "").toUpperCase() === valor
+    (p) =>
+      p.sku.toUpperCase() === valor || (p.ean || "").toUpperCase() === valor
   );
 
   if (idx === -1) {
@@ -44,10 +56,19 @@ export function biparProduto() {
   const dist = produto.distribuicaoAtual;
   let caixa = "";
 
-  if (dist.A > 0) { dist.A--; caixa = "A"; }
-  else if (dist.B > 0) { dist.B--; caixa = "B"; }
-  else if (dist.C > 0) { dist.C--; caixa = "C"; }
-  else if (dist.D > 0) { dist.D--; caixa = "D"; }
+  if (dist.A > 0) {
+    dist.A--;
+    caixa = "A";
+  } else if (dist.B > 0) {
+    dist.B--;
+    caixa = "B";
+  } else if (dist.C > 0) {
+    dist.C--;
+    caixa = "C";
+  } else if (dist.D > 0) {
+    dist.D--;
+    caixa = "D";
+  }
 
   if (!caixa) {
     mostrarToast("Produto sem caixa para retirar", "error");
@@ -58,7 +79,12 @@ export function biparProduto() {
 
   const total = dist.A + dist.B + dist.C + dist.D;
   if (total === 0) {
-    state.retirados.unshift({ ...produto, caixa, grupo, distribuicaoOriginal: { ...produto.distribuicaoOriginal } });
+    state.retirados.unshift({
+      ...produto,
+      caixa,
+      grupo,
+      distribuicaoOriginal: { ...produto.distribuicaoOriginal },
+    });
     state.produtos.splice(idx, 1);
   }
 

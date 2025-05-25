@@ -5,11 +5,16 @@
  * @returns {HTMLElement} - Elemento <div> com estrutura do card
  */
 export function criarCardProduto(produto, destaque = false) {
-  const qtdTotal = Object.values(produto.distribuicaoAtual).reduce((a, b) => a + b, 0);
+  const qtdTotal = Object.values(produto.distribuicaoAtual).reduce(
+    (a, b) => a + b,
+    0
+  );
   const end1 = produto.endereco?.split("•")[0] || "SEM LOCAL";
   const end2 = produto.endereco?.split("•")[1] || "—";
 
-  const miniCards = ["A", "B", "C", "D"].map((caixa) => `
+  const miniCards = ["A", "B", "C", "D"]
+    .map(
+      (caixa) => `
     <div class="col minicard">
       <div class="card text-center">
         <div class="card-header fw-bold text-secondary">${caixa}</div>
@@ -17,15 +22,19 @@ export function criarCardProduto(produto, destaque = false) {
           <h4 class="card-title text-danger m-0">${produto.distribuicaoAtual[caixa]}</h4>
         </div>
       </div>
-    </div>`).join("");
+    </div>`
+    )
+    .join("");
 
   const wrapper = document.createElement("div");
   wrapper.className = "col-12 col-md-6 col-lg-4 card-wrapper";
   wrapper.innerHTML = `
-    <div class="card card-produto ${destaque ? 'primary' : ''} h-100 p-3">
+    <div class="card card-produto ${destaque ? "primary" : ""} h-100 p-3">
       <div class="row g-3">
         <div class="col-md-4 text-center">
-          <img src="${produto.imagem || ''}" alt="${produto.descricao || 'Produto'}"
+          <img src="${produto.imagem || ""}" alt="${
+    produto.descricao || "Produto"
+  }"
                class="img-fluid rounded shadow-sm card-img-produto" style="max-height: 250px;">
         </div>
         <div class="col-md-8">

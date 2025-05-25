@@ -1,6 +1,6 @@
-import { state } from '../config.js';
-import { iniciarCronometro } from '../core/cronometro.js';
-import { atualizarInterface } from '../core/interface.js';
+import { state } from "../config.js";
+import { iniciarCronometro } from "../core/cronometro.js";
+import { atualizarInterface } from "../core/interface.js";
 
 export function restaurarCacheLocal() {
   const salvo = localStorage.getItem("pickingProgresso");
@@ -9,7 +9,9 @@ export function restaurarCacheLocal() {
   const dados = JSON.parse(salvo);
   document.getElementById("grupoSalvo").textContent = dados.grupo;
 
-  const modal = new bootstrap.Modal(document.getElementById("modalRestaurarPicking"));
+  const modal = new bootstrap.Modal(
+    document.getElementById("modalRestaurarPicking")
+  );
   modal.show();
 
   document.getElementById("btnConfirmarRestaurar").onclick = () => {
@@ -17,7 +19,9 @@ export function restaurarCacheLocal() {
     document.getElementById("operador").value = dados.operador;
     state.produtos = dados.produtos || [];
     state.retirados = dados.retirados || [];
-    state.tempoInicio = dados.tempoInicio ? new Date(dados.tempoInicio) : new Date();
+    state.tempoInicio = dados.tempoInicio
+      ? new Date(dados.tempoInicio)
+      : new Date();
 
     document.getElementById("grupo").disabled = true;
     document.getElementById("operador").disabled = true;
@@ -41,7 +45,7 @@ export function salvarProgressoLocal() {
     operador: document.getElementById("operador").value,
     produtos: state.produtos,
     retirados: state.retirados,
-    tempoInicio: state.tempoInicio?.toISOString() || null
+    tempoInicio: state.tempoInicio?.toISOString() || null,
   };
   localStorage.setItem("pickingProgresso", JSON.stringify(dados));
 }

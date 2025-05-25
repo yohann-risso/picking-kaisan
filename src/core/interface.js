@@ -1,17 +1,18 @@
-import { state } from '../config.js';
-import { criarCardProduto } from '../components/CardProduto.js';
-import { porcentagem } from '../utils/format.js';
-import { salvarProgressoLocal } from '../utils/storage.js';
-import { atualizarInterface } from './interface.js';
+import { state } from "../config.js";
+import { criarCardProduto } from "../components/CardProduto.js";
+import { porcentagem } from "../utils/format.js";
+import { salvarProgressoLocal } from "../utils/storage.js";
+import { atualizarInterface } from "./interface.js";
 
 export function mostrarToast(msg, tipo = "info") {
-  const cor = tipo === "success"
-    ? "bg-success"
-    : tipo === "error"
-    ? "bg-danger"
-    : tipo === "warning"
-    ? "bg-warning text-dark"
-    : "bg-primary";
+  const cor =
+    tipo === "success"
+      ? "bg-success"
+      : tipo === "error"
+      ? "bg-danger"
+      : tipo === "warning"
+      ? "bg-warning text-dark"
+      : "bg-primary";
 
   const toast = document.createElement("div");
   toast.className = `toast fade show align-items-center text-white ${cor} border-0`;
@@ -30,7 +31,10 @@ export function checarModoStandalone() {
     window.navigator.standalone;
   if (!standalone) {
     setTimeout(() => {
-      mostrarToast("📱 Para instalar como app: use o menu ⋮ e 'Instalar app'", "warning");
+      mostrarToast(
+        "📱 Para instalar como app: use o menu ⋮ e 'Instalar app'",
+        "warning"
+      );
     }, 3000);
   }
 }
@@ -53,15 +57,21 @@ export function atualizarInterface() {
     cards.appendChild(card);
   });
 
-  document.getElementById("pendentesList").innerHTML = state.produtos.map((p) => `
+  document.getElementById("pendentesList").innerHTML = state.produtos
+    .map(
+      (p) => `
     <div class="pendente-item">
       <div class="sku">SKU: ${p.sku}</div>
       <div class="descricao">${p.descricao} | Ref: ${p.sku.split("-")[0]}</div>
       <div class="endereco">${p.endereco?.split("•")[0]}</div>
     </div>
-  `).join("");
+  `
+    )
+    .join("");
 
-  document.getElementById("retiradosList").innerHTML = state.retirados.map((p) => `
+  document.getElementById("retiradosList").innerHTML = state.retirados
+    .map(
+      (p) => `
     <div class="mb-2">
       ✅ <strong>${p.sku}</strong>
       <span class="badge bg-primary">Grupo ${p.grupo}</span>
@@ -74,11 +84,15 @@ export function atualizarInterface() {
         🔄
       </button>
     </div>
-  `).join("");
+  `
+    )
+    .join("");
 
   const total = state.produtos.concat(state.retirados).reduce((acc, p) => {
     const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
-    return acc + (dist?.A || 0) + (dist?.B || 0) + (dist?.C || 0) + (dist?.D || 0);
+    return (
+      acc + (dist?.A || 0) + (dist?.B || 0) + (dist?.C || 0) + (dist?.D || 0)
+    );
   }, 0);
 
   const retiradasPecas = state.retirados.reduce((acc, p) => {
@@ -92,7 +106,8 @@ export function atualizarInterface() {
   barra.textContent = `${retiradasPecas}/${total} • ${percentual}%`;
 
   if (percentual < 30) barra.className = "progress-bar bg-danger";
-  else if (percentual < 70) barra.className = "progress-bar bg-warning text-dark";
+  else if (percentual < 70)
+    barra.className = "progress-bar bg-warning text-dark";
   else barra.className = "progress-bar bg-success";
 
   if (percentual === 100) soltarConfete();

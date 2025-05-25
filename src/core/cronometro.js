@@ -1,4 +1,4 @@
-import { state } from '../config.js';
+import { state } from "../config.js";
 
 export function iniciarCronometro() {
   const cronometro = () => {
@@ -16,5 +16,6 @@ export function calcularDuracao() {
   if (!state.tempoInicio) return "00:00:00";
   const diff = new Date(new Date() - state.tempoInicio);
   return [diff.getUTCHours(), diff.getUTCMinutes(), diff.getUTCSeconds()]
-    .map(n => String(n).padStart(2, "0")).join(":");
+    .map((n) => String(n).padStart(2, "0"))
+    .join(":");
 }

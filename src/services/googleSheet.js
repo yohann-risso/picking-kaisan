@@ -1,21 +1,30 @@
-import { toast } from '../components/Toast.js';
-import { mostrarLoaderInline, esconderLoaderInline } from '../core/interface.js';
-import { calcularTempoIdeal } from '../utils/format.js';
-import { state } from '../config.js';
-import { atualizarInterface } from '../core/interface.js';
-import { salvarProgressoLocal } from '../utils/storage.js';
-import { calcularTempoIdeal } from '../utils/format.js';
+import { toast } from "../components/Toast.js";
+import {
+  mostrarLoaderInline,
+  esconderLoaderInline,
+} from "../core/interface.js";
+import { calcularTempoIdeal } from "../utils/format.js";
+import { state } from "../config.js";
+import { atualizarInterface } from "../core/interface.js";
+import { salvarProgressoLocal } from "../utils/storage.js";
+import { calcularTempoIdeal } from "../utils/format.js";
 
 export async function zerarEnderecoExterno(endereco) {
   const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
   if (!match) return toast("❌ Endereço inválido", "error");
 
-  const operador = encodeURIComponent(document.getElementById("operador").value);
+  const operador = encodeURIComponent(
+    document.getElementById("operador").value
+  );
   const time = encodeURIComponent(new Date().toLocaleString());
   const ws = `${match[1]}-${match[2]}-${match[3]}`;
   const loaderId = `loader-zerar-${endereco}`;
 
-  const url = `${window.env.VITE_GAS_ZERAR_URL}&WS=${encodeURIComponent(ws)}&func=Update&ENDERECO=${encodeURIComponent(endereco)}&SKU=VAZIO&OPERADOR=${operador}&TIME=${time}`;
+  const url = `${window.env.VITE_GAS_ZERAR_URL}&WS=${encodeURIComponent(
+    ws
+  )}&func=Update&ENDERECO=${encodeURIComponent(
+    endereco
+  )}&SKU=VAZIO&OPERADOR=${operador}&TIME=${time}`;
 
   mostrarLoaderInline(loaderId);
   try {

@@ -4,13 +4,14 @@
  * @param {"success"|"error"|"warning"|"info"} tipo - Tipo visual do toast
  */
 export function toast(msg, tipo = "info") {
-  const cor = tipo === "success"
-    ? "bg-success"
-    : tipo === "error"
-    ? "bg-danger"
-    : tipo === "warning"
-    ? "bg-warning text-dark"
-    : "bg-primary";
+  const cor =
+    tipo === "success"
+      ? "bg-success"
+      : tipo === "error"
+      ? "bg-danger"
+      : tipo === "warning"
+      ? "bg-warning text-dark"
+      : "bg-primary";
 
   const toast = document.createElement("div");
   toast.className = `toast fade show align-items-center text-white ${cor} border-0`;

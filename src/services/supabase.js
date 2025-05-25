@@ -1,14 +1,18 @@
-import { state, getHeaders } from '../config.js';
-import { atualizarInterface } from '../core/interface.js';
-import { salvarProgressoLocal } from '../utils/storage.js';
-import { toast } from '../components/Toast.js';
-import { iniciarCronometro } from '../core/cronometro.js';
+import { state, getHeaders } from "../config.js";
+import { atualizarInterface } from "../core/interface.js";
+import { salvarProgressoLocal } from "../utils/storage.js";
+import { toast } from "../components/Toast.js";
+import { iniciarCronometro } from "../core/cronometro.js";
 
 export async function carregarGrupos() {
-  const res = await fetch('/api/proxy?endpoint=/rest/v1/produtos?select=grupo');
+  const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo");
   const dados = await res.json();
-  const grupos = [...new Set(dados.map(d => parseInt(d.grupo)))].sort((a, b) => a - b);
-  document.getElementById("grupo").innerHTML = grupos.map(g => `<option value="${g}">${g}</option>`).join("");
+  const grupos = [...new Set(dados.map((d) => parseInt(d.grupo)))].sort(
+    (a, b) => a - b
+  );
+  document.getElementById("grupo").innerHTML = grupos
+    .map((g) => `<option value="${g}">${g}</option>`)
+    .join("");
 }
 
 export async function carregarTodosRefs() {
@@ -19,7 +23,7 @@ export async function carregarTodosRefs() {
 
   while (true) {
     const res = await fetch(
-      '/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao',
+      "/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao",
       { headers: { ...headers, Range: `${from}-${from + limit - 1}` } }
     );
     const chunk = await res.json();
@@ -28,7 +32,9 @@ export async function carregarTodosRefs() {
     from += limit;
   }
 
-  window.mapaRefGlobal = new Map(refs.map(p => [p.sku.trim().toUpperCase(), p]));
+  window.mapaRefGlobal = new Map(
+    refs.map((p) => [p.sku.trim().toUpperCase(), p])
+  );
 }
 
 export async function registrarRetirada(prod, operador, grupo, caixa) {
@@ -39,26 +45,33 @@ export async function registrarRetirada(prod, operador, grupo, caixa) {
     romaneio: prod.romaneio,
     caixa,
     grupo: parseInt(grupo),
-    status: "RETIRADO"
+    status: "RETIRADO",
   };
-  await fetch('/api/proxy?endpoint=/rest/v1/retiradas', {
+  await fetch("/api/proxy?endpoint=/rest/v1/retiradas", {
     method: "POST",
     headers: getHeaders(),
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 }
 
 export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
   try {
     const query = `/rest/v1/retiradas?sku=eq.${sku}&romaneio=eq.${romaneio}&caixa=eq.${caixa}&grupo=eq.${grupo}`;
-    const res = await fetch(`/api/proxy?endpoint=${encodeURIComponent(query)}`, {
-      method: "DELETE",
-      headers: getHeaders(),
-    });
+    const res = await fetch(
+      `/api/proxy?endpoint=${encodeURIComponent(query)}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
     if (!res.ok) throw new Error(await res.text());
 
     const idx = state.retirados.findIndex(
-      (p) => p.sku === sku && p.romaneio === romaneio && p.caixa === caixa && p.grupo === grupo
+      (p) =>
+        p.sku === sku &&
+        p.romaneio === romaneio &&
+        p.caixa === caixa &&
+        p.grupo === grupo
     );
 
     if (idx !== -1) {
@@ -75,12 +88,10 @@ export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
   }
 }
 
-
 export async function carregarProdutos() {
   const grupo = document.getElementById("grupo").value;
   const operador = document.getElementById("operador").value;
-  if (!grupo || !operador)
-    return toast("Preencha grupo e operador", "warning");
+  if (!grupo || !operador) return toast("Preencha grupo e operador", "warning");
 
   document.getElementById("grupo").disabled = true;
   document.getElementById("operador").disabled = true;
@@ -137,10 +148,14 @@ export async function carregarProdutos() {
       }
 
       const p = mapaSKUs[sku];
-      if (caixa === "A") p.distribuicaoAtual.A += qtd, p.distribuicaoOriginal.A += qtd;
-      if (caixa === "B") p.distribuicaoAtual.B += qtd, p.distribuicaoOriginal.B += qtd;
-      if (caixa === "C") p.distribuicaoAtual.C += qtd, p.distribuicaoOriginal.C += qtd;
-      if (caixa === "D") p.distribuicaoAtual.D += qtd, p.distribuicaoOriginal.D += qtd;
+      if (caixa === "A")
+        (p.distribuicaoAtual.A += qtd), (p.distribuicaoOriginal.A += qtd);
+      if (caixa === "B")
+        (p.distribuicaoAtual.B += qtd), (p.distribuicaoOriginal.B += qtd);
+      if (caixa === "C")
+        (p.distribuicaoAtual.C += qtd), (p.distribuicaoOriginal.C += qtd);
+      if (caixa === "D")
+        (p.distribuicaoAtual.D += qtd), (p.distribuicaoOriginal.D += qtd);
     }
 
     for (const prod of Object.values(mapaSKUs)) {

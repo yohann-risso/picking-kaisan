@@ -1,7 +1,7 @@
 export function formatarTempo(segundos) {
-  const hh = String(Math.floor(segundos / 3600)).padStart(2, '0');
-  const mm = String(Math.floor((segundos % 3600) / 60)).padStart(2, '0');
-  const ss = String(segundos % 60).padStart(2, '0');
+  const hh = String(Math.floor(segundos / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((segundos % 3600) / 60)).padStart(2, "0");
+  const ss = String(segundos % 60).padStart(2, "0");
   return `${hh}:${mm}:${ss}`;
 }
 

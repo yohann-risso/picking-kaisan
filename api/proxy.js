@@ -2,21 +2,23 @@ export default async function handler(req, res) {
   const { endpoint } = req.query;
 
   if (!endpoint) {
-    return res.status(400).json({ error: "Parâmetro 'endpoint' é obrigatório." });
+    return res
+      .status(400)
+      .json({ error: "Parâmetro 'endpoint' é obrigatório." });
   }
 
   const url = `${process.env.SUPABASE_URL}${endpoint}`;
   const headers = {
     apikey: process.env.SUPABASE_KEY,
     Authorization: `Bearer ${process.env.SUPABASE_KEY}`,
-    'Content-Type': 'application/json'
+    "Content-Type": "application/json",
   };
 
   try {
     const supabaseRes = await fetch(url, {
       method: req.method,
       headers,
-      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined
+      body: req.method !== "GET" ? JSON.stringify(req.body) : undefined,
     });
 
     const data = await supabaseRes.json();
