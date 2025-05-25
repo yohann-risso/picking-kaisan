@@ -16,7 +16,7 @@ export async function zerarEnderecoExterno(endereco) {
   const ws = `${match[1]}-${match[2]}-${match[3]}`;
   const loaderId = `loader-zerar-${endereco}`;
 
-  const url = `${window.env.GAS_ZERAR_URL}&WS=${encodeURIComponent(ws)}&func=Update&ENDERECO=${encodeURIComponent(endereco)}&SKU=VAZIO&OPERADOR=${operador}&TIME=${time}`;
+  const url = `${window.env.VITE_GAS_ZERAR_URL}&WS=${encodeURIComponent(ws)}&func=Update&ENDERECO=${encodeURIComponent(endereco)}&SKU=VAZIO&OPERADOR=${operador}&TIME=${time}`;
 
   mostrarLoaderInline(loaderId);
   try {
