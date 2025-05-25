@@ -570,6 +570,7 @@ body {
 
 #overlayCaixa {
   transition: opacity 0.5s ease, transform 0.5s ease;
+  display: none;
 }
 
 #overlayCaixa.show {
