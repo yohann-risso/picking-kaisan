@@ -5,7 +5,6 @@ import { state } from '../config.js';
 import { atualizarInterface } from '../utils/interface.js';
 import { salvarProgressoLocal } from '../utils/storage.js';
 import { calcularTempoIdeal } from '../utils/format.js';
-import { moverProdutoParaFimPorEndereco } from './googleSheet.js';
 
 export async function zerarEnderecoExterno(endereco) {
   const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
