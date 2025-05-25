@@ -1,5 +1,5 @@
 import { state, getHeaders } from '../config.js';
-import { atualizarInterface } from '../utils/interface.js';
+import { atualizarInterface } from '../core/interface.js';
 import { salvarProgressoLocal } from '../utils/storage.js';
 import { toast } from '../components/Toast.js';
 

@@ -1,8 +1,8 @@
 import { toast } from '../components/Toast.js';
-import { mostrarLoaderInline, esconderLoaderInline } from '../utils/interface.js';
+import { mostrarLoaderInline, esconderLoaderInline } from '../core/interface.js';
 import { calcularTempoIdeal } from '../utils/format.js';
 import { state } from '../config.js';
-import { atualizarInterface } from '../utils/interface.js';
+import { atualizarInterface } from '../core/interface.js';
 import { salvarProgressoLocal } from '../utils/storage.js';
 import { calcularTempoIdeal } from '../utils/format.js';
 

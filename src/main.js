@@ -1,6 +1,6 @@
 import { carregarGrupos, carregarTodosRefs } from './services/supabase.js';
 import { restaurarCacheLocal } from './utils/storage.js';
-import { checarModoStandalone, atualizarQtdCards } from './utils/interface.js';
+import { checarModoStandalone, atualizarQtdCards } from './core/interface.js';
 import { carregarOperadores, biparProduto } from './core/picking.js';
 import { finalizarPicking } from './core/finalizar.js'; // certifique-se de que esteja criado
 import { carregarProdutos } from './services/supabase.js'; // se estiver separado, senão importe de onde estiver
