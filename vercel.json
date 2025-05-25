@@ -1,7 +1,10 @@
 {
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/$1" }],
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/handler/$1" }],
   "cleanUrls": true,
   "trailingSlash": false,
-  "builds": [{ "src": "src/index.html", "use": "@vercel/static" }],
-  "routes": [{ "src": "/(.*)", "dest": "/index.html" }],  
+  "builds": [],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/handler/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
 }
