@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <meta name="theme-color" content="#0d6efd" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/img/logo.png" />
+    <link rel="icon" href="/img/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>Picking Kaisan</title>
+
+    <!-- CSS externo -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+    <script type="module" crossorigin src="/assets/index-Dy-MA1xy.js"></script>
+  </head>
+
+  <body>
+    <div class="container-fluid p-4">
+      <h1 class="mb-4" aria-label="Controle de Picking da Kaisan">
+        <img
+          src="https://www.kaisan.com.br/skin/frontend/ultimo/default/images/nova/logo-2020-new.png"
+          width="120"
+        />
+        CONTROLE DE PICKING
+      </h1>
+
+      <div class="row row-cols-1 row-cols-md-auto g-3 align-items-center mb-4">
+        <div class="col-auto">
+          <label for="grupo" class="form-label">Grupo:</label>
+          <select id="grupo" class="form-select"></select>
+        </div>
+        <div class="col-auto">
+          <label for="operador" class="form-label">Operador:</label>
+          <select id="operador" class="form-select"></select>
+        </div>
+        <div class="col-auto">
+          <button id="btnIniciar" class="btn btn-primary">
+            Iniciar Picking
+          </button>
+        </div>
+        <div class="col-auto">
+          <button id="btnFinalizar" class="btn btn-danger d-none">
+            📄 Finalizar Picking
+          </button>
+        </div>
+        <div class="col-auto d-flex align-items-center gap-4">
+          <div
+            id="card-tempo"
+            class="card bg-light border-0 shadow-sm rounded px-4 py-3 d-none"
+            style="min-width: 280px"
+          >
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="text-center">
+                <div class="text-danger fw-bold small mb-1">
+                  TEMPO EXECUTADO
+                </div>
+                <div class="fs-5 d-flex align-items-center gap-1 text-dark">
+                  <span class="me-1">🕒</span>
+                  <span id="cronometro">00:00:00</span>
+                </div>
+              </div>
+              <div class="vr mx-3" style="height: 40px"></div>
+              <div class="text-center">
+                <div class="text-danger fw-bold small mb-1">TEMPO IDEAL</div>
+                <div class="fs-6 text-dark">
+                  <span id="ideal">00:00:00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="w-100">
+            <label class="fw-bold">Progresso:</label>
+            <div class="progress mb-4">
+              <div
+                id="progressoPicking"
+                class="progress-bar bg-success"
+                role="progressbar"
+                style="width: 0%"
+              >
+                0%
+              </div>
+            </div>
+          </div>
+          <div class="col-auto">
+            <label for="qtdCards" class="form-label"
+              >Cards visíveis: <span id="qtdCardsLabel">2</span></label
+            >
+          </div>
+          <div class="col-auto">
+            <input
+              type="range"
+              id="qtdCards"
+              min="1"
+              max="3"
+              value="2"
+              class="form-range"
+              style="width: 80px"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="input-group mb-4">
+        <input
+          id="skuInput"
+          aria-label="Digite ou bip o SKU ou EAN"
+          type="text"
+          class="form-control"
+          placeholder="Digite ou bip o SKU/EAN"
+        />
+        <button class="btn btn-success" id="btnConfirmarSKU">
+          ✔️ Confirmar
+        </button>
+        <span
+          id="loaderBipagem"
+          class="spinner-border spinner-border-sm text-light d-none ms-2"
+          role="status"
+        ></span>
+      </div>
+
+      <div class="row g-3 justify-content-center" id="cards"></div>
+
+      <h3 class="mt-5">🛒 Pendentes</h3>
+      <div class="list mb-4" id="pendentesList"></div>
+
+      <h3>✅ Retirados</h3>
+      <div class="list" id="retiradosList"></div>
+    </div>
+
+    <!-- Toast container -->
+    <div
+      id="toast-container"
+      class="position-fixed bottom-0 end-0 p-3"
+      style="z-index: 1100"
+    ></div>
+
+    <!-- Loader Global -->
+    <div
+      id="loaderGlobal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        z-index: 99999;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        class="spinner-border text-primary"
+        role="status"
+        style="width: 3rem; height: 3rem"
+      >
+        <span class="visually-hidden">Carregando...</span>
+      </div>
+    </div>
+
+    <!-- Animação da Caixa -->
+    <div id="overlayCaixa">
+      <span id="letraCaixa"></span>
+    </div>
+
+    <!-- Modal para restaurar progresso -->
+    <div
+      class="modal fade"
+      id="modalRestaurarPicking"
+      tabindex="-1"
+      aria-labelledby="modalRestaurarLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow">
+          <div class="modal-header bg-warning">
+            <h5 class="modal-title" id="modalRestaurarLabel">
+              🔄 Restaurar progresso
+            </h5>
+          </div>
+          <div class="modal-body">
+            <p>
+              Foi encontrado um progresso salvo do grupo
+              <strong id="grupoSalvo"></strong>.
+            </p>
+            <p>Deseja restaurar o estado anterior do picking?</p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              id="btnCancelarRestaurar"
+            >
+              Não
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              id="btnConfirmarRestaurar"
+            >
+              Sim, restaurar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Libs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Entry Point -->
+  </body>
+</html>
