@@ -1,5 +1,5 @@
 import { state } from '../config.js';
-import { iniciarCronometro } from './cronometro.js';
+import { iniciarCronometro } from './core/cronometro.js';
 import { atualizarInterface } from './interface.js';
 
 export function restaurarCacheLocal() {
