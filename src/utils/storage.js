@@ -1,6 +1,6 @@
 import { state } from '../config.js';
-import { iniciarCronometro } from './core/cronometro.js';
-import { atualizarInterface } from './interface.js';
+import { iniciarCronometro } from '../core/cronometro.js';
+import { atualizarInterface } from '../core/interface.js';
 
 export function restaurarCacheLocal() {
   const salvo = localStorage.getItem("pickingProgresso");
