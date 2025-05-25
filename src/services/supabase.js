@@ -1,9 +1,7 @@
 import { state, getHeaders } from '../config.js';
-import { iniciarCronometro } from '../utils/cronometro.js';
 import { atualizarInterface } from '../utils/interface.js';
 import { salvarProgressoLocal } from '../utils/storage.js';
 import { toast } from '../components/Toast.js';
-import { desfazerRetirada } from '../services/supabase.js';
 
 export async function carregarGrupos() {
   const res = await fetch('/api/proxy?endpoint=/rest/v1/produtos?select=grupo');
