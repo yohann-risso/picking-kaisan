@@ -1,6 +1,8 @@
 import { state } from '../config.js';
 import { criarCardProduto } from '../components/CardProduto.js';
-import { calcularTempoIdeal, porcentagem } from '../utils/format.js';
+import { porcentagem } from '../utils/format.js';
+import { salvarProgressoLocal } from '../utils/storage.js';
+import { atualizarInterface } from './interface.js';
 
 export function mostrarToast(msg, tipo = "info") {
   const cor = tipo === "success"
@@ -103,4 +105,12 @@ export function feedbackVisual(sku, tipo) {
       setTimeout(() => card.classList.remove(`feedback-${tipo}`), 800);
     }
   });
+}
+
+export function atualizarQtdCards() {
+  const qtd = parseInt(document.getElementById("qtdCards").value, 10);
+  document.getElementById("qtdCardsLabel").textContent = qtd;
+  localStorage.setItem("qtdCardsPreferido", qtd);
+  atualizarInterface();
+  salvarProgressoLocal();
 }
