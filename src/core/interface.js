@@ -95,3 +95,12 @@ export function atualizarInterface() {
 
   if (percentual === 100) soltarConfete();
 }
+
+export function feedbackVisual(sku, tipo) {
+  document.querySelectorAll(".card-produto").forEach((card) => {
+    if (!sku || card.innerHTML.includes(sku)) {
+      card.classList.add(`feedback-${tipo}`);
+      setTimeout(() => card.classList.remove(`feedback-${tipo}`), 800);
+    }
+  });
+}
