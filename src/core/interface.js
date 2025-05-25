@@ -95,9 +95,3 @@ export function atualizarInterface() {
 
   if (percentual === 100) soltarConfete();
 }
-
-export function soltarConfete() {
-  if (window.confetti) {
-    window.confetti({ particleCount: 250, spread: 90, origin: { y: 0.6 } });
-  }
-}
