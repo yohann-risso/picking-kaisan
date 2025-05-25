@@ -1,3 +1,7 @@
+import { state } from '../config.js';
+import { criarCardProduto } from '../components/CardProduto.js';
+import { calcularTempoIdeal, porcentagem } from '../utils/format.js';
+
 export function mostrarToast(msg, tipo = "info") {
   const cor = tipo === "success"
     ? "bg-success"
@@ -27,6 +31,69 @@ export function checarModoStandalone() {
       mostrarToast("📱 Para instalar como app: use o menu ⋮ e 'Instalar app'", "warning");
     }, 3000);
   }
+}
+
+export function soltarConfete() {
+  if (window.confetti) {
+    window.confetti({ particleCount: 250, spread: 90, origin: { y: 0.6 } });
+  }
+}
+
+export function atualizarInterface() {
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+
+  const maxCards = parseInt(document.getElementById("qtdCards").value, 10) || 2;
+  const visiveis = state.produtos.slice(0, maxCards);
+
+  visiveis.forEach((produto, i) => {
+    const card = criarCardProduto(produto, i === 0);
+    cards.appendChild(card);
+  });
+
+  document.getElementById("pendentesList").innerHTML = state.produtos.map((p) => `
+    <div class="pendente-item">
+      <div class="sku">SKU: ${p.sku}</div>
+      <div class="descricao">${p.descricao} | Ref: ${p.sku.split("-")[0]}</div>
+      <div class="endereco">${p.endereco?.split("•")[0]}</div>
+    </div>
+  `).join("");
+
+  document.getElementById("retiradosList").innerHTML = state.retirados.map((p) => `
+    <div class="mb-2">
+      ✅ <strong>${p.sku}</strong>
+      <span class="badge bg-primary">Grupo ${p.grupo}</span>
+      <span class="badge bg-secondary">Caixa ${p.caixa}</span>
+      <button
+        class="btn btn-sm btn-outline-light ms-3"
+        title="Desfazer"
+        onclick="desfazerRetirada('${p.sku}', ${p.romaneio}, '${p.caixa}', ${p.grupo})"
+      >
+        🔄
+      </button>
+    </div>
+  `).join("");
+
+  const total = state.produtos.concat(state.retirados).reduce((acc, p) => {
+    const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
+    return acc + (dist?.A || 0) + (dist?.B || 0) + (dist?.C || 0) + (dist?.D || 0);
+  }, 0);
+
+  const retiradasPecas = state.retirados.reduce((acc, p) => {
+    const d = p.distribuicaoOriginal;
+    return acc + d.A + d.B + d.C + d.D;
+  }, 0);
+
+  const percentual = porcentagem(retiradasPecas, total);
+  const barra = document.getElementById("progressoPicking");
+  barra.style.width = `${percentual}%`;
+  barra.textContent = `${retiradasPecas}/${total} • ${percentual}%`;
+
+  if (percentual < 30) barra.className = "progress-bar bg-danger";
+  else if (percentual < 70) barra.className = "progress-bar bg-warning text-dark";
+  else barra.className = "progress-bar bg-success";
+
+  if (percentual === 100) soltarConfete();
 }
 
 export function soltarConfete() {
