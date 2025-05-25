@@ -2,7 +2,6 @@ import { state } from "../config.js";
 import { criarCardProduto } from "../components/CardProduto.js";
 import { porcentagem } from "../utils/format.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
-import { atualizarInterface } from "./interface.js";
 
 export function mostrarToast(msg, tipo = "info") {
   const cor =
