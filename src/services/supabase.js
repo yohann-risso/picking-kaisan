@@ -16,26 +16,34 @@ export async function carregarGrupos() {
     .join("");
 }
 
+let refsCarregadas = false;
+
 export async function carregarTodosRefs() {
+  if (refsCarregadas) return; // ✅ evita chamadas duplicadas
+  refsCarregadas = true;
+
   const headers = getHeaders();
-  const refs = [];
+  const allRefs = [];
   const limit = 1000;
   let from = 0;
 
   while (true) {
-    const res = await fetch(
-      "/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao",
-      { headers: { ...headers, Range: `${from}-${from + limit - 1}` } }
-    );
+    const res = await fetch(`/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao&range=${from}-${from + limit - 1}`, {
+      headers
+    });
+
     const chunk = await res.json();
-    refs.push(...chunk);
+    allRefs.push(...chunk);
+
     if (chunk.length < limit) break;
     from += limit;
   }
 
   window.mapaRefGlobal = new Map(
-    refs.map(r => [r.sku.trim().toUpperCase(), r])
+    allRefs.map(r => [r.sku.trim().toUpperCase(), r])
   );
+
+  console.log("✅ mapaRefGlobal carregado:", allRefs.length);
 }
 
 export async function registrarRetirada(prod, operador, grupo, caixa) {
