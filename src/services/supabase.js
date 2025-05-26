@@ -3,6 +3,7 @@ import { atualizarInterface } from "../core/interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
 import { toast } from "../components/Toast.js";
 import { iniciarCronometro } from "../core/cronometro.js";
+import { calcularTempoIdeal } from '../utils/format.js';
 
 export async function carregarGrupos() {
   const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo");
@@ -202,6 +203,14 @@ export async function carregarProdutos() {
     iniciarCronometro();
     atualizarInterface();
     salvarProgressoLocal();
+
+    const totalPecas = state.produtos.concat(state.retirados).reduce((acc, p) => {
+      const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
+      return acc + dist.A + dist.B + dist.C + dist.D;
+    }, 0);
+
+    document.getElementById("ideal").textContent = calcularTempoIdeal(totalPecas);
+
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
     toast("Erro ao carregar dados do Supabase", "error");
