@@ -15,7 +15,7 @@ export async function zerarEnderecoExterno(endereco) {
   const ws = `${match[1]}-${match[2]}-${match[3]}`;
   const loaderId = `loader-zerar-${endereco}`;
 
-  const gasURL = window?.env?.VITE_GAS_ZERAR_URL;
+  const gasURL = window?.env?.GAS_ZERAR_URL;
   if (!gasURL) {
     toast("❌ URL de zeramento não configurada", "error");
     return;

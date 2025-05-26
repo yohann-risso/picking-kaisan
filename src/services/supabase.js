@@ -151,7 +151,7 @@ export async function carregarProdutos() {
       const qtd = parseInt(linha.qtd || 0, 10);
       const endereco =
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
-      const ref = mapaRef.get(sku.trim().toUpperCase());
+      const ref = mapaRef.get(sku.toUpperCase());
 
       if (!mapaSKUs[sku]) {
         const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);

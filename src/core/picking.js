@@ -3,6 +3,8 @@ import { mostrarToast, feedbackVisual } from "./interface.js";
 import { registrarRetirada } from "../services/supabase.js";
 import { atualizarInterface } from "./interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
+import { mostrarAnimacaoCaixa } from "./interface.js";
+
 
 export function carregarOperadores() {
   const ops = [

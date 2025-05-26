@@ -135,3 +135,20 @@ export function atualizarQtdCards() {
   atualizarInterface();
   salvarProgressoLocal();
 }
+
+export function mostrarAnimacaoCaixa(letra) {
+  const overlay = document.getElementById("overlayCaixa");
+  const letraBox = document.getElementById("letraCaixa");
+
+  letraBox.textContent = letra;
+
+  overlay.classList.remove("hide");
+  overlay.classList.add("show");
+  overlay.style.display = "flex";
+
+  setTimeout(() => {
+    overlay.classList.remove("show");
+    overlay.classList.add("hide");
+    setTimeout(() => (overlay.style.display = "none"), 500);
+  }, 2000);
+}
