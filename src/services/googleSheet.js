@@ -22,11 +22,15 @@ export async function zerarEnderecoExterno(endereco) {
     return;
   }
 
-  const url = `${gasURL}WS=${encodeURIComponent(
-    ws
-  )}&func=Update&ENDERECO=${encodeURIComponent(
-    endereco
-  )}&SKU=VAZIO&OPERADOR=${operador}&TIME=${time}`;
+  const url =
+    `${window.env.GAS_ZERAR_URL}?` +
+    `WS=${encodeURIComponent(ws)}` +
+    `&func=Update` +
+    `&ENDERECO=${encodeURIComponent(enderecoLimpo)}` +
+    `&SKU=VAZIO` +
+    `&OPERADOR=${operador}` +
+    `&TIME=${time}`;
+    console.log(`🔗 URL de zeramento: ${url}`);
 
   mostrarLoaderInline(loaderId);
   try {
