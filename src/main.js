@@ -13,14 +13,36 @@ window.addEventListener('load', async () => {
   const btnIniciar = document.getElementById('btnIniciar');
   console.log('🔍 btnIniciar:', btnIniciar);
 
-  if (btnIniciar) {
-    btnIniciar.addEventListener('click', () => {
-      console.log("🖱️ Clique no botão 'Iniciar'");
-      carregarProdutos();
-    });
-  } else {
-    console.warn('⚠️ Botão #btnIniciar não encontrado no DOM.');
-  }
+  btnIniciar?.addEventListener('click', () => {
+    console.log("🖱️ Clique no botão 'Iniciar'");
+    carregarProdutos();
+  });
+
+  const btnConfirmarSKU = document.getElementById('btnConfirmarSKU');
+  btnConfirmarSKU?.addEventListener('click', () => {
+    console.log("🖱️ Clique em Confirmar SKU");
+    biparProduto();
+  });
+
+  const btnFinalizar = document.getElementById('btnFinalizar');
+  btnFinalizar?.addEventListener('click', () => {
+    console.log("🛑 Clique em Finalizar");
+    finalizarPicking();
+  });
+
+  const skuInput = document.getElementById('skuInput');
+  skuInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      console.log("⌨️ Enter pressionado no SKU");
+      biparProduto();
+    }
+  });
+
+  const slider = document.getElementById('qtdCards');
+  slider?.addEventListener('input', () => {
+    console.log("🎚️ Alterou quantidade de cards");
+    atualizarQtdCards();
+  });
 
   try {
     // 🔐 Variáveis de ambiente seguras
