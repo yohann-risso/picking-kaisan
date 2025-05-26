@@ -89,6 +89,7 @@ export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
 }
 
 export async function carregarProdutos() {
+  console.log("⚙️ carregarProdutos chamado");
   const grupo = document.getElementById("grupo").value;
   const operador = document.getElementById("operador").value;
   if (!grupo || !operador) return toast("Preencha grupo e operador", "warning");

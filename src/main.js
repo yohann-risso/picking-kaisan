@@ -21,7 +21,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     checarModoStandalone();
 
     // ✅ Conectando a interface com as funções do app
-    document.getElementById('btnIniciar')?.addEventListener('click', carregarProdutos);
+    document.getElementById('btnIniciar')?.addEventListener('click', () => {
+      console.log("🖱️ Clique no botão 'Iniciar'");
+      carregarProdutos();
+    });
     document.getElementById('btnFinalizar')?.addEventListener('click', finalizarPicking);
     document.getElementById('btnConfirmarSKU')?.addEventListener('click', biparProduto);
 
