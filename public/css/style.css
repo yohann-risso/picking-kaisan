@@ -22,10 +22,21 @@ body {
   flex-direction: column;
   min-height: 100vh;
   justify-content: space-between;
+<<<<<<< HEAD
   max-width: 1200px;  /* Ou o valor que você achar melhor */
   margin: 0 auto;     /* Centraliza o conteúdo */
   padding: 0 15px;    /* Adiciona um pequeno espaço nas laterais */
   overflow-x: hidden; /* Impede rolagem horizontal */
+=======
+  max-width: 1200px;
+  /* Ou o valor que você achar melhor */
+  margin: 0 auto;
+  /* Centraliza o conteúdo */
+  padding: 0 15px;
+  /* Adiciona um pequeno espaço nas laterais */
+  overflow-x: hidden;
+  /* Impede rolagem horizontal */
+>>>>>>> a60c69519cc9fa3d9a9f3fc545abfa22d9266730
 }
 
 #cronometro {
@@ -35,10 +46,21 @@ body {
 }
 
 .container-fluid {
+<<<<<<< HEAD
   width: 100%;        /* Garante que o conteúdo ocupa toda a largura disponível */
   max-width: 1200px;  /* Limita a largura máxima */
   margin: 0 auto;     /* Centraliza o conteúdo */
   padding: 0 15px;    /* Espaçamento nas laterais */
+=======
+  width: 100%;
+  /* Garante que o conteúdo ocupa toda a largura disponível */
+  max-width: 1200px;
+  /* Limita a largura máxima */
+  margin: 0 auto;
+  /* Centraliza o conteúdo */
+  padding: 0 15px;
+  /* Espaçamento nas laterais */
+>>>>>>> a60c69519cc9fa3d9a9f3fc545abfa22d9266730
 }
 
 .pendente-item {
@@ -140,6 +162,7 @@ body {
 }
 
 .card-wrapper {
+<<<<<<< HEAD
   flex: 1 0 auto;  /* O card ocupa o espaço disponível */
   max-width: 100%;  /* Garantir que cada card ocupe 100% do seu espaço */
 }
@@ -154,10 +177,32 @@ body {
 
 .card-wrapper.card-3 {
   flex: 1 0 33.33%; /* 3 cards ocupam 33.33% cada */
+=======
+  flex: 1 0 auto;
+  /* O card ocupa o espaço disponível */
+  max-width: 100%;
+  /* Garantir que cada card ocupe 100% do seu espaço */
+}
+
+.card-wrapper.card-1 {
+  flex: 1 0 100%;
+  /* 1 card ocupa 100% da largura */
+}
+
+.card-wrapper.card-2 {
+  flex: 1 0 50%;
+  /* 2 cards ocupam 50% cada */
+}
+
+.card-wrapper.card-3 {
+  flex: 1 0 33.33%;
+  /* 3 cards ocupam 33.33% cada */
+>>>>>>> a60c69519cc9fa3d9a9f3fc545abfa22d9266730
 }
 
 #cards {
   display: flex;
+<<<<<<< HEAD
   flex-direction: row;  /* Manter os cards na horizontal */
   gap: 1rem;            /* Espaçamento entre os cards */
   justify-content: flex-start;  /* Alinhamento inicial */
@@ -165,6 +210,21 @@ body {
   overflow-x: auto;      /* Permite rolagem horizontal se necessário */
   padding-bottom: 1rem;
   max-width: 100%;    /* Garante que o container de cards não ultrapasse a largura máxima */
+=======
+  flex-direction: row;
+  /* Manter os cards na horizontal */
+  gap: 1rem;
+  /* Espaçamento entre os cards */
+  justify-content: flex-start;
+  /* Alinhamento inicial */
+  flex-wrap: nowrap;
+  /* Não permite quebra de linha */
+  overflow-x: auto;
+  /* Permite rolagem horizontal se necessário */
+  padding-bottom: 1rem;
+  max-width: 100%;
+  /* Garante que o container de cards não ultrapasse a largura máxima */
+>>>>>>> a60c69519cc9fa3d9a9f3fc545abfa22d9266730
 }
 
 .texto-endereco {

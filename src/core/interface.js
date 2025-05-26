@@ -97,9 +97,7 @@ export function atualizarInterface() {
 
   const total = state.produtos.concat(state.retirados).reduce((acc, p) => {
     const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
-    return (
-      acc + dist.A + dist.B + dist.C + dist.D
-    );
+    return acc + dist.A + dist.B + dist.C + dist.D;
   }, 0);
 
   const retiradasPecas = state.retirados.reduce((acc, p) => {
