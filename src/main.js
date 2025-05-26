@@ -42,7 +42,6 @@ window.addEventListener('load', async () => {
 
   // ✅ Conecta eventos da interface
   const btnIniciar = document.getElementById('btnIniciar');
-  console.log('🔍 btnIniciar:', btnIniciar);
   btnIniciar?.addEventListener('click', () => {
     console.log("🖱️ Clique no botão 'Iniciar'");
     carregarProdutos();

@@ -7,6 +7,13 @@ import { calcularTempoIdeal } from '../utils/format.js';
 
 export async function carregarGrupos() {
   const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo");
+
+  if (!res.ok) {
+  const textoErro = await res.text();
+  throw new Error(`Erro ao carregar grupos: ${textoErro}`);
+}
+  console.log("✅ Grupos carregados com sucesso");
+  
   const dados = await res.json();
   const grupos = [...new Set(dados.map((d) => parseInt(d.grupo)))].sort(
     (a, b) => a - b
