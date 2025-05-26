@@ -13,6 +13,13 @@ export function mostrarToast(msg, tipo = "info") {
       ? "bg-warning text-dark"
       : "bg-primary";
 
+  const container = document.getElementById("toast-container");
+  if (!container) {
+    console.warn("⚠️ Toast container não encontrado.");
+    return;
+  }
+  container.appendChild(toast);
+
   const toast = document.createElement("div");
   toast.className = `toast fade show align-items-center text-white ${cor} border-0`;
   toast.innerHTML = `

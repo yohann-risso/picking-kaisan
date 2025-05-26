@@ -38,8 +38,12 @@ export async function carregarTodosRefs() {
 }
 
 export async function registrarRetirada(prod, operador, grupo, caixa) {
+  const timestamp = new Date()
+    .toLocaleString("sv-SE", { timeZone: "America/Sao_Paulo" })
+    .replace(" ", "T");
+
   const payload = {
-    timestamp: new Date().toISOString(),
+    timestamp,
     operador,
     sku: prod.sku,
     romaneio: prod.romaneio,
@@ -47,12 +51,17 @@ export async function registrarRetirada(prod, operador, grupo, caixa) {
     grupo: parseInt(grupo),
     status: "RETIRADO",
   };
+}
+console.log("📤 Enviando retirada:", payload);
+
+async function enviarRetirada(payload) {
   await fetch("/api/proxy?endpoint=/rest/v1/retiradas", {
     method: "POST",
     headers: getHeaders(),
     body: JSON.stringify(payload),
   });
 }
+enviarRetirada(payload);
 
 export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
   try {

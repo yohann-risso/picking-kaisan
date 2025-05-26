@@ -26,7 +26,7 @@ export function carregarOperadores() {
     .join("");
 }
 
-export function biparProduto() {
+export async function biparProduto() {
   const input = document.getElementById("skuInput");
   const valor = input.value.trim().toUpperCase();
   const grupo = document.getElementById("grupo").value;
@@ -75,7 +75,7 @@ export function biparProduto() {
     return liberar();
   }
 
-  registrarRetirada(produto, operador, grupo, caixa);
+  await registrarRetirada(produto, operador, grupo, caixa);
 
   const total = dist.A + dist.B + dist.C + dist.D;
   if (total === 0) {
