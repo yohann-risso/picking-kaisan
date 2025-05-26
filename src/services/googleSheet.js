@@ -23,7 +23,7 @@ export async function zerarEnderecoExterno(endereco) {
   }
 
   const url =
-    `${window.env.GAS_ZERAR_URL}?` +
+    `${window.env.GAS_ZERAR_URL}&` +
     `WS=${encodeURIComponent(ws)}` +
     `&func=Update` +
     `&ENDERECO=${encodeURIComponent(endereco)}` +
