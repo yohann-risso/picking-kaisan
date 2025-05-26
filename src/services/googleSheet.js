@@ -26,7 +26,7 @@ export async function zerarEnderecoExterno(endereco) {
     `${window.env.GAS_ZERAR_URL}?` +
     `WS=${encodeURIComponent(ws)}` +
     `&func=Update` +
-    `&ENDERECO=${encodeURIComponent(enderecoLimpo)}` +
+    `&ENDERECO=${encodeURIComponent(endereco)}` +
     `&SKU=VAZIO` +
     `&OPERADOR=${operador}` +
     `&TIME=${time}`;
