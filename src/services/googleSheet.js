@@ -3,6 +3,7 @@ import { calcularTempoIdeal } from "../utils/format.js";
 import { state } from "../config.js";
 import { atualizarInterface } from "../core/interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
+import { mostrarLoaderInline, esconderLoaderInline } from "../core/interface.js";
 
 export async function zerarEnderecoExterno(endereco) {
   const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);

@@ -5,6 +5,8 @@ import { carregarOperadores, biparProduto } from './core/picking.js';
 import { finalizarPicking } from './core/finalizar.js';
 import { carregarProdutos } from './services/supabase.js';
 import { zerarEnderecoExterno } from './services/googleSheet.js';
+import { mostrarLoaderInline, esconderLoaderInline } from './core/interface.js';
+
 
 // ✅ GARANTE que DOM e assets estejam carregados mesmo se script estiver no <head>
 window.addEventListener('load', async () => {
@@ -91,6 +93,8 @@ window.carregarTodosRefs = carregarTodosRefs;
 window.restaurarCacheLocal = restaurarCacheLocal;
 window.checarModoStandalone = checarModoStandalone;
 window.zerarEnderecoExterno = zerarEnderecoExterno;
+window.mostrarLoaderInline = mostrarLoaderInline;
+window.esconderLoaderInline = esconderLoaderInline;
 console.log('Exportando funções para o console global ✅');
 // 🌟 Exibe mensagem de boas-vindas
 console.log('🌟 Bem-vindo ao sistema de Picking! Carregando...');

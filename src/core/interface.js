@@ -152,3 +152,23 @@ export function mostrarAnimacaoCaixa(letra) {
     setTimeout(() => (overlay.style.display = "none"), 500);
   }, 2000);
 }
+
+export function mostrarLoaderInline(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.remove("d-none");
+    el.style.visibility = "visible";
+  } else {
+    console.warn(`⚠️ mostrarLoaderInline: elemento #${id} não encontrado`);
+  }
+}
+
+export function esconderLoaderInline(id) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add("d-none");
+    el.style.visibility = "hidden";
+  } else {
+    console.warn(`⚠️ esconderLoaderInline: elemento #${id} não encontrado`);
+  }
+}
