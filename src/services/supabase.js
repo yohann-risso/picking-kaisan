@@ -51,17 +51,28 @@ export async function registrarRetirada(prod, operador, grupo, caixa) {
     grupo: parseInt(grupo),
     status: "RETIRADO",
   };
-}
-console.log("📤 Enviando retirada:", payload);
 
-async function enviarRetirada(payload) {
-  await fetch("/api/proxy?endpoint=/rest/v1/retiradas", {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(payload),
-  });
+  console.log("📤 Enviando retirada:", payload);
+
+  try {
+    const res = await fetch("/api/proxy?endpoint=/rest/v1/retiradas", {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(errText);
+    }
+
+    console.log("✅ Retirada registrada com sucesso!");
+  } catch (err) {
+    console.error("❌ Falha ao registrar retirada:", err);
+    toast("Erro ao registrar retirada", "error");
+  }
 }
-enviarRetirada(payload);
+
 
 export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
   try {
