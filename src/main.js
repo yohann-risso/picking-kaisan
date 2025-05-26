@@ -9,6 +9,19 @@ import { carregarProdutos } from './services/supabase.js';
 window.addEventListener('load', async () => {
   console.log('✅ window.onload: DOM e assets carregados');
 
+
+  const btnIniciar = document.getElementById('btnIniciar');
+  console.log('🔍 btnIniciar:', btnIniciar);
+
+  if (btnIniciar) {
+    btnIniciar.addEventListener('click', () => {
+      console.log("🖱️ Clique no botão 'Iniciar'");
+      carregarProdutos();
+    });
+  } else {
+    console.warn('⚠️ Botão #btnIniciar não encontrado no DOM.');
+  }
+
   try {
     // 🔐 Variáveis de ambiente seguras
     window.env = {
