@@ -2,6 +2,9 @@ html,
 body {
   touch-action: manipulation;
   overscroll-behavior: contain;
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
 * {
@@ -13,14 +16,37 @@ body {
 
 body {
   background-color: #f8f9fa;
-  font-family: "Quicksand", sans-serif;
+  font-family: 'Quicksand', sans-serif;
   font-size: 15px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  justify-content: space-between;
+  max-width: 1200px;
+  /* Ou o valor que você achar melhor */
+  margin: 0 auto;
+  /* Centraliza o conteúdo */
+  padding: 0 15px;
+  /* Adiciona um pequeno espaço nas laterais */
+  overflow-x: hidden;
+  /* Impede rolagem horizontal */
 }
 
 #cronometro {
   min-width: 80px;
   display: inline-block;
   text-align: left;
+}
+
+.container-fluid {
+  width: 100%;
+  /* Garante que o conteúdo ocupa toda a largura disponível */
+  max-width: 1200px;
+  /* Limita a largura máxima */
+  margin: 0 auto;
+  /* Centraliza o conteúdo */
+  padding: 0 15px;
+  /* Espaçamento nas laterais */
 }
 
 .pendente-item {
@@ -122,18 +148,42 @@ body {
 }
 
 .card-wrapper {
-  flex: 0 0 320px;
-  max-width: 320px;
+  flex: 1 0 auto;
+  /* O card ocupa o espaço disponível */
+  max-width: 100%;
+  /* Garantir que cada card ocupe 100% do seu espaço */
+}
+
+.card-wrapper.card-1 {
+  flex: 1 0 100%;
+  /* 1 card ocupa 100% da largura */
+}
+
+.card-wrapper.card-2 {
+  flex: 1 0 50%;
+  /* 2 cards ocupam 50% cada */
+}
+
+.card-wrapper.card-3 {
+  flex: 1 0 33.33%;
+  /* 3 cards ocupam 33.33% cada */
 }
 
 #cards {
   display: flex;
   flex-direction: row;
+  /* Manter os cards na horizontal */
   gap: 1rem;
-  justify-content: center;
+  /* Espaçamento entre os cards */
+  justify-content: flex-start;
+  /* Alinhamento inicial */
   flex-wrap: nowrap;
+  /* Não permite quebra de linha */
   overflow-x: auto;
+  /* Permite rolagem horizontal se necessário */
   padding-bottom: 1rem;
+  max-width: 100%;
+  /* Garante que o container de cards não ultrapasse a largura máxima */
 }
 
 .texto-endereco {
@@ -157,7 +207,6 @@ body {
   min-height: 100vh;
 }
 
-/* ===== RESPONSIVO (MOBILE) ===== */
 @media (max-width: 768px) {
   body {
     font-size: 17px;
@@ -302,281 +351,4 @@ body {
   #ideal {
     font-size: 1.6rem;
   }
-}
-
-.input-group .form-control {
-  font-size: 1.6rem;
-  padding: 1.5rem;
-}
-
-.input-group .btn {
-  font-size: 1.6rem;
-  padding: 1.5rem 2.5rem;
-}
-
-.btn {
-  font-size: 1.2rem;
-  padding: 1rem 1.5rem;
-}
-
-#cards {
-  gap: 1.2rem;
-}
-
-.toast {
-  font-size: 1rem;
-}
-
-/* ===== DARK MODE ===== */
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #121212;
-    color: #f1f1f1;
-  }
-
-  .endereco-label,
-  .texto-endereco,
-  .card-produto p,
-  .card-produto .fw-bold,
-  .pendente-item .descricao {
-    color: #f1f1f1 !important;
-  }
-
-  .card-produto p {
-    color: #ccc !important;
-  }
-
-  .card-produto {
-    background-color: #1e1e1e;
-    border-left-color: #e74c3c;
-  }
-
-  .card-produto.primary {
-    background-color: #1e2b40;
-    border-left-color: #0d6efd;
-  }
-
-  .pendente-item {
-    background-color: #1e1e1e;
-    color: #f1f1f1;
-  }
-
-  .pendente-item .sku {
-    color: #ff6b6b;
-  }
-
-  .pendente-item .descricao {
-    color: #e0e0e0;
-  }
-
-  .pendente-item .endereco {
-    color: #66b2ff;
-  }
-
-  .list {
-    background: #1e1e1e;
-  }
-
-  .text-danger {
-    color: #ff6b6b !important;
-  }
-
-  .text-secondary {
-    color: #cccccc !important;
-  }
-
-  .progress {
-    background-color: #333;
-  }
-
-  .progress-bar.bg-success {
-    background-color: #4caf50 !important;
-  }
-
-  .progress-bar.bg-danger {
-    background-color: #f44336 !important;
-  }
-
-  .progress-bar.bg-warning {
-    background-color: #ff9800 !important;
-  }
-
-  .progress-bar.bg-primary {
-    background-color: #2196f3 !important;
-  }
-
-  #overlayCaixa {
-    background: rgba(18, 18, 18, 0.95);
-    color: #66b2ff;
-  }
-
-  .form-control,
-  .form-select {
-    background-color: #1e1e1e;
-    color: #f1f1f1;
-    border-color: #444;
-  }
-
-  .form-control::placeholder {
-    color: #888;
-  }
-
-  .btn {
-    border: none;
-  }
-
-  .btn-primary {
-    background-color: #0d6efd;
-  }
-
-  .btn-danger {
-    background-color: #dc3545;
-  }
-
-  .btn-success {
-    background-color: #198754;
-  }
-
-  .toast {
-    background-color: #333 !important;
-    color: #f1f1f1 !important;
-  }
-
-  .card-img-produto {
-    border: 1px solid #333;
-  }
-}
-
-/* === Ajustes para smartphones muito pequenos (como LG K22+) === */
-@media (max-width: 380px) {
-  body {
-    font-size: 18px;
-  }
-
-  .card-produto {
-    padding: 2rem !important;
-    font-size: 2rem;
-    box-shadow: none;
-  }
-
-  .card-produto p,
-  .card-produto .fs-5,
-  .card-produto .fs-6 {
-    font-size: 2rem;
-  }
-
-  .card-produto .fw-bold,
-  .texto-endereco {
-    font-size: 2.4rem;
-  }
-
-  .minicard .card {
-    padding: 1.8rem;
-    font-size: 2.2rem;
-    min-width: 100px;
-  }
-
-  .minicard .card-title {
-    font-size: 2rem;
-  }
-
-  .btn {
-    font-size: 2rem;
-    padding: 2rem;
-  }
-
-  .input-group .form-control {
-    font-size: 1.8rem;
-    padding: 1.6rem;
-  }
-
-  #cronometro,
-  #ideal {
-    font-size: 1.6rem;
-  }
-
-  .pendente-item {
-    font-size: 1.7rem;
-    padding: 1.5rem;
-  }
-}
-
-/* === Ajustes específicos para tablets (como Tab 9) === */
-@media (min-width: 768px) {
-  .card-produto {
-    padding: 2.8rem !important;
-    font-size: 1.9rem;
-  }
-
-  .card-produto .texto-endereco {
-    font-size: 2.6rem;
-  }
-
-  .minicard .card {
-    min-width: 90px;
-    padding: 1.6rem;
-    font-size: 2rem;
-  }
-
-  .minicard .card-title {
-    font-size: 2.2rem;
-  }
-
-  .btn {
-    font-size: 1.6rem;
-    padding: 1.6rem 2.6rem;
-  }
-
-  #cronometro,
-  #ideal {
-    font-size: 1.6rem;
-  }
-
-  #cards {
-    flex-wrap: wrap;
-    justify-content: start;
-    gap: 2rem;
-  }
-
-  .card-wrapper {
-    max-width: 340px;
-    flex: 0 0 33.3%;
-  }
-}
-
-@keyframes fadeScaleIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes fadeScaleOut {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-}
-
-#overlayCaixa {
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  display: none;
-}
-
-#overlayCaixa.show {
-  animation: fadeScaleIn 0.5s forwards;
-}
-
-#overlayCaixa.hide {
-  animation: fadeScaleOut 0.5s forwards;
 }
