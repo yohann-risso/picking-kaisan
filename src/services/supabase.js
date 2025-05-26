@@ -33,7 +33,7 @@ export async function carregarTodosRefs() {
   }
 
   window.mapaRefGlobal = new Map(
-    refs.map((p) => [p.sku.trim().toUpperCase(), p])
+    refs.map(r => [r.sku.trim().toUpperCase(), r])
   );
 }
 
@@ -150,7 +150,7 @@ export async function carregarProdutos() {
       const qtd = parseInt(linha.qtd || 0, 10);
       const endereco =
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
-      const ref = mapaRef.get(sku);
+      const ref = mapaRef.get(sku.trim().toUpperCase());
 
       if (!mapaSKUs[sku]) {
         const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
@@ -198,6 +198,7 @@ export async function carregarProdutos() {
     });
 
     state.tempoInicio = new Date();
+    calcularTempoIdeal();
     iniciarCronometro();
     atualizarInterface();
     salvarProgressoLocal();

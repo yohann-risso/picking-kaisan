@@ -97,7 +97,7 @@ export function atualizarInterface() {
   const total = state.produtos.concat(state.retirados).reduce((acc, p) => {
     const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
     return (
-      acc + (dist?.A || 0) + (dist?.B || 0) + (dist?.C || 0) + (dist?.D || 0)
+      acc + dist.A + dist.B + dist.C + dist.D
     );
   }, 0);
 

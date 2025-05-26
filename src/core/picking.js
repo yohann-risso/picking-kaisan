@@ -88,6 +88,8 @@ export async function biparProduto() {
     state.produtos.splice(idx, 1);
   }
 
+  mostrarAnimacaoCaixa(caixa);
+  calcularTempoIdeal();
   feedbackVisual(produto.sku, "success");
   atualizarInterface();
   salvarProgressoLocal();
