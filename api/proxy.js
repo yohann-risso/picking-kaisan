@@ -21,8 +21,14 @@ export default async function handler(req, res) {
       body: req.method !== "GET" ? JSON.stringify(req.body) : undefined,
     });
 
-    const data = await supabaseRes.json();
-    res.status(supabaseRes.status).json(data);
+    const text = await supabaseRes.text();
+    try {
+      const data = JSON.parse(text);
+      res.status(supabaseRes.status).json(data);
+    } catch (err) {
+      // Se não for JSON, retorna o texto cru (ou vazio)
+      res.status(supabaseRes.status).send(text || '');
+    }
   } catch (error) {
     console.error("❌ Erro na proxy Supabase:", error);
     res.status(500).json({ error: "Erro interno na proxy Supabase." });
