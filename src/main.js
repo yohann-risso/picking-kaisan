@@ -36,3 +36,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   console.log('Main carregado')
 });
+
+// Exportando funções globalmente (para o console e para onclicks no HTML, se existirem)
+window.carregarProdutos = carregarProdutos;
+window.biparProduto = biparProduto;
+window.finalizarPicking = finalizarPicking;
+window.atualizarQtdCards = atualizarQtdCards;
+window.carregarGrupos = carregarGrupos; 
+window.carregarTodosRefs = carregarTodosRefs;
+window.restaurarCacheLocal = restaurarCacheLocal;
+window.checarModoStandalone = checarModoStandalone;
