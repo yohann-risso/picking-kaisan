@@ -58,9 +58,13 @@ export async function carregarRefsPorGrupo(grupo) {
   }
 
   // 3. Montar o mapa
-  window.mapaRefGlobal = new Map(
-    refs.map((r) => [r.sku.trim().toUpperCase(), r])
-  );
+  window.mapaRefGlobal = new Map();
+
+  refs.forEach((r) => {
+    const key = r.sku.trim().toUpperCase();
+    window.mapaRefGlobal.set(key, r);
+    window.mapaRefGlobal.set(key.toLowerCase(), r); // tolerância se for necessário
+  });
 
   console.log("✅ mapaRefGlobal carregado:", window.mapaRefGlobal.size);
 }
