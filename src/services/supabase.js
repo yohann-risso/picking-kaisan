@@ -26,38 +26,43 @@ export async function carregarGrupos() {
 let refsCarregadas = false;
 
 export async function carregarRefsPorGrupo(grupo) {
-  const headers = getHeaders();
+  // 1. Buscar SKUs únicos do grupo atual
+  const { data: produtos, error: erroProdutos } = await supabase
+    .from("produtos")
+    .select("sku")
+    .eq("grupo", grupo);
 
-  const resProdutos = await fetch(
-    `/api/proxy?endpoint=/rest/v1/produtos?grupo=eq.${grupo}&select=sku`,
-    { headers }
-  );
+  if (erroProdutos) {
+    console.error("❌ Erro ao buscar SKUs:", erroProdutos);
+    return;
+  }
 
-  const produtos = await resProdutos.json();
-  const skusUnicos = [
+  const skuList = [
     ...new Set(produtos.map((p) => p.sku?.trim().toUpperCase())),
   ].filter(Boolean);
 
-  const allRefs = [];
-  const chunkSize = 100;
-
-  for (let i = 0; i < skusUnicos.length; i += chunkSize) {
-    const chunk = skusUnicos.slice(i, i + chunkSize);
-    const lista = chunk.join(",");
-    const endpointRaw = `/rest/v1/produtos_ref?select=sku,imagem,colecao&sku=in.(${lista})`;
-    const endpoint = encodeURIComponent(endpointRaw);
-    const query = `/api/proxy?endpoint=${endpoint}`;
-    const res = await fetch(query, { headers });
-
-    const refs = await res.json();
-    allRefs.push(...refs);
+  if (!skuList.length) {
+    console.warn("⚠️ Nenhum SKU encontrado para o grupo:", grupo);
+    return;
   }
 
+  // 2. Buscar referências apenas dos SKUs do grupo
+  const { data: refs, error: erroRefs } = await supabase
+    .from("produtos_ref")
+    .select("sku, imagem, colecao")
+    .in("sku", skuList);
+
+  if (erroRefs) {
+    console.error("❌ Erro ao buscar produtos_ref:", erroRefs);
+    return;
+  }
+
+  // 3. Montar o mapa
   window.mapaRefGlobal = new Map(
-    allRefs.map((r) => [r.sku.trim().toUpperCase(), r])
+    refs.map((r) => [r.sku.trim().toUpperCase(), r])
   );
 
-  console.log("✅ mapaRefGlobal carregado (grupo):", allRefs.length);
+  console.log("✅ mapaRefGlobal carregado:", window.mapaRefGlobal.size);
 }
 
 export async function registrarRetirada(prod, operador, grupo, caixa) {
