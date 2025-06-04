@@ -34,12 +34,17 @@ function aguardarElemento(id, callback) {
 // ✅ Conecta eventos de forma segura
 aguardarElemento("btnIniciar", (btn) => {
   console.log("✅ Ligando evento: Iniciar");
-  btn.addEventListener("click", () => {
+
+  btn.addEventListener("click", async () => {
     try {
       console.log("🖱️ Clique no botão 'Iniciar'");
-      carregarProdutos();
+      const grupo = document.getElementById("grupo")?.value;
+      if (!grupo) return toast("Selecione um grupo", "warning");
+
+      await carregarRefsPorGrupo(grupo); // ✅ Carrega imagens e coleção
+      await carregarProdutos(); // ✅ Usa o mapa já carregado
     } catch (err) {
-      console.error("❌ Erro ao executar carregarProdutos:", err);
+      console.error("❌ Erro ao executar fluxo de iniciar:", err);
     }
   });
 });
