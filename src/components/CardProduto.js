@@ -15,48 +15,72 @@ export function criarCardProduto(produto, destaque = false) {
   const miniCards = ["A", "B", "C", "D"]
     .map(
       (caixa) => `
-    <div class="col minicard">
-      <div class="card text-center">
-        <div class="card-header fw-bold text-secondary">${caixa}</div>
-        <div class="card-body p-2">
-          <h4 class="card-title text-danger m-0">${produto.distribuicaoAtual[caixa]}</h4>
+      <div class="col minicard">
+        <div class="card text-center">
+          <div class="card-header fw-bold text-secondary">${caixa}</div>
+          <div class="card-body p-2">
+            <h4 class="card-title text-danger m-0">${produto.distribuicaoAtual[caixa]}</h4>
+          </div>
         </div>
       </div>
-    </div>`
+    `
     )
     .join("");
 
   const wrapper = document.createElement("div");
-  wrapper.className = "col-12 col-md-6 col-lg-4 card-wrapper";
+  wrapper.className =
+    "col-12 card-wrapper card-" +
+    (localStorage.getItem("qtdCardsPreferido") || 2);
   wrapper.innerHTML = `
-    <div class="card card-produto ${destaque ? "primary" : ""} h-100 p-3">
-      <div class="row g-3">
-        <div class="col-md-4 text-center">
-          <img src="${produto.imagem || ""}" alt="${
-    produto.descricao || "Produto"
-  }"
-               class="img-fluid rounded shadow-sm card-img-produto" style="max-height: 250px;">
+    <div class="card-produto shadow-sm p-3 rounded d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 ${
+      destaque ? "primary" : ""
+    }">
+      <!-- Informações -->
+      <div class="flex-grow-1 pe-md-4">
+        <div class="fw-bold fs-6 mb-2">${
+          produto.descricao || "Sem descrição"
+        } | <strong>Ref: ${produto.sku.split("-")[0]}</strong></div>
+        <div class="text-primary fw-bold mb-2">SKU: ${produto.sku}</div>
+
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+          <span>Pedido: <strong>${produto.pedido_id}</strong></span>
+          <button class="btn btn-outline-danger btn-sm" title="Desfazer bipagem"
+            onclick="desfazerRetirada('${produto.sku}', ${produto.romaneio}, '${
+    produto.caixa
+  }', ${produto.grupo})">
+            <i class="bi bi-arrow-counterclockwise"></i> DESFAZER
+          </button>
         </div>
-        <div class="col-md-8">
-          <p class="fw-bold fs-3 mb-1 endereco-label">
-            ENDEREÇO: <span class="texto-endereco d-block">${end1}</span>
-          </p>
-          <span onclick="zerarEnderecoExterno('${end1}')" style="cursor:pointer;" title="Zerar Endereço">
-            <i class="bi bi-x-circle-fill text-danger ms-2 fs-5"></i>
-            <span class="spinner-border spinner-border-sm text-primary ms-2 d-none"
-                  role="status" id="loader-zerar-${end1}"></span>
-          </span>
-          <p><strong>ENDEREÇO SECUNDÁRIO:</strong><br>${end2}</p>
-          <p class="text-danger fw-bold fs-2 mb-1">SKU: ${produto.sku}</p>
-          <p><strong>PRODUTO:</strong> ${produto.descricao}</p>
-          <p><strong>COLEÇÃO:</strong> ${produto.colecao || "—"}</p>
-        </div>
-      </div>
-      <div class="text-center mt-3">
+
+        <p class="fw-bold fs-6 mb-1 endereco-label">
+          ENDEREÇO:
+          <span class="texto-endereco">${end1}</span>
+          <i class="bi bi-x-circle-fill text-danger ms-2 fs-5"
+             title="Zerar Endereço"
+             onclick="zerarEnderecoExterno('${end1}')"></i>
+          <span class="spinner-border spinner-border-sm text-primary ms-2 d-none"
+                role="status" id="loader-zerar-${end1}"></span>
+        </p>
+        <p class="mb-2"><strong>Endereço secundário:</strong> ${end2}</p>
+        <p class="mb-2"><strong>Coleção:</strong> ${produto.colecao || "—"}</p>
+
         <div class="fw-bold text-muted small">QTDE TOTAL</div>
         <div class="fw-bold fs-1">${qtdTotal}</div>
+
         <div class="row mt-2 g-2">${miniCards}</div>
       </div>
-    </div>`;
+
+      <!-- Imagem -->
+      <div class="image-container text-center">
+        <img src="${
+          produto.imagem || "https://via.placeholder.com/120?text=Sem+Img"
+        }"
+             alt="Imagem do Produto"
+             class="img-fluid rounded border border-primary"
+             style="max-width: 120px; height: auto;"
+             onerror="this.onerror=null;this.src='https://via.placeholder.com/120?text=Sem+Img';">
+      </div>
+    </div>
+  `;
   return wrapper;
 }
