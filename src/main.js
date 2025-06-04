@@ -81,20 +81,19 @@ window.addEventListener("load", async () => {
   console.log("🧪 main.js version: FINAL");
   console.log("✅ DOMContentLoaded: DOM e assets carregados");
 
-  let env;
+  let env = {};
   try {
     const res = await fetch("/api/env");
     if (!res.ok) throw new Error("API /api/env falhou");
     env = await res.json();
     console.log("🔐 Variáveis carregadas do /api/env:", env);
   } catch (err) {
-    console.warn(
-      "Falha ao acessar /api/env, usando import.meta.env como fallback."
-    );
+    console.warn("⚠️ Falha ao acessar /api/env.");
+
     env = {
-      SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
-      SUPABASE_KEY: import.meta.env.VITE_SUPABASE_KEY,
-      GAS_ZERAR_URL: import.meta.env.VITE_GAS_ZERAR_URL,
+      SUPABASE_URL: "",
+      SUPABASE_KEY: "",
+      GAS_ZERAR_URL: "",
     };
   }
 
