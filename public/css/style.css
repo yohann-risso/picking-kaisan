@@ -1,3 +1,4 @@
+/* === BASE E RESET === */
 html,
 body {
   touch-action: manipulation;
@@ -8,12 +9,13 @@ body {
 }
 
 * {
+  user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  user-select: none;
 }
 
+/* === BODY GERAL === */
 body {
   background-color: #f8f9fa;
   font-family: 'Quicksand', sans-serif;
@@ -22,47 +24,60 @@ body {
   flex-direction: column;
   min-height: 100vh;
   justify-content: space-between;
-<<<<<<< HEAD
-  max-width: 1200px;  /* Ou o valor que você achar melhor */
-  margin: 0 auto;     /* Centraliza o conteúdo */
-  padding: 0 15px;    /* Adiciona um pequeno espaço nas laterais */
-  overflow-x: hidden; /* Impede rolagem horizontal */
-=======
   max-width: 1200px;
-  /* Ou o valor que você achar melhor */
   margin: 0 auto;
-  /* Centraliza o conteúdo */
   padding: 0 15px;
-  /* Adiciona um pequeno espaço nas laterais */
   overflow-x: hidden;
-  /* Impede rolagem horizontal */
->>>>>>> a60c69519cc9fa3d9a9f3fc545abfa22d9266730
 }
 
+/* === CRONÔMETRO === */
 #cronometro {
   min-width: 80px;
   display: inline-block;
   text-align: left;
 }
 
+/* === CONTAINER PRINCIPAL === */
 .container-fluid {
-<<<<<<< HEAD
-  width: 100%;        /* Garante que o conteúdo ocupa toda a largura disponível */
-  max-width: 1200px;  /* Limita a largura máxima */
-  margin: 0 auto;     /* Centraliza o conteúdo */
-  padding: 0 15px;    /* Espaçamento nas laterais */
-=======
   width: 100%;
-  /* Garante que o conteúdo ocupa toda a largura disponível */
   max-width: 1200px;
-  /* Limita a largura máxima */
   margin: 0 auto;
-  /* Centraliza o conteúdo */
   padding: 0 15px;
-  /* Espaçamento nas laterais */
->>>>>>> a60c69519cc9fa3d9a9f3fc545abfa22d9266730
 }
 
+/* === CARDS DE PRODUTO === */
+.card-produto {
+  background-color: #ffecec;
+  border-left: 5px solid #e74c3c;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  min-width: 320px;
+}
+
+.card-produto.primary {
+  border-left: 5px solid #0d6efd;
+  background-color: #eaf2ff;
+}
+
+/* === FEEDBACK === */
+.feedback-success {
+  background-color: #d4fcd4 !important;
+}
+
+.feedback-error {
+  background-color: #ffdfdf !important;
+}
+
+/* === LISTAS DE PRODUTOS (Pendentes / Retirados) === */
+.list {
+  background: #f1f1f1;
+  padding: 10px;
+  border-radius: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* === ITEM DE LISTA PENDENTE === */
 .pendente-item {
   padding: 8px 12px;
   border-radius: 6px;
@@ -88,48 +103,13 @@ body {
   font-size: 14px;
 }
 
-.card-produto {
-  background-color: #ffecec;
-  border-left: 5px solid #e74c3c;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  min-width: 320px;
-}
-
-.card-produto.primary {
-  border-left: 5px solid #0d6efd;
-  background-color: #eaf2ff;
-}
-
-.feedback-success {
-  background-color: #d4fcd4 !important;
-}
-
-.feedback-error {
-  background-color: #ffdfdf !important;
-}
-
-.list {
-  background: #f1f1f1;
-  padding: 10px;
-  border-radius: 6px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.minicard .card-title {
-  font-size: 1rem;
-}
-
-.minicard .card {
-  min-width: 40px;
-}
-
+/* === CARD DE TEMPO === */
 #card-tempo .vr {
   background-color: #dee2e6;
   width: 1px;
 }
 
+/* === OVERLAY DE CAIXA === */
 #overlayCaixa {
   position: fixed;
   top: 0;
@@ -146,6 +126,7 @@ body {
   z-index: 9999;
 }
 
+/* === ENDEREÇO LABEL === */
 .endereco-label {
   cursor: pointer;
   display: inline-flex;
@@ -157,82 +138,47 @@ body {
 }
 
 .endereco-label i {
-  cursor: pointer;
   color: #0d6efd;
 }
 
+/* === WRAPPER DOS CARDS === */
 .card-wrapper {
-<<<<<<< HEAD
-  flex: 1 0 auto;  /* O card ocupa o espaço disponível */
-  max-width: 100%;  /* Garantir que cada card ocupe 100% do seu espaço */
-}
-
-.card-wrapper.card-1 {
-  flex: 1 0 100%;  /* 1 card ocupa 100% da largura */
-}
-
-.card-wrapper.card-2 {
-  flex: 1 0 50%;   /* 2 cards ocupam 50% cada */
-}
-
-.card-wrapper.card-3 {
-  flex: 1 0 33.33%; /* 3 cards ocupam 33.33% cada */
-=======
   flex: 1 0 auto;
-  /* O card ocupa o espaço disponível */
   max-width: 100%;
-  /* Garantir que cada card ocupe 100% do seu espaço */
 }
 
 .card-wrapper.card-1 {
   flex: 1 0 100%;
-  /* 1 card ocupa 100% da largura */
 }
 
 .card-wrapper.card-2 {
   flex: 1 0 50%;
-  /* 2 cards ocupam 50% cada */
 }
 
 .card-wrapper.card-3 {
   flex: 1 0 33.33%;
-  /* 3 cards ocupam 33.33% cada */
->>>>>>> a60c69519cc9fa3d9a9f3fc545abfa22d9266730
 }
 
+/* === CONTAINER DE CARDS === */
 #cards {
   display: flex;
-<<<<<<< HEAD
-  flex-direction: row;  /* Manter os cards na horizontal */
-  gap: 1rem;            /* Espaçamento entre os cards */
-  justify-content: flex-start;  /* Alinhamento inicial */
-  flex-wrap: nowrap;     /* Não permite quebra de linha */
-  overflow-x: auto;      /* Permite rolagem horizontal se necessário */
-  padding-bottom: 1rem;
-  max-width: 100%;    /* Garante que o container de cards não ultrapasse a largura máxima */
-=======
   flex-direction: row;
-  /* Manter os cards na horizontal */
   gap: 1rem;
-  /* Espaçamento entre os cards */
   justify-content: flex-start;
-  /* Alinhamento inicial */
-  flex-wrap: nowrap;
-  /* Não permite quebra de linha */
-  overflow-x: auto;
-  /* Permite rolagem horizontal se necessário */
+  flex-wrap: wrap;
+  overflow-x: hidden;
   padding-bottom: 1rem;
   max-width: 100%;
-  /* Garante que o container de cards não ultrapasse a largura máxima */
->>>>>>> a60c69519cc9fa3d9a9f3fc545abfa22d9266730
 }
 
+/* === TEXTO ENDEREÇO === */
 .texto-endereco {
   font-size: 1.6rem;
   color: #0d6efd;
   font-weight: 800;
 }
 
+/* === IMAGEM PRODUTO === */
 .card-img-produto {
   width: 200px;
   height: 320px;
@@ -240,14 +186,17 @@ body {
   border-radius: 6px;
 }
 
+/* === PROGRESSO === */
 .progress-bar {
   transition: all 0.3s ease;
 }
 
+/* === LOADER === */
 #loaderGlobal {
   min-height: 100vh;
 }
 
+/* === MEDIA QUERIES MOBILE === */
 @media (max-width: 768px) {
   body {
     font-size: 17px;
@@ -256,8 +205,6 @@ body {
   .card-img-produto {
     width: 100%;
     height: 200px;
-    object-fit: cover;
-    border-radius: 6px;
   }
 
   .form-label,
@@ -314,7 +261,6 @@ body {
   .texto-endereco {
     font-size: 2.6rem;
     font-weight: 900;
-    color: #0d6efd;
   }
 
   .fw-bold.text-muted.small {
@@ -334,7 +280,6 @@ body {
     min-width: 90px;
     padding: 1.8rem;
     font-size: 2rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     border: 2px solid #dee2e6;
     border-radius: 0.5rem;
     background-color: #ffffff;
@@ -381,6 +326,7 @@ body {
     flex-direction: row;
     overflow-x: auto;
     gap: 1.5rem;
+    flex-wrap: nowrap;
   }
 
   .card-wrapper {

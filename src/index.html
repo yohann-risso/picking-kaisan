@@ -34,116 +34,125 @@
   </head>
 
   <body>
-    <div class="container-fluid p-4">
-      <h1 class="mb-4" aria-label="Controle de Picking da Kaisan">
-        <img
-          src="https://www.kaisan.com.br/skin/frontend/ultimo/default/images/nova/logo-2020-new.png"
-          width="120"
-        />
-        CONTROLE DE PICKING
-      </h1>
+    <div class="container-xl py-4 px-3 px-md-5">
+      <div class="card shadow-sm p-4 mb-4">
+        <h1 class="mb-4" aria-label="Controle de Picking da Kaisan">
+          <img
+            src="https://www.kaisan.com.br/skin/frontend/ultimo/default/images/nova/logo-2020-new.png"
+            width="120"
+          />
+          CONTROLE DE PICKING
+        </h1>
 
-      <div class="row row-cols-1 row-cols-md-auto g-3 align-items-center mb-4">
-        <div class="col-auto">
-          <label for="grupo" class="form-label">Grupo:</label>
-          <select id="grupo" class="form-select"></select>
-        </div>
-        <div class="col-auto">
-          <label for="operador" class="form-label">Operador:</label>
-          <select id="operador" class="form-select"></select>
-        </div>
-        <div class="col-auto">
-          <button id="btnIniciar" class="btn btn-primary">
-            Iniciar Picking
-          </button>
-        </div>
-        <div class="col-auto">
-          <button id="btnFinalizar" class="btn btn-danger d-none">
-            📄 Finalizar Picking
-          </button>
-        </div>
-        <div class="col-auto d-flex align-items-center gap-4">
-          <div
-            id="card-tempo"
-            class="card bg-light border-0 shadow-sm rounded px-4 py-3 d-none"
-            style="min-width: 280px"
-          >
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="text-center">
-                <div class="text-danger fw-bold small mb-1">
-                  TEMPO EXECUTADO
-                </div>
-                <div class="fs-5 d-flex align-items-center gap-1 text-dark">
-                  <span class="me-1">🕒</span>
-                  <span id="cronometro">00:00:00</span>
-                </div>
-              </div>
-              <div class="vr mx-3" style="height: 40px"></div>
-              <div class="text-center">
-                <div class="text-danger fw-bold small mb-1">TEMPO IDEAL</div>
-                <div class="fs-6 text-dark">
-                  <span id="ideal">00:00:00</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="w-100">
-            <label class="fw-bold">Progresso:</label>
-            <div class="progress mb-4">
-              <div
-                id="progressoPicking"
-                class="progress-bar bg-success"
-                role="progressbar"
-                style="width: 0%"
-              >
-                0%
-              </div>
-            </div>
+        <div
+          class="row row-cols-1 row-cols-md-auto g-3 align-items-center mb-4"
+        >
+          <div class="col-auto">
+            <label for="grupo" class="form-label">Grupo:</label>
+            <select id="grupo" class="form-select"></select>
           </div>
           <div class="col-auto">
-            <label for="qtdCards" class="form-label"
-              >Cards visíveis: <span id="qtdCardsLabel">2</span></label
+            <label for="operador" class="form-label">Operador:</label>
+            <select id="operador" class="form-select"></select>
+          </div>
+          <div class="col-auto">
+            <button id="btnIniciar" class="btn btn-primary">
+              Iniciar Picking
+            </button>
+          </div>
+          <div class="col-auto">
+            <button id="btnFinalizar" class="btn btn-danger d-none">
+              📄 Finalizar Picking
+            </button>
+          </div>
+
+          <div class="col-auto d-flex align-items-center gap-4 flex-wrap">
+            <div
+              id="card-tempo"
+              class="card bg-light border-0 shadow-sm rounded px-4 py-3 d-none"
+              style="min-width: 280px"
             >
-          </div>
-          <div class="col-auto">
-            <input
-              type="range"
-              id="qtdCards"
-              min="1"
-              max="3"
-              value="2"
-              class="form-range"
-              style="width: 80px"
-            />
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="text-center">
+                  <div class="text-danger fw-bold small mb-1">
+                    TEMPO EXECUTADO
+                  </div>
+                  <div class="fs-5 d-flex align-items-center gap-1 text-dark">
+                    <span class="me-1">🕒</span>
+                    <span id="cronometro">00:00:00</span>
+                  </div>
+                </div>
+                <div class="vr mx-3" style="height: 40px"></div>
+                <div class="text-center">
+                  <div class="text-danger fw-bold small mb-1">TEMPO IDEAL</div>
+                  <div class="fs-6 text-dark">
+                    <span id="ideal">00:00:00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="w-100">
+              <label class="fw-bold">Progresso:</label>
+              <div class="progress mb-2">
+                <div
+                  id="progressoPicking"
+                  class="progress-bar bg-success"
+                  role="progressbar"
+                  style="width: 0%"
+                >
+                  0%
+                </div>
+              </div>
+            </div>
+
+            <div class="col-auto">
+              <label for="qtdCards" class="form-label">
+                Cards visíveis: <span id="qtdCardsLabel">2</span>
+              </label>
+            </div>
+            <div class="col-auto">
+              <input
+                type="range"
+                id="qtdCards"
+                min="1"
+                max="3"
+                value="2"
+                class="form-range"
+                style="width: 80px"
+              />
+            </div>
           </div>
         </div>
+
+        <div class="input-group mb-4">
+          <input
+            id="skuInput"
+            aria-label="Digite ou bip o SKU ou EAN"
+            type="text"
+            class="form-control"
+            placeholder="Digite ou bip o SKU/EAN"
+          />
+          <button class="btn btn-success" id="btnConfirmarSKU">
+            ✔️ Confirmar
+          </button>
+          <span
+            id="loaderBipagem"
+            class="spinner-border spinner-border-sm text-light d-none ms-2"
+            role="status"
+          ></span>
+        </div>
+
+        <div class="row g-3 justify-content-center" id="cards"></div>
       </div>
 
-      <div class="input-group mb-4">
-        <input
-          id="skuInput"
-          aria-label="Digite ou bip o SKU ou EAN"
-          type="text"
-          class="form-control"
-          placeholder="Digite ou bip o SKU/EAN"
-        />
-        <button class="btn btn-success" id="btnConfirmarSKU">
-          ✔️ Confirmar
-        </button>
-        <span
-          id="loaderBipagem"
-          class="spinner-border spinner-border-sm text-light d-none ms-2"
-          role="status"
-        ></span>
+      <div class="card shadow-sm p-4 mb-4">
+        <h3>🛒 Pendentes</h3>
+        <div class="list mb-4" id="pendentesList"></div>
+
+        <h3>✅ Retirados</h3>
+        <div class="list" id="retiradosList"></div>
       </div>
-
-      <div class="row g-3 justify-content-center" id="cards"></div>
-
-      <h3 class="mt-5">🛒 Pendentes</h3>
-      <div class="list mb-4" id="pendentesList"></div>
-
-      <h3>✅ Retirados</h3>
-      <div class="list" id="retiradosList"></div>
     </div>
 
     <!-- Toast container -->
