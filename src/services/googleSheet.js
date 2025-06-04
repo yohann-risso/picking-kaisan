@@ -56,7 +56,7 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
   });
 
   if (idx === -1) {
-    console.warn("⚠️ Produto com endereço não encontrado:", enderecoZerado);
+    console.warn("Produto com endereço não encontrado:", enderecoZerado);
     return;
   }
 
@@ -67,7 +67,7 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
   const novo = novoEndereco?.trim();
 
   if (!novo || !/A\d+-B\d+-R\d+-C\d+-N\d+/.test(novo)) {
-    console.warn("⚠️ Endereço secundário inválido:", novo);
+    console.warn("Endereço secundário inválido:", novo);
     state.produtos.push(produto);
     atualizarInterface();
     salvarProgressoLocal();

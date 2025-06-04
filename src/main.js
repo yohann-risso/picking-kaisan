@@ -89,7 +89,7 @@ window.addEventListener("load", async () => {
     console.log("🔐 Variáveis carregadas do /api/env:", env);
   } catch (err) {
     console.warn(
-      "⚠️ Falha ao acessar /api/env, usando import.meta.env como fallback."
+      "Falha ao acessar /api/env, usando import.meta.env como fallback."
     );
     env = {
       SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,

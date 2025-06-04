@@ -16,7 +16,7 @@ export function mostrarToast(msg, tipo = "info") {
 
   const container = document.getElementById("toast-container");
   if (!container) {
-    console.warn("⚠️ Toast container não encontrado.");
+    console.warn("Toast container não encontrado.");
     return;
   }
 
@@ -160,7 +160,7 @@ export function mostrarLoaderInline(id) {
     el.classList.remove("d-none");
     el.style.visibility = "visible";
   } else {
-    console.warn(`⚠️ mostrarLoaderInline: elemento #${id} não encontrado`);
+    console.warn(`mostrarLoaderInline: elemento #${id} não encontrado`);
   }
 }
 
@@ -170,6 +170,6 @@ export function esconderLoaderInline(id) {
     el.classList.add("d-none");
     el.style.visibility = "hidden";
   } else {
-    console.warn(`⚠️ esconderLoaderInline: elemento #${id} não encontrado`);
+    console.warn(`esconderLoaderInline: elemento #${id} não encontrado`);
   }
 }
