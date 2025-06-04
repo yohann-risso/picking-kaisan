@@ -1,6 +1,6 @@
 import {
   carregarGrupos,
-  carregarTodosRefs,
+  carregarRefsPorGrupo,
   carregarProdutos,
   desfazerRetirada,
 } from "./services/supabase.js";
@@ -124,7 +124,7 @@ window.biparProduto = biparProduto;
 window.finalizarPicking = finalizarPicking;
 window.atualizarQtdCards = atualizarQtdCards;
 window.carregarGrupos = carregarGrupos;
-window.carregarTodosRefs = carregarTodosRefs;
+window.carregarRefsPorGrupo = carregarRefsPorGrupo;
 window.restaurarCacheLocal = restaurarCacheLocal;
 window.checarModoStandalone = checarModoStandalone;
 window.zerarEnderecoExterno = zerarEnderecoExterno;
