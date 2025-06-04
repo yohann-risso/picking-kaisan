@@ -43,7 +43,6 @@ export function criarCardProduto(produto, destaque = false) {
         <div class="text-primary fw-bold mb-2">SKU: ${produto.sku}</div>
 
         <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-          <span>Pedido: <strong>${produto.pedido_id}</strong></span>
           <button class="btn btn-outline-danger btn-sm" title="Desfazer bipagem"
             onclick="desfazerRetirada('${produto.sku}', ${produto.romaneio}, '${
     produto.caixa
