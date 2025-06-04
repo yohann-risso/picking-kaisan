@@ -416,9 +416,24 @@ body {
 }
 
 .image-container img {
-  border-radius: 10px;
-  object-fit: contain;
-  max-height: 180px;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.card-produto {
+  background-color: #f8f9ff;
+  border-left: 6px solid #0d6efd;
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+@media (max-width: 576px) {
+  .image-container {
+    order: -1;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
 }
 
 /* Badge de número da caixa */
