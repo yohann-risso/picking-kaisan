@@ -182,7 +182,7 @@ export async function carregarProdutos() {
       const qtd = parseInt(linha.qtd || 0, 10);
       const endereco =
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
-      const ref = mapaRef.get(sku);
+      const ref = mapaRef.get(sku.trim().toUpperCase());
 
       // Log opcional por SKU
       console.log(
