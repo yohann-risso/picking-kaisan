@@ -28,7 +28,7 @@ let refsCarregadas = false;
 export async function carregarRefsPorGrupo(grupo) {
   const headers = getHeaders();
 
-  // 1. Primeiro busca os SKUs do grupo
+  // 1. Buscar os SKUs do grupo
   const resProdutos = await fetch(
     `/api/proxy?endpoint=/rest/v1/produtos?grupo=eq.${grupo}&select=sku`,
     { headers }
@@ -36,31 +36,29 @@ export async function carregarRefsPorGrupo(grupo) {
 
   const produtos = await resProdutos.json();
   const skusUnicos = [
-    ...new Set(produtos.map((p) => p.sku.trim().toUpperCase())),
-  ];
+    ...new Set(produtos.map((p) => p.sku?.trim().toUpperCase())),
+  ].filter(Boolean); // remove nulos
 
   const allRefs = [];
   const chunkSize = 100;
 
   for (let i = 0; i < skusUnicos.length; i += chunkSize) {
     const chunk = skusUnicos.slice(i, i + chunkSize);
-    const filter = chunk
-      .map((sku) => `sku=in.(${chunk.map(encodeURIComponent).join(",")})`)
-      .join("&");
+    const lista = chunk.map(encodeURIComponent).join(",");
 
-    const query = `/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao&${filter}`;
+    const query = `/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao&sku=in.(${lista})`;
     const res = await fetch(query, { headers });
 
     const refs = await res.json();
     allRefs.push(...refs);
   }
 
-  // 2. Monta o mapa global apenas dos SKUs do grupo
+  // Monta o mapa final
   window.mapaRefGlobal = new Map(
     allRefs.map((r) => [r.sku.trim().toUpperCase(), r])
   );
 
-  console.log("✅ mapaRefGlobal (grupo) carregado:", allRefs.length);
+  console.log("✅ mapaRefGlobal carregado (grupo):", allRefs.length);
 }
 
 export async function registrarRetirada(prod, operador, grupo, caixa) {
