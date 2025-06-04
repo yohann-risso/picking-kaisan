@@ -222,7 +222,6 @@ export async function carregarProdutos() {
     });
 
     state.tempoInicio = new Date();
-    calcularTempoIdeal();
     iniciarCronometro();
     atualizarInterface();
     salvarProgressoLocal();
