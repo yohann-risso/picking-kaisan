@@ -238,6 +238,6 @@ export async function carregarProdutos() {
       calcularTempoIdeal(totalPecas);
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
-    toast("Erro ao carregar dados do Supabase", "error");
+    mostrarToast("Erro ao carregar dados do Supabase", "error");
   }
 }
