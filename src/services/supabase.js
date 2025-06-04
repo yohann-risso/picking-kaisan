@@ -3,17 +3,17 @@ import { atualizarInterface } from "../core/interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
 import { toast } from "../components/Toast.js";
 import { iniciarCronometro } from "../core/cronometro.js";
-import { calcularTempoIdeal } from '../utils/format.js';
+import { calcularTempoIdeal } from "../utils/format.js";
 
 export async function carregarGrupos() {
   const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo");
 
   if (!res.ok) {
-  const textoErro = await res.text();
-  throw new Error(`Erro ao carregar grupos: ${textoErro}`);
-}
+    const textoErro = await res.text();
+    throw new Error(`Erro ao carregar grupos: ${textoErro}`);
+  }
   console.log("✅ Grupos carregados com sucesso");
-  
+
   const dados = await res.json();
   const grupos = [...new Set(dados.map((d) => parseInt(d.grupo)))].sort(
     (a, b) => a - b
@@ -35,9 +35,14 @@ export async function carregarTodosRefs() {
   let from = 0;
 
   while (true) {
-    const res = await fetch(`/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao&range=${from}-${from + limit - 1}`, {
-      headers
-    });
+    const res = await fetch(
+      `/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao&range=${from}-${
+        from + limit - 1
+      }`,
+      {
+        headers,
+      }
+    );
 
     const chunk = await res.json();
     allRefs.push(...chunk);
@@ -47,7 +52,7 @@ export async function carregarTodosRefs() {
   }
 
   window.mapaRefGlobal = new Map(
-    allRefs.map(r => [r.sku.trim().toUpperCase(), r])
+    allRefs.map((r) => [r.sku.trim().toUpperCase(), r])
   );
 
   console.log("✅ mapaRefGlobal carregado:", allRefs.length);
@@ -89,7 +94,6 @@ export async function registrarRetirada(prod, operador, grupo, caixa) {
   }
 }
 
-
 export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
   try {
     const query = `/rest/v1/retiradas?sku=eq.${sku}&romaneio=eq.${romaneio}&caixa=eq.${caixa}&grupo=eq.${grupo}`;
@@ -126,10 +130,14 @@ export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
 
 export async function carregarProdutos() {
   console.log("⚙️ carregarProdutos chamado");
-  const grupo = document.getElementById("grupo").value;
-  const operador = document.getElementById("operador").value;
-  if (!grupo || !operador) return toast("Preencha grupo e operador", "warning");
 
+  const grupo = document.getElementById("grupo")?.value;
+  const operador = document.getElementById("operador")?.value;
+
+  if (!grupo || !operador) {
+    console.warn("🚫 Grupo ou operador não preenchido.");
+    return mostrarToast("Preencha grupo e operador", "warning");
+  }
   document.getElementById("grupo").disabled = true;
   document.getElementById("operador").disabled = true;
   document.getElementById("btnIniciar").classList.add("d-none");
@@ -219,13 +227,15 @@ export async function carregarProdutos() {
     atualizarInterface();
     salvarProgressoLocal();
 
-    const totalPecas = state.produtos.concat(state.retirados).reduce((acc, p) => {
-      const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
-      return acc + dist.A + dist.B + dist.C + dist.D;
-    }, 0);
+    const totalPecas = state.produtos
+      .concat(state.retirados)
+      .reduce((acc, p) => {
+        const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
+        return acc + dist.A + dist.B + dist.C + dist.D;
+      }, 0);
 
-    document.getElementById("ideal").textContent = calcularTempoIdeal(totalPecas);
-
+    document.getElementById("ideal").textContent =
+      calcularTempoIdeal(totalPecas);
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
     toast("Erro ao carregar dados do Supabase", "error");

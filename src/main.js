@@ -35,8 +35,12 @@ function aguardarElemento(id, callback) {
 aguardarElemento("btnIniciar", (btn) => {
   console.log("✅ Ligando evento: Iniciar");
   btn.addEventListener("click", () => {
-    console.log("🖱️ Clique no botão 'Iniciar'");
-    carregarProdutos();
+    try {
+      console.log("🖱️ Clique no botão 'Iniciar'");
+      carregarProdutos();
+    } catch (err) {
+      console.error("❌ Erro ao executar carregarProdutos:", err);
+    }
   });
 });
 
