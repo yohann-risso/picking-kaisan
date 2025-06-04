@@ -28,7 +28,6 @@ let refsCarregadas = false;
 export async function carregarRefsPorGrupo(grupo) {
   const headers = getHeaders();
 
-  // 1. Buscar os SKUs do grupo
   const resProdutos = await fetch(
     `/api/proxy?endpoint=/rest/v1/produtos?grupo=eq.${grupo}&select=sku`,
     { headers }
@@ -37,18 +36,16 @@ export async function carregarRefsPorGrupo(grupo) {
   const produtos = await resProdutos.json();
   const skusUnicos = [
     ...new Set(produtos.map((p) => p.sku?.trim().toUpperCase())),
-  ].filter(Boolean); // remove nulos
+  ].filter(Boolean);
 
   const allRefs = [];
   const chunkSize = 100;
 
   for (let i = 0; i < skusUnicos.length; i += chunkSize) {
     const chunk = skusUnicos.slice(i, i + chunkSize);
-    const lista = chunk.map((s) => encodeURIComponent(s)).join(",");
-
+    const lista = chunk.join(",");
     const endpointRaw = `/rest/v1/produtos_ref?select=sku,imagem,colecao&sku=in.(${lista})`;
     const endpoint = encodeURIComponent(endpointRaw);
-
     const query = `/api/proxy?endpoint=${endpoint}`;
     const res = await fetch(query, { headers });
 
@@ -56,7 +53,6 @@ export async function carregarRefsPorGrupo(grupo) {
     allRefs.push(...refs);
   }
 
-  // Monta o mapa final
   window.mapaRefGlobal = new Map(
     allRefs.map((r) => [r.sku.trim().toUpperCase(), r])
   );
