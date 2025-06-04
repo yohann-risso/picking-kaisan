@@ -339,3 +339,121 @@ body {
     font-size: 1.6rem;
   }
 }
+
+.card-wrapper {
+  flex: 1 0 auto;
+  max-width: 100%;
+  min-width: 300px;
+}
+
+.card-wrapper.card-1 {
+  flex: 1 0 100%;
+}
+
+.card-wrapper.card-2 {
+  flex: 1 0 48%;
+}
+
+.card-wrapper.card-3 {
+  flex: 1 0 31%;
+}
+
+/* Layout base do card */
+.card-produto {
+  background-color: #ffecec;
+  border-left: 5px solid #e74c3c;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.card-produto.primary {
+  border-left-color: #0d6efd;
+  background-color: #eaf2ff;
+}
+
+/* Área superior do card com info + imagem */
+.card-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.2rem;
+  align-items: flex-start;
+}
+
+/* Informações à esquerda */
+.card-info .details {
+  flex: 1;
+}
+
+.card-info .title {
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.card-info .sku,
+.card-info .pedido-undo {
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.card-info .pedido-undo {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Imagem do produto */
+.image-container {
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.image-container img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Badge de número da caixa */
+.card-number {
+  margin-top: 1rem;
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: center;
+  color: #0d6efd;
+}
+
+/* Botão de desfazer */
+.btn-undo-simple {
+  font-size: 0.9rem;
+  border: none;
+  background: transparent;
+  color: #dc3545;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn-undo-simple:hover {
+  color: #a50000;
+}
+
+/* Estilo para erro */
+.card-erro {
+  background-color: #f8d7da;
+  border-left: 5px solid #dc3545;
+  padding: 1rem;
+  font-weight: bold;
+  color: #842029;
+  border-radius: 6px;
+  font-size: 1.2rem;
+}
