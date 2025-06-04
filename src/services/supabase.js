@@ -186,7 +186,15 @@ export async function carregarProdutos() {
       const qtd = parseInt(linha.qtd || 0, 10);
       const endereco =
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
-      const ref = mapaRef.get(sku);
+
+      const key = (linha.sku || "").trim().toUpperCase();
+      console.log("🔍 Buscando por SKU:", JSON.stringify(key));
+      console.log("🔍 Existe em mapaRefGlobal?", mapaRef.has(key));
+      console.log(
+        "🔍 Chaves no mapa (exemplo):",
+        [...mapaRef.keys()].slice(0, 5)
+      );
+      const ref = mapaRef.get(key);
 
       // Log opcional por SKU
       console.log(
