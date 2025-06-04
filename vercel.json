@@ -1,6 +1,7 @@
 {
   "routes": [
     { "handle": "filesystem" },
+    { "src": "/service-worker.js", "dest": "/service-worker.js" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ],
