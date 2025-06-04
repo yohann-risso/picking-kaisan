@@ -102,7 +102,7 @@ window.addEventListener("load", async () => {
   try {
     carregarOperadores();
     await carregarGrupos();
-    await carregarTodosRefs();
+    await carregarRefsPorGrupo(document.getElementById("grupo")?.value);
     restaurarCacheLocal();
     checarModoStandalone();
   } catch (e) {

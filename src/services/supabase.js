@@ -25,37 +25,42 @@ export async function carregarGrupos() {
 
 let refsCarregadas = false;
 
-export async function carregarTodosRefs() {
-  if (refsCarregadas) return; // ✅ evita chamadas duplicadas
-  refsCarregadas = true;
-
+export async function carregarRefsPorGrupo(grupo) {
   const headers = getHeaders();
+
+  // 1. Primeiro busca os SKUs do grupo
+  const resProdutos = await fetch(
+    `/api/proxy?endpoint=/rest/v1/produtos?grupo=eq.${grupo}&select=sku`,
+    { headers }
+  );
+
+  const produtos = await resProdutos.json();
+  const skusUnicos = [
+    ...new Set(produtos.map((p) => p.sku.trim().toUpperCase())),
+  ];
+
   const allRefs = [];
-  const limit = 1000;
-  let from = 0;
+  const chunkSize = 100;
 
-  while (true) {
-    const res = await fetch(
-      `/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao&range=${from}-${
-        from + limit - 1
-      }`,
-      { headers }
-    );
+  for (let i = 0; i < skusUnicos.length; i += chunkSize) {
+    const chunk = skusUnicos.slice(i, i + chunkSize);
+    const filter = chunk
+      .map((sku) => `sku=in.(${chunk.map(encodeURIComponent).join(",")})`)
+      .join("&");
 
-    const chunk = await res.json();
-    allRefs.push(...chunk);
+    const query = `/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao&${filter}`;
+    const res = await fetch(query, { headers });
 
-    if (chunk.length < limit) break;
-    from += limit;
+    const refs = await res.json();
+    allRefs.push(...refs);
   }
 
-  // Normalização garantida
+  // 2. Monta o mapa global apenas dos SKUs do grupo
   window.mapaRefGlobal = new Map(
     allRefs.map((r) => [r.sku.trim().toUpperCase(), r])
   );
 
-  console.log("✅ mapaRefGlobal carregado:", allRefs.length);
-  console.log("🔎 Exemplo:", [...window.mapaRefGlobal.entries()].slice(0, 5));
+  console.log("✅ mapaRefGlobal (grupo) carregado:", allRefs.length);
 }
 
 export async function registrarRetirada(prod, operador, grupo, caixa) {
