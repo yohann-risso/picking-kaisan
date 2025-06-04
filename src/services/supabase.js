@@ -39,9 +39,7 @@ export async function carregarTodosRefs() {
       `/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao&range=${from}-${
         from + limit - 1
       }`,
-      {
-        headers,
-      }
+      { headers }
     );
 
     const chunk = await res.json();
@@ -51,11 +49,13 @@ export async function carregarTodosRefs() {
     from += limit;
   }
 
+  // Normalização garantida
   window.mapaRefGlobal = new Map(
     allRefs.map((r) => [r.sku.trim().toUpperCase(), r])
   );
 
   console.log("✅ mapaRefGlobal carregado:", allRefs.length);
+  console.log("🔎 Exemplo:", [...window.mapaRefGlobal.entries()].slice(0, 5));
 }
 
 export async function registrarRetirada(prod, operador, grupo, caixa) {
@@ -138,6 +138,7 @@ export async function carregarProdutos() {
     console.warn("🚫 Grupo ou operador não preenchido.");
     return mostrarToast("Preencha grupo e operador", "warning");
   }
+
   document.getElementById("grupo").disabled = true;
   document.getElementById("operador").disabled = true;
   document.getElementById("btnIniciar").classList.add("d-none");
@@ -174,7 +175,14 @@ export async function carregarProdutos() {
       const qtd = parseInt(linha.qtd || 0, 10);
       const endereco =
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
-      const ref = mapaRef.get(sku.toUpperCase());
+      const ref = mapaRef.get(sku);
+
+      // Log opcional por SKU
+      console.log(
+        `🔗 SKU: ${sku} → Imagem: ${ref?.imagem || "❌"}, Coleção: ${
+          ref?.colecao || "—"
+        }`
+      );
 
       if (!mapaSKUs[sku]) {
         const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
@@ -182,7 +190,7 @@ export async function carregarProdutos() {
           ...linha,
           sku,
           endereco,
-          imagem: ref?.imagem || "",
+          imagem: ref?.imagem || "https://placehold.co/120x120?text=Sem+Img",
           colecao: ref?.colecao || "—",
           distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
           distribuicaoOriginal: { A: 0, B: 0, C: 0, D: 0 },
