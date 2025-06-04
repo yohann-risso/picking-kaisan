@@ -3,6 +3,7 @@ import {
   carregarRefsPorGrupo,
   carregarProdutos,
   desfazerRetirada,
+  supabase,
 } from "./services/supabase.js";
 import { restaurarCacheLocal } from "./utils/storage.js";
 import { checarModoStandalone, atualizarQtdCards } from "./core/interface.js";
@@ -10,6 +11,7 @@ import { carregarOperadores, biparProduto } from "./core/picking.js";
 import { finalizarPicking } from "./core/finalizar.js";
 import { zerarEnderecoExterno } from "./services/googleSheet.js";
 import { mostrarLoaderInline, esconderLoaderInline } from "./core/interface.js";
+
 
 // 🛠️ Aguarda elemento com fallback para quando ele for adicionado ao DOM depois
 function aguardarElemento(id, callback) {

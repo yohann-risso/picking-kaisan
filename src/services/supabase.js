@@ -5,6 +5,14 @@ import { toast } from "../components/Toast.js";
 import { iniciarCronometro } from "../core/cronometro.js";
 import { calcularTempoIdeal } from "../utils/format.js";
 
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = window.env?.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = window.env?.SUPABASE_KEY || import.meta.env.VITE_SUPABASE_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
+
 export async function carregarGrupos() {
   const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo");
 
