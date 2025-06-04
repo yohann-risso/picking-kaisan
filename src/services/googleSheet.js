@@ -112,6 +112,5 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
 
   atualizarInterface();
   salvarProgressoLocal();
-  calcularTempoIdeal();
 }
 

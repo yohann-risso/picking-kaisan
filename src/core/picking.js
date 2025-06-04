@@ -91,7 +91,6 @@ export async function biparProduto() {
   }
 
   mostrarAnimacaoCaixa(caixa);
-  calcularTempoIdeal();
   feedbackVisual(produto.sku, "success");
   atualizarInterface();
   salvarProgressoLocal();
