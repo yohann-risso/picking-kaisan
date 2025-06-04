@@ -46,7 +46,11 @@ export async function carregarRefsPorGrupo(grupo) {
     const chunk = skusUnicos.slice(i, i + chunkSize);
     const lista = chunk.map(encodeURIComponent).join(",");
 
-    const query = `/api/proxy?endpoint=/rest/v1/produtos_ref?select=sku,imagem,colecao&sku=in.(${lista})`;
+    const endpoint = encodeURIComponent(
+      `/rest/v1/produtos_ref?select=sku,imagem,colecao&sku=in.(${lista})`
+    );
+
+    const query = `/api/proxy?endpoint=${endpoint}`;
     const res = await fetch(query, { headers });
 
     const refs = await res.json();
