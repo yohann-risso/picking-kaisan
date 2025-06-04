@@ -44,11 +44,10 @@ export async function carregarRefsPorGrupo(grupo) {
 
   for (let i = 0; i < skusUnicos.length; i += chunkSize) {
     const chunk = skusUnicos.slice(i, i + chunkSize);
-    const lista = chunk.map(encodeURIComponent).join(",");
+    const lista = chunk.map((s) => encodeURIComponent(s)).join(",");
 
-    const endpoint = encodeURIComponent(
-      `/rest/v1/produtos_ref?select=sku,imagem,colecao&sku=in.(${lista})`
-    );
+    const endpointRaw = `/rest/v1/produtos_ref?select=sku,imagem,colecao&sku=in.(${lista})`;
+    const endpoint = encodeURIComponent(endpointRaw);
 
     const query = `/api/proxy?endpoint=${endpoint}`;
     const res = await fetch(query, { headers });
@@ -182,7 +181,7 @@ export async function carregarProdutos() {
       const qtd = parseInt(linha.qtd || 0, 10);
       const endereco =
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
-      const ref = mapaRef.get(sku.trim().toUpperCase());
+      const ref = mapaRef.get(sku);
 
       // Log opcional por SKU
       console.log(
