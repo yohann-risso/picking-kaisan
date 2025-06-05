@@ -3,29 +3,64 @@ import { salvarProgressoLocal } from "../utils/storage.js";
 import { toast } from "../components/Toast.js";
 import { calcularDuracao } from "./cronometro.js";
 
-export function finalizarPicking() {
+export async function finalizarPicking() {
   const confirmacao = confirm("Tem certeza que deseja finalizar o picking?");
   if (!confirmacao) return;
 
-  // Limpeza e redefinições (ajuste conforme necessidade)
-  localStorage.removeItem("progressoPicking");
-  window.state.produtos = [];
-  window.state.retirados = [];
+  const tempoFinal = new Date();
+  const tempoExecucao = calcularDuracao(state.tempoInicio, tempoFinal);
+
+  const resumo = {
+    operador: window.operadorSelecionado,
+    grupo: window.grupoSelecionado,
+    tempoExecucao,
+    retirados: state.retirados,
+    total: state.totalPecas || 0,
+    data: tempoFinal.toLocaleString(),
+  };
+
+  gerarPDF(resumo); // local (jsPDF)
+
+  try {
+    const GAS_URL = window.env?.GAS_FINALIZAR_URL;
+    if (!GAS_URL) throw new Error("URL do GAS_FINALIZAR_URL não definida.");
+
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(resumo),
+    });
+
+    if (!res.ok) {
+      const msg = await res.text();
+      throw new Error(msg);
+    }
+
+    console.log("📩 Relatório enviado ao Google Apps Script com sucesso.");
+  } catch (e) {
+    console.warn("⚠️ Falha ao enviar resumo ao Google Apps Script:", e.message);
+    toast("⚠️ Relatório não foi enviado ao Drive", "warning");
+  }
+
+  // Reset local
+  localStorage.removeItem("pickingProgresso");
+  state.produtos = [];
+  state.retirados = [];
+  state.totalPecas = 0;
+
   document.getElementById("cards").innerHTML = "";
   document.getElementById("pendentesList").innerHTML = "";
   document.getElementById("retiradosList").innerHTML = "";
-
-  document.getElementById("grupo").disabled = false;
-  document.getElementById("operador").disabled = false;
-  document.getElementById("btnIniciar").classList.remove("d-none");
   document.getElementById("btnFinalizar").classList.add("d-none");
   document.getElementById("card-tempo").classList.add("d-none");
+
   document.getElementById("progressoPicking").style.width = "0%";
   document.getElementById("progressoPicking").textContent = "0%";
+  document.getElementById("qtdRetiradas").textContent = "0";
+  document.getElementById("qtdTotal").textContent = "0";
 
-  toast("Picking finalizado com sucesso!", "success");
+  toast("✅ Picking finalizado com sucesso!", "success");
 
-  // 🆕 Reabrir modal para próximo grupo
   setTimeout(() => {
     const modal = new bootstrap.Modal(document.getElementById("modalInicio"));
     modal.show();
