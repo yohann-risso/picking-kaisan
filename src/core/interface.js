@@ -129,6 +129,9 @@ export function atualizarInterface() {
   else barra.className = "progress-bar bg-success";
 
   if (percentual === 100) soltarConfete();
+
+  document.getElementById("qtdRetiradas").textContent = retiradasPecas;
+  document.getElementById("qtdTotal").textContent = total;
 }
 
 export function feedbackVisual(sku, tipo) {
