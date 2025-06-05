@@ -17,12 +17,11 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 export async function carregarGrupos() {
   const pageSize = 1000;
   let offset = 0;
-  let todosGrupos = [];
-  let continuar = true;
-  let paginaMaxima = 20; // segurança contra loop infinito (até 50 mil registros)
+  const todosGrupos = [];
+  const maxPaginas = 20;
 
-  while (continuar && paginaMaxima-- > 0) {
-    const url = `/api/proxy?endpoint=/rest/v1/produtos?select=grupo&distinct=grupo&limit=${pageSize}&offset=${offset}`;
+  for (let i = 0; i < maxPaginas; i++) {
+    const url = `/api/proxy?endpoint=/rest/v1/produtos?select=grupo&limit=${pageSize}&offset=${offset}`;
     const res = await fetch(url);
 
     if (!res.ok) {
@@ -33,15 +32,26 @@ export async function carregarGrupos() {
     const dados = await res.json();
 
     if (!Array.isArray(dados) || dados.length === 0) {
-      continuar = false;
-    } else {
-      console.log(
-        `🔁 Página carregada: offset ${offset}, grupos: ${dados.length}`
-      );
-      todosGrupos.push(...dados.map((d) => d.grupo));
-      offset += pageSize;
+      console.log(`✅ Final da paginação: offset ${offset}, nada mais a carregar.`);
+      break;
     }
+
+    console.log(`🔁 Página ${i + 1}: carregados ${dados.length} registros com offset ${offset}`);
+    todosGrupos.push(...dados.map((d) => d.grupo));
+    offset += pageSize;
   }
+
+  const grupos = [
+    ...new Set(
+      todosGrupos
+        .map((g) => Number(String(g).trim()))
+        .filter((g) => Number.isInteger(g) && g > 0)
+    ),
+  ].sort((a, b) => a - b);
+
+  console.log("✅ Grupos finais únicos ordenados:", grupos);
+  return grupos;
+}
 
   const grupos = [
     ...new Set(
