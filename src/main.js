@@ -67,29 +67,15 @@ async function inicializarApp() {
   window.env = env;
 
   try {
+    const grupos = await carregarGrupos();
+
+    aguardarElemento("grupoModal", (el) => {
+      el.innerHTML = grupos
+        .map((g) => `<option value="${g}">${g}</option>`)
+        .join("");
+    });
+
     carregarOperadores();
-    await carregarGrupos();
-
-    const grupos = await supabase
-      .from("produtos")
-      .select("grupo", { distinct: true });
-
-    if (grupos.error) {
-      console.error("❌ Erro ao carregar grupos:", grupos.error);
-    } else {
-      const lista = [
-        ...new Set(
-          grupos.data.map((d) => parseInt(d.grupo)).filter((g) => !isNaN(g))
-        ),
-      ].sort((a, b) => a - b);
-
-      aguardarElemento("grupoModal", (el) => {
-        const html = lista
-          .map((g) => `<option value="${g}">${g}</option>`)
-          .join("");
-        el.innerHTML = html;
-      });
-    }
   } catch (e) {
     console.error("❌ Erro ao carregar aplicação:", e);
   }

@@ -21,15 +21,15 @@ export async function carregarGrupos() {
     const textoErro = await res.text();
     throw new Error(`Erro ao carregar grupos: ${textoErro}`);
   }
+
   console.log("✅ Grupos carregados com sucesso");
 
   const dados = await res.json();
   const grupos = [
     ...new Set(dados.map((d) => parseInt(d.grupo)).filter((g) => !isNaN(g))),
   ].sort((a, b) => a - b);
-  document.getElementById("grupo").innerHTML = grupos
-    .map((g) => `<option value="${g}">${g}</option>`)
-    .join("");
+
+  return grupos; // retorna os grupos para uso no main.js
 }
 
 let refsCarregadas = false;
