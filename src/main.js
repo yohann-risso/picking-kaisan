@@ -118,6 +118,46 @@ window.addEventListener("load", () => {
   inicializarApp();
 });
 
+aguardarElemento("btnLimparCache", (btn) => {
+  let pressTimer = null;
+
+  const tempoPressionar = 1200; // 1.2 segundos
+
+  const iniciarPress = () => {
+    btn.classList.add("long-pressing"); // feedback visual
+    pressTimer = setTimeout(async () => {
+      btn.classList.remove("long-pressing");
+
+      const confirmar = confirm(
+        "🧹 Deseja realmente limpar o cache da aplicação?"
+      );
+      if (!confirmar) return;
+
+      localStorage.clear();
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+
+      mostrarToast("🧹 Cache limpo. Recarregando...", "success");
+      setTimeout(() => window.location.reload(), 1000);
+    }, tempoPressionar);
+  };
+
+  const cancelarPress = () => {
+    btn.classList.remove("long-pressing");
+    clearTimeout(pressTimer);
+  };
+
+  // Compatível com mouse e toque
+  btn.addEventListener("mousedown", iniciarPress);
+  btn.addEventListener("touchstart", iniciarPress);
+
+  btn.addEventListener("mouseup", cancelarPress);
+  btn.addEventListener("mouseleave", cancelarPress);
+  btn.addEventListener("touchend", cancelarPress);
+});
+
 // 🛠️ Service Worker
 if ("serviceWorker" in navigator) {
   // Registra o Service Worker ao carregar a página

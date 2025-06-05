@@ -403,3 +403,10 @@ body {
     margin-bottom: 1rem;
   }
 }
+
+#btnLimparCache.long-pressing {
+  transform: scale(0.95);
+  background-color: #ffc107 !important;
+  color: #000 !important;
+  transition: all 0.2s ease;
+}
