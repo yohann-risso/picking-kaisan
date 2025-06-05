@@ -90,28 +90,6 @@ async function inicializarApp() {
       });
     }
 
-    const operadores = [
-      "Alan Ramos",
-      "Anderson Dutra",
-      "Arthur Oliveira",
-      "Felipe Moraes",
-      "Filipe Silva",
-      "Gabriel Lagoa",
-      "João Alves",
-      "Kaique Teixeira",
-      "Marrony Portugal",
-      "Nalbert Pereira",
-      "Rodrigo Novaes",
-      "Rony Côrrea",
-      "Ykaro Oliveira",
-      "Yohann Risso",
-    ];
-
-    aguardarElemento("operadorModal", (el) => {
-      el.innerHTML = operadores
-        .map((nome) => `<option value="${nome}">${nome}</option>`)
-        .join("");
-    });
   } catch (e) {
     console.error("❌ Erro ao carregar aplicação:", e);
   }

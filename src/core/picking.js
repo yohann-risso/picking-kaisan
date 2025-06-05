@@ -5,7 +5,6 @@ import { atualizarInterface } from "./interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
 import { mostrarAnimacaoCaixa } from "./interface.js";
 
-
 export function carregarOperadores() {
   const ops = [
     "Alan Ramos",
@@ -23,16 +22,24 @@ export function carregarOperadores() {
     "Ykaro Oliveira",
     "Yohann Risso",
   ];
-  document.getElementById("operador").innerHTML = ops
-    .map((op) => `<option value="${op}">${op}</option>`)
-    .join("");
+
+  if (!window.aguardarElemento) {
+    console.warn("aguardarElemento não disponível no escopo global.");
+    return;
+  }
+
+  aguardarElemento("operadorModal", (el) => {
+    el.innerHTML = ops
+      .map((op) => `<option value="${op}">${op}</option>`)
+      .join("");
+  });
 }
 
 export async function biparProduto() {
   const input = document.getElementById("skuInput");
   const valor = input.value.trim().toUpperCase();
-  const grupo = document.getElementById("grupo").value;
-  const operador = document.getElementById("operador").value;
+  const grupo = window.grupoSelecionado;
+  const operador = window.operadorSelecionado;
 
   input.disabled = true;
   document.querySelector(".input-group .btn").disabled = true;
