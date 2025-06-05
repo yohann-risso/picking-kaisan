@@ -160,21 +160,30 @@ aguardarElemento("btnLimparCache", (btn) => {
 
 // 🛠️ Service Worker
 if ("serviceWorker" in navigator) {
-  // Registra o Service Worker ao carregar a página
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/service-worker.js")
       .then((reg) => {
         console.log("🛠️ SW registrado:", reg.scope);
+        // força atualização quando houver nova versão
+        reg.onupdatefound = () => {
+          const newWorker = reg.installing;
+          newWorker.onstatechange = () => {
+            if (
+              newWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
+              console.log("🔁 Nova versão detectada. Atualizando...");
+              window.location.reload();
+            }
+          };
+        };
       })
-      .catch((err) => {
-        console.error("❌ Erro ao registrar o SW:", err);
-      });
+      .catch((err) => console.error("❌ SW erro:", err));
   });
 
-  // Detecta troca de versão e recarrega o app
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    console.log("🔁 Atualização detectada, recarregando...");
+    console.log("♻️ controllerchange → reload");
     window.location.reload();
   });
 }
