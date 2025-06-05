@@ -1,11 +1,22 @@
-/* === BASE E RESET === */
+/* === RESET E BASE === */
+:root {
+  --azul: #0d6efd;
+  --vermelho: #e74c3c;
+  --cinza-bg: #f8f9fa;
+  --cinza-claro: #dee2e6;
+  --fonte-principal: 'Quicksand', sans-serif;
+}
+
 html,
 body {
-  touch-action: manipulation;
-  overscroll-behavior: contain;
   margin: 0;
   padding: 0;
   height: 100%;
+  font-family: var(--fonte-principal);
+  font-size: 15px;
+  background-color: var(--cinza-bg);
+  touch-action: manipulation;
+  overscroll-behavior: contain;
 }
 
 * {
@@ -15,29 +26,18 @@ body {
   -ms-user-select: none;
 }
 
-/* === BODY GERAL === */
+/* === LAYOUT PRINCIPAL === */
 body {
-  background-color: #f8f9fa;
-  font-family: 'Quicksand', sans-serif;
-  font-size: 15px;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
   justify-content: space-between;
+  min-height: 100vh;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 15px;
   overflow-x: hidden;
 }
 
-/* === CRONÔMETRO === */
-#cronometro {
-  min-width: 80px;
-  display: inline-block;
-  text-align: left;
-}
-
-/* === CONTAINER PRINCIPAL === */
 .container-fluid {
   width: 100%;
   max-width: 1200px;
@@ -45,30 +45,49 @@ body {
   padding: 0 15px;
 }
 
-/* === CARDS DE PRODUTO === */
-.card-produto {
-  background-color: #ffecec;
-  border-left: 5px solid #e74c3c;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+/* === COMPONENTES === */
+
+/* Cronômetro */
+#cronometro {
+  min-width: 80px;
+  display: inline-block;
+  text-align: left;
+}
+
+/* Progresso */
+.progress-bar {
   transition: all 0.3s ease;
-  min-width: 320px;
 }
 
-.card-produto.primary {
-  border-left: 5px solid #0d6efd;
-  background-color: #eaf2ff;
+/* Loader global */
+#loaderGlobal {
+  min-height: 100vh;
 }
 
-/* === FEEDBACK === */
-.feedback-success {
-  background-color: #d4fcd4 !important;
+/* Overlay de caixa */
+#overlayCaixa {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--azul);
+  font-size: 150px;
+  font-weight: bold;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
 
-.feedback-error {
-  background-color: #ffdfdf !important;
+/* Card de tempo */
+#card-tempo .vr {
+  background-color: var(--cinza-claro);
+  width: 1px;
 }
 
-/* === LISTAS DE PRODUTOS (Pendentes / Retirados) === */
+/* === LISTAS === */
 .list {
   background: #f1f1f1;
   padding: 10px;
@@ -77,12 +96,11 @@ body {
   overflow-y: auto;
 }
 
-/* === ITEM DE LISTA PENDENTE === */
 .pendente-item {
+  background: #fff;
+  margin-bottom: 8px;
   padding: 8px 12px;
   border-radius: 6px;
-  background: white;
-  margin-bottom: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   font-size: 15px;
   line-height: 1.4;
@@ -99,31 +117,145 @@ body {
 }
 
 .pendente-item .endereco {
-  color: #0d6efd;
+  color: var(--azul);
   font-size: 14px;
 }
 
-/* === CARD DE TEMPO === */
-#card-tempo .vr {
-  background-color: #dee2e6;
-  width: 1px;
+/* === CARD DE PRODUTO === */
+.card-produto {
+  background-color: #f8f9ff;
+  border-left: 6px solid var(--azul);
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  transition: all 0.3s ease;
 }
 
-/* === OVERLAY DE CAIXA === */
-#overlayCaixa {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  color: #0d6efd;
-  font-size: 150px;
+.card-produto.primary {
+  background-color: #eaf2ff;
+  border-left-color: var(--azul);
+}
+
+.card-erro {
+  background-color: #f8d7da;
+  border-left: 5px solid #dc3545;
+  padding: 1rem;
   font-weight: bold;
-  display: none;
+  color: #842029;
+  border-radius: 6px;
+  font-size: 1.2rem;
+}
+
+/* Feedback visual */
+.feedback-success {
+  background-color: #d4fcd4 !important;
+}
+
+.feedback-error {
+  background-color: #ffdfdf !important;
+}
+
+/* Imagem do produto */
+.card-img-produto,
+.image-container img {
+  width: 200px;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* Info do card */
+.card-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.2rem;
+  align-items: flex-start;
+}
+
+.card-info .details {
+  flex: 1;
+}
+
+.card-info .title {
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.card-info .sku,
+.card-info .pedido-undo {
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.card-info .pedido-undo {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  z-index: 9999;
+}
+
+/* Badge e botão de desfazer */
+.card-number {
+  margin-top: 1rem;
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: center;
+  color: var(--azul);
+}
+
+.btn-undo-simple {
+  font-size: 0.9rem;
+  border: none;
+  background: transparent;
+  color: #dc3545;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.btn-undo-simple:hover {
+  color: #a50000;
+}
+
+/* === WRAPPER DOS CARDS === */
+.card-wrapper {
+  flex: 1 0 auto;
+  max-width: 100%;
+  min-width: 300px;
+}
+
+.card-wrapper.card-1 {
+  flex: 1 0 100%;
+}
+
+.card-wrapper.card-2 {
+  flex: 1 0 48%;
+}
+
+.card-wrapper.card-3 {
+  flex: 1 0 31%;
+}
+
+#cards {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  overflow-x: hidden;
+}
+
+/* === TEXTO ENDEREÇO === */
+.texto-endereco {
+  font-size: 1.6rem;
+  color: var(--azul);
+  font-weight: 800;
+  word-break: break-word;
 }
 
 /* === ENDEREÇO LABEL === */
@@ -138,95 +270,13 @@ body {
 }
 
 .endereco-label i {
-  color: #0d6efd;
+  color: var(--azul);
 }
 
-/* === WRAPPER DOS CARDS === */
-.card-wrapper {
-  flex: 1 0 auto;
-  max-width: 100%;
-}
-
-.card-wrapper.card-1 {
-  flex: 1 0 100%;
-}
-
-.card-wrapper.card-2 {
-  flex: 1 0 50%;
-}
-
-.card-wrapper.card-3 {
-  flex: 1 0 33.33%;
-}
-
-/* === CONTAINER DE CARDS === */
-#cards {
-  display: flex;
-  flex-direction: row;
-  gap: 1rem;
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  overflow-x: hidden;
-  padding-bottom: 1rem;
-  max-width: 100%;
-}
-
-/* === TEXTO ENDEREÇO === */
-.texto-endereco {
-  font-size: 1.6rem;
-  color: #0d6efd;
-  font-weight: 800;
-  word-break: break-word;
-}
-
-/* === IMAGEM PRODUTO === */
-.card-img-produto {
-  width: 200px;
-  height: 320px;
-  object-fit: cover;
-  border-radius: 6px;
-}
-
-/* === PROGRESSO === */
-.progress-bar {
-  transition: all 0.3s ease;
-}
-
-/* === LOADER === */
-#loaderGlobal {
-  min-height: 100vh;
-}
-
-/* === MEDIA QUERIES MOBILE === */
+/* === RESPONSIVO === */
 @media (max-width: 768px) {
   body {
     font-size: 17px;
-  }
-
-  .card-img-produto {
-    width: 100%;
-    height: 200px;
-  }
-
-  .form-label,
-  .card-title,
-  .endereco-label {
-    font-size: 2rem;
-  }
-
-  .btn {
-    font-size: 1.8rem;
-    padding: 1.6rem 2.6rem;
-    width: 100%;
-  }
-
-  .input-group .form-control {
-    font-size: 1.6rem;
-    padding: 1.4rem;
-  }
-
-  .input-group {
-    gap: 0.5rem;
   }
 
   .card-produto {
@@ -281,7 +331,7 @@ body {
     min-width: 90px;
     padding: 1.8rem;
     font-size: 2rem;
-    border: 2px solid #dee2e6;
+    border: 2px solid var(--cinza-claro);
     border-radius: 0.5rem;
     background-color: #ffffff;
   }
@@ -339,94 +389,11 @@ body {
   #ideal {
     font-size: 1.6rem;
   }
-}
 
-.card-wrapper {
-  flex: 1 0 auto;
-  max-width: 100%;
-  min-width: 300px;
-}
-
-.card-wrapper.card-1 {
-  flex: 1 0 100%;
-}
-
-.card-wrapper.card-2 {
-  flex: 1 0 48%;
-}
-
-.card-wrapper.card-3 {
-  flex: 1 0 31%;
-}
-
-/* Layout base do card */
-.card-produto {
-  background-color: #ffecec;
-  border-left: 5px solid #e74c3c;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-  border-radius: 8px;
-}
-
-.card-produto.primary {
-  border-left-color: #0d6efd;
-  background-color: #eaf2ff;
-}
-
-/* Área superior do card com info + imagem */
-.card-info {
-  display: flex;
-  justify-content: space-between;
-  gap: 1.2rem;
-  align-items: flex-start;
-}
-
-/* Informações à esquerda */
-.card-info .details {
-  flex: 1;
-}
-
-.card-info .title {
-  font-weight: bold;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-}
-
-.card-info .sku,
-.card-info .pedido-undo {
-  font-size: 0.95rem;
-  color: #444;
-}
-
-.card-info .pedido-undo {
-  margin-top: 0.75rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* Imagem do produto */
-.image-container {
-  flex-shrink: 0;
-  text-align: center;
-}
-
-.image-container img {
-  max-height: 200px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.card-produto {
-  background-color: #f8f9ff;
-  border-left: 6px solid #0d6efd;
-  transition: all 0.3s ease;
-  border-radius: 12px;
+  .card-img-produto {
+    width: 100%;
+    height: 200px;
+  }
 }
 
 @media (max-width: 576px) {
@@ -435,39 +402,4 @@ body {
     width: 100%;
     margin-bottom: 1rem;
   }
-}
-
-/* Badge de número da caixa */
-.card-number {
-  margin-top: 1rem;
-  font-size: 1.8rem;
-  font-weight: bold;
-  text-align: center;
-  color: #0d6efd;
-}
-
-/* Botão de desfazer */
-.btn-undo-simple {
-  font-size: 0.9rem;
-  border: none;
-  background: transparent;
-  color: #dc3545;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.btn-undo-simple:hover {
-  color: #a50000;
-}
-
-/* Estilo para erro */
-.card-erro {
-  background-color: #f8d7da;
-  border-left: 5px solid #dc3545;
-  padding: 1rem;
-  font-weight: bold;
-  color: #842029;
-  border-radius: 6px;
-  font-size: 1.2rem;
 }
