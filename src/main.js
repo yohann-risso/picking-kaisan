@@ -84,12 +84,12 @@ async function inicializarApp() {
       ].sort((a, b) => a - b);
 
       aguardarElemento("grupoModal", (el) => {
-        el.innerHTML = lista
+        const html = lista
           .map((g) => `<option value="${g}">${g}</option>`)
           .join("");
+        el.innerHTML = html;
       });
     }
-
   } catch (e) {
     console.error("❌ Erro ao carregar aplicação:", e);
   }
