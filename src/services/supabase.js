@@ -15,7 +15,7 @@ const supabaseKey =
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function carregarGrupos() {
-  const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo");
+  const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo&distinct=grupo");
 
   if (!res.ok) {
     const textoErro = await res.text();
