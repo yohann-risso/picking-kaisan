@@ -4,39 +4,32 @@ import { toast } from "../components/Toast.js";
 import { calcularDuracao } from "./cronometro.js";
 
 export function finalizarPicking() {
-  clearTimeout(state.cronometroInterval);
+  const confirmacao = confirm("Tem certeza que deseja finalizar o picking?");
+  if (!confirmacao) return;
 
-  const operador = document.getElementById("operador").value;
-  const grupo = document.getElementById("grupo").value;
-
-  const resumo = {
-    operador,
-    grupo,
-    tempoExecucao: calcularDuracao(),
-    retirados: state.retirados,
-    pendentes: state.produtos,
-  };
-
-  gerarPDF(resumo);
-
-  localStorage.removeItem("pickingProgresso");
-  state.produtos = [];
-  state.retirados = [];
-  state.tempoInicio = null;
+  // Limpeza e redefinições (ajuste conforme necessidade)
+  localStorage.removeItem("progressoPicking");
+  window.state.produtos = [];
+  window.state.retirados = [];
+  document.getElementById("cards").innerHTML = "";
+  document.getElementById("pendentesList").innerHTML = "";
+  document.getElementById("retiradosList").innerHTML = "";
 
   document.getElementById("grupo").disabled = false;
   document.getElementById("operador").disabled = false;
   document.getElementById("btnIniciar").classList.remove("d-none");
   document.getElementById("btnFinalizar").classList.add("d-none");
-  document.getElementById("cards").innerHTML = "";
-  document.getElementById("pendentesList").innerHTML = "";
-  document.getElementById("retiradosList").innerHTML = "";
-  document.getElementById("cronometro").textContent = "00:00:00";
-  document.getElementById("ideal").textContent = "";
+  document.getElementById("card-tempo").classList.add("d-none");
   document.getElementById("progressoPicking").style.width = "0%";
   document.getElementById("progressoPicking").textContent = "0%";
 
-  toast("Pronto para iniciar novo picking! 🚀", "success");
+  toast("Picking finalizado com sucesso!", "success");
+
+  // 🆕 Reabrir modal para próximo grupo
+  setTimeout(() => {
+    const modal = new bootstrap.Modal(document.getElementById("modalInicio"));
+    modal.show();
+  }, 800);
 }
 
 function gerarPDF(resumo) {

@@ -36,95 +36,98 @@
   <body>
     <div class="container-xl py-4 px-3 px-md-5">
       <div class="card shadow-sm p-4 mb-4">
-        <h1 class="mb-4" aria-label="Controle de Picking da Kaisan">
-          <img
-            src="https://www.kaisan.com.br/skin/frontend/ultimo/default/images/nova/logo-2020-new.png"
-            width="120"
-          />
-          CONTROLE DE PICKING
-        </h1>
-
+        <!-- HEADER FLEXÍVEL -->
         <div
-          class="row row-cols-1 row-cols-md-auto g-3 align-items-center mb-4"
+          class="d-flex justify-content-between align-items-center flex-wrap mb-4"
         >
-          <div class="col-auto">
-            <label for="grupo" class="form-label">Grupo:</label>
-            <select id="grupo" class="form-select"></select>
-          </div>
-          <div class="col-auto">
-            <label for="operador" class="form-label">Operador:</label>
-            <select id="operador" class="form-select"></select>
-          </div>
-          <div class="col-auto">
-            <button id="btnIniciar" class="btn btn-primary">
-              Iniciar Picking
-            </button>
-          </div>
-          <div class="col-auto">
+          <!-- Logo e botão -->
+          <div class="d-flex align-items-center gap-3">
+            <img
+              src="https://www.kaisan.com.br/skin/frontend/ultimo/default/images/nova/logo-2020-new.png"
+              width="100"
+              alt="Logo Kaisan"
+            />
             <button id="btnFinalizar" class="btn btn-danger d-none">
-              📄 Finalizar Picking
+              Finalizar Picking
             </button>
           </div>
 
-          <div class="col-auto d-flex align-items-center gap-4 flex-wrap">
-            <div
-              id="card-tempo"
-              class="card bg-light border-0 shadow-sm rounded px-4 py-3 d-none"
-              style="min-width: 280px"
-            >
-              <div class="d-flex justify-content-between align-items-center">
-                <div class="text-center">
-                  <div class="text-danger fw-bold small mb-1">
-                    TEMPO EXECUTADO
-                  </div>
-                  <div class="fs-5 d-flex align-items-center gap-1 text-dark">
-                    <span class="me-1">🕒</span>
-                    <span id="cronometro">00:00:00</span>
-                  </div>
-                </div>
-                <div class="vr mx-3" style="height: 40px"></div>
-                <div class="text-center">
-                  <div class="text-danger fw-bold small mb-1">TEMPO IDEAL</div>
-                  <div class="fs-6 text-dark">
-                    <span id="ideal">00:00:00</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <!-- Grupo ativo (centro) -->
+          <div
+            class="text-center flex-grow-1 fw-semibold text-uppercase text-muted small"
+          >
+            PICKING | <span id="grupoAtivo">Grupo 0</span>
+          </div>
 
-            <div class="w-100">
-              <label class="fw-bold">Progresso:</label>
-              <div class="progress mb-2">
-                <div
-                  id="progressoPicking"
-                  class="progress-bar bg-success"
-                  role="progressbar"
-                  style="width: 0%"
-                >
-                  0%
-                </div>
-              </div>
+          <!-- Cards visíveis e operador -->
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-end small text-muted">
+              Cards visíveis: <span id="qtdCardsLabel">1</span>
             </div>
-
-            <div class="col-auto">
-              <label for="qtdCards" class="form-label">
-                Cards visíveis: <span id="qtdCardsLabel">2</span>
-              </label>
-            </div>
-            <div class="col-auto">
-              <input
-                type="range"
-                id="qtdCards"
-                min="1"
-                max="3"
-                value="2"
-                class="form-range"
-                style="width: 80px"
-              />
+            <input
+              type="range"
+              id="qtdCards"
+              min="1"
+              max="3"
+              value="1"
+              class="form-range"
+              style="width: 100px"
+            />
+            <div class="d-flex align-items-center gap-1 text-muted small">
+              <i class="bi bi-person-fill text-warning"></i>
+              <span id="nomeOperador">Operador</span>
             </div>
           </div>
         </div>
 
+        <!-- TEMPO EXECUTADO / IDEAL -->
+        <div class="d-flex justify-content-start mb-4">
+          <div
+            id="card-tempo"
+            class="card bg-light border-0 shadow-sm rounded px-4 py-3 d-none"
+            style="min-width: 280px"
+          >
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="text-center">
+                <div class="text-danger fw-bold small mb-1">
+                  TEMPO EXECUTADO
+                </div>
+                <div class="fs-5 d-flex align-items-center gap-1 text-dark">
+                  <span class="me-1">🕒</span>
+                  <span id="cronometro">00:00:00</span>
+                </div>
+              </div>
+              <div class="vr mx-3" style="height: 40px"></div>
+              <div class="text-center">
+                <div class="text-danger fw-bold small mb-1">TEMPO IDEAL</div>
+                <div class="fs-6 text-dark">
+                  <span id="ideal">00:00:00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROGRESSO -->
+        <div class="mb-4">
+          <label class="fw-bold">Progresso:</label>
+          <div class="progress mb-1">
+            <div
+              id="progressoPicking"
+              class="progress-bar bg-success"
+              role="progressbar"
+              style="width: 0%"
+            >
+              0%
+            </div>
+          </div>
+          <div class="text-muted small">
+            <span id="qtdRetiradas">0</span> de
+            <span id="qtdTotal">0</span> peças
+          </div>
+        </div>
+
+        <!-- INPUT SKU -->
         <div class="input-group mb-4">
           <input
             id="skuInput"
@@ -190,6 +193,47 @@
     <!-- Animação da Caixa -->
     <div id="overlayCaixa">
       <span id="letraCaixa"></span>
+    </div>
+
+    <!-- Modal de Seleção Inicial -->
+    <div
+      class="modal fade"
+      id="modalInicio"
+      tabindex="-1"
+      aria-labelledby="modalInicioLabel"
+      aria-hidden="true"
+      data-bs-backdrop="static"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-sm">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="modalInicioLabel">
+              🚀 Iniciar Picking
+            </h5>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="grupoModal" class="form-label fw-bold">Grupo:</label>
+              <select id="grupoModal" class="form-select"></select>
+            </div>
+            <div class="mb-3">
+              <label for="operadorModal" class="form-label fw-bold"
+                >Operador:</label
+              >
+              <select id="operadorModal" class="form-select"></select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              id="btnConfirmarInicio"
+              type="button"
+              class="btn btn-success w-100"
+            >
+              ✅ Iniciar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Modal para restaurar progresso -->

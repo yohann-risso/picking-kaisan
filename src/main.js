@@ -12,7 +12,6 @@ import { finalizarPicking } from "./core/finalizar.js";
 import { zerarEnderecoExterno } from "./services/googleSheet.js";
 import { mostrarLoaderInline, esconderLoaderInline } from "./core/interface.js";
 
-
 // 🛠️ Aguarda elemento com fallback para quando ele for adicionado ao DOM depois
 function aguardarElemento(id, callback) {
   const el = document.getElementById(id);
@@ -96,7 +95,6 @@ window.addEventListener("load", async () => {
     console.log("🔐 Variáveis carregadas do /api/env:", env);
   } catch (err) {
     console.warn("⚠️ Falha ao acessar /api/env.");
-
     env = {
       SUPABASE_URL: "",
       SUPABASE_KEY: "",
@@ -109,9 +107,12 @@ window.addEventListener("load", async () => {
   try {
     carregarOperadores();
     await carregarGrupos();
-    await carregarRefsPorGrupo(document.getElementById("grupo")?.value);
-    restaurarCacheLocal();
-    checarModoStandalone();
+
+    // Preenche selects do modal
+    document.getElementById("grupoModal").innerHTML =
+      document.getElementById("grupo").innerHTML;
+    document.getElementById("operadorModal").innerHTML =
+      document.getElementById("operador").innerHTML;
   } catch (e) {
     console.error("❌ Erro ao carregar aplicação:", e);
   }
@@ -122,7 +123,9 @@ window.addEventListener("load", async () => {
     document.getElementById("overlayCaixa").style.display = "none";
   }, 3000);
 
-  console.log("Main carregado ✅");
+  // ✅ Mostrar modal inicial
+  const modal = new bootstrap.Modal(document.getElementById("modalInicio"));
+  modal.show();
 });
 
 // 🌍 Exporta globalmente
@@ -158,14 +161,48 @@ console.log("Exportando funções para o console global ✅");
 console.log("🌟 Bem-vindo ao sistema de Picking! Carregando...");
 
 // 📲 Registro do Service Worker para PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/service-worker.js")
       .then((registration) => {
-        console.log('🛠️ Service Worker registrado com sucesso:', registration.scope);
+        console.log(
+          "🛠️ Service Worker registrado com sucesso:",
+          registration.scope
+        );
       })
       .catch((error) => {
-        console.error('❌ Falha ao registrar Service Worker:', error);
+        console.error("❌ Falha ao registrar Service Worker:", error);
       });
   });
 }
+
+document
+  .getElementById("btnConfirmarInicio")
+  .addEventListener("click", async () => {
+    const grupo = document.getElementById("grupoModal").value;
+    const operador = document.getElementById("operadorModal").value;
+
+    if (!grupo || !operador) {
+      toast("Selecione grupo e operador", "warning");
+      return;
+    }
+
+    // Define no DOM
+    document.getElementById("grupoAtivo").textContent = `Grupo ${grupo}`;
+    document.getElementById("nomeOperador").textContent = operador;
+
+    // Guarda estado ativo
+    window.grupoSelecionado = grupo;
+    window.operadorSelecionado = operador;
+
+    // Oculta o modal
+    const modal = bootstrap.Modal.getInstance(
+      document.getElementById("modalInicio")
+    );
+    modal.hide();
+
+    // Carrega dados
+    await carregarRefsPorGrupo(grupo);
+    await carregarProdutos();
+  });

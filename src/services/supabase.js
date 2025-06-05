@@ -7,11 +7,12 @@ import { calcularTempoIdeal } from "../utils/format.js";
 
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = window.env?.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = window.env?.SUPABASE_KEY || import.meta.env.VITE_SUPABASE_KEY;
+const supabaseUrl =
+  window.env?.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey =
+  window.env?.SUPABASE_KEY || import.meta.env.VITE_SUPABASE_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
-
 
 export async function carregarGrupos() {
   const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo");
@@ -23,9 +24,9 @@ export async function carregarGrupos() {
   console.log("✅ Grupos carregados com sucesso");
 
   const dados = await res.json();
-  const grupos = [...new Set(dados.map((d) => parseInt(d.grupo)))].sort(
-    (a, b) => a - b
-  );
+  const grupos = [
+    ...new Set(dados.map((d) => parseInt(d.grupo)).filter((g) => !isNaN(g))),
+  ].sort((a, b) => a - b);
   document.getElementById("grupo").innerHTML = grupos
     .map((g) => `<option value="${g}">${g}</option>`)
     .join("");
@@ -125,12 +126,13 @@ export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
     );
     if (!res.ok) throw new Error(await res.text());
 
+    // Encontrar o item exato em state.retirados
     const idx = state.retirados.findIndex(
       (p) =>
         p.sku === sku &&
-        p.romaneio === romaneio &&
+        p.romaneio == romaneio &&
         p.caixa === caixa &&
-        p.grupo === grupo
+        p.grupo == grupo
     );
 
     if (idx !== -1) {
@@ -139,83 +141,82 @@ export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
       state.produtos.unshift(item);
       salvarProgressoLocal();
       atualizarInterface();
-      toast(`✔️ Retirada de ${sku} desfeita.`, "success");
+      toast(
+        `✔️ Retirada de ${sku} (Romaneio ${romaneio}) desfeita.`,
+        "success"
+      );
+    } else {
+      console.warn(
+        `❌ Item não encontrado para desfazer: ${sku} | ${romaneio} | ${caixa}`
+      );
+      toast("Item não encontrado para desfazer.", "warning");
     }
   } catch (e) {
     console.error("Erro ao desfazer retirada:", e);
-    toast("❌ Não foi possível desfazer.", "error");
+    toast("❌ Não foi possível desfazer retirada.", "error");
   }
 }
 
 export async function carregarProdutos() {
   console.log("⚙️ carregarProdutos chamado");
 
-  const grupo = document.getElementById("grupo")?.value;
-  const operador = document.getElementById("operador")?.value;
+  const grupo = window.grupoSelecionado;
+  const operador = window.operadorSelecionado;
 
   if (!grupo || !operador) {
-    console.warn("🚫 Grupo ou operador não preenchido.");
-    return mostrarToast("Preencha grupo e operador", "warning");
+    console.warn("🚫 Grupo ou operador não definidos.");
+    return mostrarToast("Grupo ou operador não selecionado", "warning");
   }
 
-  document.getElementById("grupo").disabled = true;
-  document.getElementById("operador").disabled = true;
-  document.getElementById("btnIniciar").classList.add("d-none");
+  // Exibir elementos da interface
   document.getElementById("btnFinalizar").classList.remove("d-none");
   document.getElementById("card-tempo").classList.remove("d-none");
 
   const headers = getHeaders();
 
   try {
+    // 1. Buscar todos os produtos do grupo
     const resProdutos = await fetch(
       `/api/proxy?endpoint=/rest/v1/produtos?grupo=eq.${grupo}&select=*`,
       { headers }
     );
     const linhas = await resProdutos.json();
 
-    const mapaRef = window.mapaRefGlobal || new Map();
-
+    // 2. Buscar retiradas já feitas
     const resRet = await fetch(
-      `/api/proxy?endpoint=/rest/v1/retiradas?grupo=eq.${grupo}&select=sku,caixa`,
+      `/api/proxy?endpoint=/rest/v1/retiradas?grupo=eq.${grupo}&select=sku,caixa,romaneio`,
       { headers }
     );
     const retiradas = await resRet.json();
-    const mapaRetiradas = new Map(
-      retiradas.map((r) => [r.sku.trim().toUpperCase(), r.caixa])
-    );
 
+    // 3. Mapear retiradas por sku + romaneio
+    const mapaRetiradas = new Map();
+    retiradas.forEach((r) => {
+      const key = `${r.sku.trim().toUpperCase()}__${r.romaneio}`;
+      if (!mapaRetiradas.has(key)) mapaRetiradas.set(key, []);
+      mapaRetiradas.get(key).push(r.caixa.toUpperCase());
+    });
+
+    const mapaRef = window.mapaRefGlobal || new Map();
     state.produtos = [];
     state.retirados = [];
     const mapaSKUs = {};
 
     for (const linha of linhas) {
       const sku = (linha.sku || "").trim().toUpperCase();
+      const romaneio = linha.romaneio;
       const caixa = (linha.caixa || "").toUpperCase();
       const qtd = parseInt(linha.qtd || 0, 10);
       const endereco =
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
+      const ref = mapaRef.get(sku);
 
-      const key = (linha.sku || "").trim().toUpperCase();
-      console.log("🔍 Buscando por SKU:", JSON.stringify(key));
-      console.log("🔍 Existe em mapaRefGlobal?", mapaRef.has(key));
-      console.log(
-        "🔍 Chaves no mapa (exemplo):",
-        [...mapaRef.keys()].slice(0, 5)
-      );
-      const ref = mapaRef.get(key);
-
-      // Log opcional por SKU
-      console.log(
-        `🔗 SKU: ${sku} → Imagem: ${ref?.imagem || "❌"}, Coleção: ${
-          ref?.colecao || "—"
-        }`
-      );
-
-      if (!mapaSKUs[sku]) {
+      if (!mapaSKUs[`${sku}__${romaneio}`]) {
         const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
-        mapaSKUs[sku] = {
+        mapaSKUs[`${sku}__${romaneio}`] = {
           ...linha,
           sku,
+          romaneio,
           endereco,
           imagem: ref?.imagem || "https://placehold.co/120x120?text=Sem+Img",
           colecao: ref?.colecao || "—",
@@ -227,7 +228,7 @@ export async function carregarProdutos() {
         };
       }
 
-      const p = mapaSKUs[sku];
+      const p = mapaSKUs[`${sku}__${romaneio}`];
       if (caixa === "A")
         (p.distribuicaoAtual.A += qtd), (p.distribuicaoOriginal.A += qtd);
       if (caixa === "B")
@@ -239,14 +240,20 @@ export async function carregarProdutos() {
     }
 
     for (const prod of Object.values(mapaSKUs)) {
-      if (mapaRetiradas.has(prod.sku)) {
-        prod.caixa = mapaRetiradas.get(prod.sku);
-        state.retirados.push(prod);
+      const key = `${prod.sku}__${prod.romaneio}`;
+      const caixasRetiradas = mapaRetiradas.get(key) || [];
+      if (caixasRetiradas.length > 0) {
+        caixasRetiradas.forEach((caixa) => {
+          const duplicado = structuredClone(prod);
+          duplicado.caixa = caixa;
+          state.retirados.push(duplicado);
+        });
       } else {
         state.produtos.push(prod);
       }
     }
 
+    // 4. Ordenar os produtos por endereço
     state.produtos.sort((a, b) => {
       for (let i = 0; i < a.ordemEndereco.length; i++) {
         if (a.ordemEndereco[i] !== b.ordemEndereco[i]) {
@@ -261,6 +268,7 @@ export async function carregarProdutos() {
     atualizarInterface();
     salvarProgressoLocal();
 
+    // 5. Tempo ideal total
     const totalPecas = state.produtos
       .concat(state.retirados)
       .reduce((acc, p) => {
@@ -270,6 +278,7 @@ export async function carregarProdutos() {
 
     document.getElementById("ideal").textContent =
       calcularTempoIdeal(totalPecas);
+    document.getElementById("qtdTotal").textContent = totalPecas;
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
     mostrarToast("Erro ao carregar dados do Supabase", "error");
