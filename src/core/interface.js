@@ -59,7 +59,13 @@ export function atualizarInterface() {
   cards.innerHTML = "";
 
   const maxCards = parseInt(document.getElementById("qtdCards").value, 10) || 2;
-  const visiveis = state.produtos.slice(0, maxCards);
+  const visiveis = state.produtos
+    .filter((p) => {
+      const dist = p.distribuicaoAtual || {};
+      const total = dist.A + dist.B + dist.C + dist.D;
+      return total > 0;
+    })
+    .slice(0, maxCards);
 
   visiveis.forEach((produto, i) => {
     const card = criarCardProduto(produto, i === 0);
@@ -67,16 +73,20 @@ export function atualizarInterface() {
   });
 
   // PENDENTES
-  document.getElementById("pendentesList").innerHTML = state.produtos
+  const pendentesVisiveis = state.produtos.filter((p) => {
+    const dist = p.distribuicaoAtual || {};
+    const total = dist.A + dist.B + dist.C + dist.D;
+    return total > 0;
+  });
+
+  document.getElementById("pendentesList").innerHTML = pendentesVisiveis
     .map(
       (p) => `
-      <div class="pendente-item">
-        <div class="sku">SKU: ${p.sku}</div>
-        <div class="descricao">${p.descricao} | Ref: ${
-        p.sku.split("-")[0]
-      }</div>
-        <div class="endereco">${p.endereco?.split("•")[0]}</div>
-      </div>`
+    <div class="pendente-item">
+      <div class="sku">SKU: ${p.sku}</div>
+      <div class="descricao">${p.descricao} | Ref: ${p.sku.split("-")[0]}</div>
+      <div class="endereco">${p.endereco?.split("•")[0]}</div>
+    </div>`
     )
     .join("");
 
