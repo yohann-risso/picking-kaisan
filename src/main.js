@@ -32,24 +32,6 @@ function aguardarElemento(id, callback) {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// ✅ Conecta eventos de forma segura
-aguardarElemento("btnIniciar", (btn) => {
-  console.log("✅ Ligando evento: Iniciar");
-
-  btn.addEventListener("click", async () => {
-    try {
-      console.log("🖱️ Clique no botão 'Iniciar'");
-      const grupo = document.getElementById("grupo")?.value;
-      if (!grupo) return toast("Selecione um grupo", "warning");
-
-      await carregarRefsPorGrupo(grupo); // ✅ Carrega imagens e coleção
-      await carregarProdutos(); // ✅ Usa o mapa já carregado
-    } catch (err) {
-      console.error("❌ Erro ao executar fluxo de iniciar:", err);
-    }
-  });
-});
-
 aguardarElemento("btnConfirmarSKU", (btn) => {
   btn.addEventListener("click", () => {
     console.log("🖱️ Clique em Confirmar SKU");
@@ -122,9 +104,11 @@ window.addEventListener("load", async () => {
         ),
       ].sort((a, b) => a - b);
 
-      document.getElementById("grupoModal").innerHTML = unicos
-        .map((g) => `<option value="${g}">${g}</option>`)
-        .join("");
+      aguardarElemento("grupoModal", (el) => {
+        el.innerHTML = unicos
+          .map((g) => `<option value="${g}">${g}</option>`)
+          .join("");
+      });
     }
 
     // Preenche diretamente os operadores
@@ -145,9 +129,11 @@ window.addEventListener("load", async () => {
       "Yohann Risso",
     ];
 
-    document.getElementById("operadorModal").innerHTML = operadores
-      .map((nome) => `<option value="${nome}">${nome}</option>`)
-      .join("");
+    aguardarElemento("operadorModal", (el) => {
+      el.innerHTML = operadores
+        .map((nome) => `<option value="${nome}">${nome}</option>`)
+        .join("");
+    });
   } catch (e) {
     console.error("❌ Erro ao carregar aplicação:", e);
   }
