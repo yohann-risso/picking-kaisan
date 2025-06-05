@@ -210,9 +210,11 @@ export async function carregarProdutos() {
         (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
       const ref = mapaRef.get(sku);
 
-      if (!mapaSKUs[`${sku}__${romaneio}`]) {
+      const key = `${sku}__${romaneio}`;
+
+      if (!mapaSKUs[key]) {
         const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
-        mapaSKUs[`${sku}__${romaneio}`] = {
+        mapaSKUs[key] = {
           ...linha,
           sku,
           romaneio,
@@ -227,15 +229,14 @@ export async function carregarProdutos() {
         };
       }
 
-      const p = mapaSKUs[`${sku}__${romaneio}`];
-      if (caixa === "A")
-        (p.distribuicaoAtual.A += qtd), (p.distribuicaoOriginal.A += qtd);
-      if (caixa === "B")
-        (p.distribuicaoAtual.B += qtd), (p.distribuicaoOriginal.B += qtd);
-      if (caixa === "C")
-        (p.distribuicaoAtual.C += qtd), (p.distribuicaoOriginal.C += qtd);
-      if (caixa === "D")
-        (p.distribuicaoAtual.D += qtd), (p.distribuicaoOriginal.D += qtd);
+      const p = mapaSKUs[key];
+      if (caixa === "A") p.distribuicaoOriginal.A += qtd;
+      if (caixa === "B") p.distribuicaoOriginal.B += qtd;
+      if (caixa === "C") p.distribuicaoOriginal.C += qtd;
+      if (caixa === "D") p.distribuicaoOriginal.D += qtd;
+
+      // Sempre mantenha atual sincronizado com original no início
+      p.distribuicaoAtual = { ...p.distribuicaoOriginal };
     }
 
     for (const prod of Object.values(mapaSKUs)) {
