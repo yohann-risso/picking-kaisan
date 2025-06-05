@@ -15,26 +15,40 @@ const supabaseKey =
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function carregarGrupos() {
-  const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo&distinct=grupo");
+  const pageSize = 1000;
+  let offset = 0;
+  let todosGrupos = [];
+  let continuar = true;
 
-  if (!res.ok) {
-    const textoErro = await res.text();
-    throw new Error(`Erro ao carregar grupos: ${textoErro}`);
+  while (continuar) {
+    const query = `/rest/v1/produtos?select=grupo&distinct=grupo&limit=${pageSize}&offset=${offset}`;
+    const res = await fetch(`/api/proxy?endpoint=${encodeURIComponent(query)}`);
+
+    if (!res.ok) {
+      const erro = await res.text();
+      throw new Error(`Erro ao carregar grupos: ${erro}`);
+    }
+
+    const dados = await res.json();
+
+    if (dados.length === 0) {
+      continuar = false;
+    } else {
+      todosGrupos.push(...dados.map((d) => d.grupo));
+      offset += pageSize;
+    }
   }
 
-  console.log("✅ Grupos carregados com sucesso");
-
-  const dados = await res.json();
-  console.log("📦 Grupos brutos recebidos:", dados.map(d => d.grupo));
   const grupos = [
     ...new Set(
-      dados
-        .map((d) => Number(String(d.grupo).trim()))
+      todosGrupos
+        .map((g) => Number(String(g).trim()))
         .filter((g) => Number.isInteger(g) && g > 0)
     ),
   ].sort((a, b) => a - b);
 
-  return grupos; // retorna os grupos para uso no main.js
+  console.log("✅ Grupos finais paginados:", grupos);
+  return grupos;
 }
 
 let refsCarregadas = false;
