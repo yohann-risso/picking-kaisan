@@ -18,10 +18,11 @@ export async function carregarGrupos() {
   const pageSize = 1000;
   let offset = 0;
   const todosGrupos = [];
-  const maxPaginas = 20;
+  const maxPaginas = 100;
 
   for (let i = 0; i < maxPaginas; i++) {
-    const url = `/api/proxy?endpoint=/rest/v1/produtos?select=grupo&limit=${pageSize}&offset=${offset}`;
+    const query = `/rest/v1/produtos?select=grupo&limit=${pageSize}&offset=${offset}`;
+    const url = `/api/proxy?endpoint=${encodeURIComponent(query)}`;
     const res = await fetch(url);
 
     if (!res.ok) {
@@ -32,11 +33,13 @@ export async function carregarGrupos() {
     const dados = await res.json();
 
     if (!Array.isArray(dados) || dados.length === 0) {
-      console.log(`✅ Final da paginação: offset ${offset}, nada mais a carregar.`);
+      console.log(`✅ Fim da paginação no offset ${offset}`);
       break;
     }
 
-    console.log(`🔁 Página ${i + 1}: carregados ${dados.length} registros com offset ${offset}`);
+    console.log(
+      `🔁 Página ${i + 1} (offset ${offset}) → ${dados.length} registros`
+    );
     todosGrupos.push(...dados.map((d) => d.grupo));
     offset += pageSize;
   }
@@ -49,19 +52,7 @@ export async function carregarGrupos() {
     ),
   ].sort((a, b) => a - b);
 
-  console.log("✅ Grupos finais únicos ordenados:", grupos);
-  return grupos;
-}
-
-  const grupos = [
-    ...new Set(
-      todosGrupos
-        .map((g) => Number(String(g).trim()))
-        .filter((g) => Number.isInteger(g) && g > 0)
-    ),
-  ].sort((a, b) => a - b);
-
-  console.log("✅ Grupos finais paginados:", grupos);
+  console.log("✅ Grupos finais únicos:", grupos);
   return grupos;
 }
 
