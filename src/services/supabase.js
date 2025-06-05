@@ -22,7 +22,7 @@ export async function carregarGrupos() {
 
   while (continuar) {
     const query = `/rest/v1/produtos?select=grupo&distinct=grupo&limit=${pageSize}&offset=${offset}`;
-    const res = await fetch(`/api/proxy?endpoint=${encodeURIComponent(query)}`);
+    const res = await fetch(`/api/proxy?endpoint=/rest/v1/produtos?select=grupo&distinct=grupo&limit=${pageSize}&offset=${offset}`);
 
     if (!res.ok) {
       const erro = await res.text();
