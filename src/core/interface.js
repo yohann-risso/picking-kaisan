@@ -102,10 +102,21 @@ export function atualizarInterface() {
     return acc + dist.A + dist.B + dist.C + dist.D;
   }, 0);
 
-  const retiradasPecas = state.retirados.reduce((acc, p) => {
-    const d = p.distribuicaoOriginal;
-    return acc + d.A + d.B + d.C + d.D;
-  }, 0);
+  const retiradasPecas = (() => {
+    const totalOriginal = state.produtos
+      .concat(state.retirados)
+      .reduce((acc, p) => {
+        const original = p.distribuicaoOriginal || { A: 0, B: 0, C: 0, D: 0 };
+        return acc + original.A + original.B + original.C + original.D;
+      }, 0);
+
+    const totalAtual = state.produtos.reduce((acc, p) => {
+      const atual = p.distribuicaoAtual || { A: 0, B: 0, C: 0, D: 0 };
+      return acc + atual.A + atual.B + atual.C + atual.D;
+    }, 0);
+
+    return totalOriginal - totalAtual;
+  })();
 
   const percentual = porcentagem(retiradasPecas, total);
   const barra = document.getElementById("progressoPicking");
