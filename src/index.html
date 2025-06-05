@@ -156,6 +156,17 @@
         <h3>✅ Retirados</h3>
         <div class="list" id="retiradosList"></div>
       </div>
+      <!-- Botão no rodapé para limpar cache -->
+      <div class="text-center mt-4 mb-2">
+        <button
+          id="btnLimparCache"
+          class="btn btn-outline-secondary btn-sm"
+          title="Pressione e segure para limpar o cache"
+        >
+          🧹 Limpar Cache
+        </button>
+        <div class="small text-muted">Pressione e segure para confirmar</div>
+      </div>
     </div>
 
     <!-- Toast container -->
@@ -278,22 +289,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Botão flutuante para limpar cache -->
-    <button
-      id="btnLimparCache"
-      title="Limpar Cache"
-      class="btn btn-light position-fixed shadow rounded-circle"
-      style="
-        bottom: 20px;
-        right: 20px;
-        z-index: 1100;
-        width: 48px;
-        height: 48px;
-      "
-    >
-      <i class="bi bi-arrow-clockwise"></i>
-    </button>
 
     <!-- Libs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
