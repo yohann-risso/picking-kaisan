@@ -15,17 +15,22 @@ export function restaurarCacheLocal() {
   modal.show();
 
   document.getElementById("btnConfirmarRestaurar").onclick = () => {
-    document.getElementById("grupo").value = dados.grupo;
-    document.getElementById("operador").value = dados.operador;
+    // Atribui aos elementos de contexto global
+    window.grupoSelecionado = dados.grupo;
+    window.operadorSelecionado = dados.operador;
+
+    // Atualiza na interface
+    document.getElementById("grupoAtivo").textContent = `Grupo ${dados.grupo}`;
+    document.getElementById("nomeOperador").textContent = dados.operador;
+
+    // Atualiza o estado da aplicação
     state.produtos = dados.produtos || [];
     state.retirados = dados.retirados || [];
     state.tempoInicio = dados.tempoInicio
       ? new Date(dados.tempoInicio)
       : new Date();
 
-    document.getElementById("grupo").disabled = true;
-    document.getElementById("operador").disabled = true;
-    document.getElementById("btnIniciar").classList.add("d-none");
+    // Ajustes visuais
     document.getElementById("btnFinalizar").classList.remove("d-none");
     document.getElementById("card-tempo").classList.remove("d-none");
 
@@ -41,8 +46,8 @@ export function restaurarCacheLocal() {
 
 export function salvarProgressoLocal() {
   const dados = {
-    grupo: document.getElementById("grupo").value,
-    operador: document.getElementById("operador").value,
+    grupo: window.grupoSelecionado,
+    operador: window.operadorSelecionado,
     produtos: state.produtos,
     retirados: state.retirados,
     tempoInicio: state.tempoInicio?.toISOString() || null,

@@ -3,14 +3,17 @@ import { calcularTempoIdeal } from "../utils/format.js";
 import { state } from "../config.js";
 import { atualizarInterface } from "../core/interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
-import { mostrarLoaderInline, esconderLoaderInline } from "../core/interface.js";
+import {
+  mostrarLoaderInline,
+  esconderLoaderInline,
+} from "../core/interface.js";
 
 export async function zerarEnderecoExterno(endereco) {
   const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
   if (!match) return toast("❌ Endereço inválido", "error");
 
   const operador = encodeURIComponent(
-    document.getElementById("operador").value
+    window.operadorSelecionado || "DESCONHECIDO"
   );
   const time = encodeURIComponent(new Date().toLocaleString());
   const ws = `${match[1]}-${match[2]}-${match[3]}`;
@@ -30,7 +33,8 @@ export async function zerarEnderecoExterno(endereco) {
     `&SKU=VAZIO` +
     `&OPERADOR=${operador}` +
     `&TIME=${time}`;
-    console.log(`🔗 URL de zeramento: ${url}`);
+
+  console.log(`🔗 URL de zeramento: ${url}`);
 
   mostrarLoaderInline(loaderId);
   try {
@@ -84,10 +88,8 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
   produto.ordemEndereco = novaOrdem;
 
   // ✅ Posição atual do operador (primeiro produto visível ou primeiro retirado)
-  const referencia =
-    state.produtos[0]?.ordemEndereco ??
-    state.retirados[0]?.ordemEndereco ??
-    [0, 0, 0, 0, 0];
+  const referencia = state.produtos[0]?.ordemEndereco ??
+    state.retirados[0]?.ordemEndereco ?? [0, 0, 0, 0, 0];
 
   // ✅ Decide onde recolocar
   const novoVemDepois = novaOrdem.some((n, i) => n > referencia[i]);
@@ -113,4 +115,3 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
   atualizarInterface();
   salvarProgressoLocal();
 }
-
