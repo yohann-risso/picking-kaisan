@@ -108,11 +108,46 @@ window.addEventListener("load", async () => {
     carregarOperadores();
     await carregarGrupos();
 
-    // Preenche selects do modal
-    document.getElementById("grupoModal").innerHTML =
-      document.getElementById("grupo").innerHTML;
-    document.getElementById("operadorModal").innerHTML =
-      document.getElementById("operador").innerHTML;
+    // Preenche diretamente o modal com os grupos disponíveis via Supabase
+    const grupos = await supabase
+      .from("produtos")
+      .select("grupo", { distinct: true });
+
+    if (grupos.error) {
+      console.error("Erro ao carregar grupos para o modal:", grupos.error);
+    } else {
+      const unicos = [
+        ...new Set(
+          grupos.data.map((d) => parseInt(d.grupo)).filter((g) => !isNaN(g))
+        ),
+      ].sort((a, b) => a - b);
+
+      document.getElementById("grupoModal").innerHTML = unicos
+        .map((g) => `<option value="${g}">${g}</option>`)
+        .join("");
+    }
+
+    // Preenche diretamente os operadores
+    const operadores = [
+      "Alan Ramos",
+      "Anderson Dutra",
+      "Arthur Oliveira",
+      "Felipe Moraes",
+      "Filipe Silva",
+      "Gabriel Lagoa",
+      "João Alves",
+      "Kaique Teixeira",
+      "Marrony Portugal",
+      "Nalbert Pereira",
+      "Rodrigo Novaes",
+      "Rony Côrrea",
+      "Ykaro Oliveira",
+      "Yohann Risso",
+    ];
+
+    document.getElementById("operadorModal").innerHTML = operadores
+      .map((nome) => `<option value="${nome}">${nome}</option>`)
+      .join("");
   } catch (e) {
     console.error("❌ Erro ao carregar aplicação:", e);
   }

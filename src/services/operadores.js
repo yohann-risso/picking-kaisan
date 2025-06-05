@@ -15,7 +15,14 @@ export function carregarOperadores() {
     "Ykaro Oliveira",
     "Yohann Risso",
   ];
-  document.getElementById("operador").innerHTML = operadores
+
+  const seletor = document.getElementById("operadorModal");
+  if (!seletor) {
+    console.warn("⚠️ Elemento #operadorModal não encontrado");
+    return;
+  }
+
+  seletor.innerHTML = operadores
     .map((op) => `<option value="${op}">${op}</option>`)
     .join("");
 }
