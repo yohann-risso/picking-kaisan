@@ -168,7 +168,6 @@ export async function carregarProdutos() {
     return mostrarToast("Grupo ou operador não selecionado", "warning");
   }
 
-  // Exibir elementos da interface
   document.getElementById("btnFinalizar").classList.remove("d-none");
   document.getElementById("card-tempo").classList.remove("d-none");
 
@@ -263,22 +262,22 @@ export async function carregarProdutos() {
       return 0;
     });
 
-    state.tempoInicio = new Date();
-    iniciarCronometro();
-    atualizarInterface();
-    salvarProgressoLocal();
+    // 5. Calcular e armazenar total de peças (Fixo)
+    const totalPecas = Object.values(mapaSKUs).reduce((acc, p) => {
+      const dist = p.distribuicaoOriginal || { A: 0, B: 0, C: 0, D: 0 };
+      return acc + dist.A + dist.B + dist.C + dist.D;
+    }, 0);
 
-    // 5. Tempo ideal total
-    const totalPecas = state.produtos
-      .concat(state.retirados)
-      .reduce((acc, p) => {
-        const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
-        return acc + dist.A + dist.B + dist.C + dist.D;
-      }, 0);
+    state.totalPecas = totalPecas;
 
     document.getElementById("ideal").textContent =
       calcularTempoIdeal(totalPecas);
     document.getElementById("qtdTotal").textContent = totalPecas;
+
+    state.tempoInicio = new Date();
+    iniciarCronometro();
+    atualizarInterface();
+    salvarProgressoLocal();
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
     mostrarToast("Erro ao carregar dados do Supabase", "error");

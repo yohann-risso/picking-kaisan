@@ -66,41 +66,41 @@ export function atualizarInterface() {
     cards.appendChild(card);
   });
 
+  // PENDENTES
   document.getElementById("pendentesList").innerHTML = state.produtos
     .map(
       (p) => `
-    <div class="pendente-item">
-      <div class="sku">SKU: ${p.sku}</div>
-      <div class="descricao">${p.descricao} | Ref: ${p.sku.split("-")[0]}</div>
-      <div class="endereco">${p.endereco?.split("•")[0]}</div>
-    </div>
-  `
+      <div class="pendente-item">
+        <div class="sku">SKU: ${p.sku}</div>
+        <div class="descricao">${p.descricao} | Ref: ${
+        p.sku.split("-")[0]
+      }</div>
+        <div class="endereco">${p.endereco?.split("•")[0]}</div>
+      </div>`
     )
     .join("");
 
+  // RETIRADOS
   document.getElementById("retiradosList").innerHTML = state.retirados
     .map(
       (p) => `
-    <div class="mb-2">
-      ✅ <strong>${p.sku}</strong>
-      <span class="badge bg-primary">Grupo ${p.grupo}</span>
-      <span class="badge bg-secondary">Caixa ${p.caixa}</span>
-      <button
-        class="btn btn-sm btn-outline-light ms-3"
-        title="Desfazer"
-        onclick="desfazerRetirada('${p.sku}', ${p.romaneio}, '${p.caixa}', ${p.grupo})"
-      >
-        🔄
-      </button>
-    </div>
-  `
+      <div class="mb-2">
+        ✅ <strong>${p.sku}</strong>
+        <span class="badge bg-primary">Grupo ${p.grupo}</span>
+        <span class="badge bg-secondary">Caixa ${p.caixa}</span>
+        <button
+          class="btn btn-sm btn-outline-light ms-3"
+          title="Desfazer"
+          onclick="desfazerRetirada('${p.sku}', ${p.romaneio}, '${p.caixa}', ${p.grupo})"
+        >
+          🔄
+        </button>
+      </div>`
     )
     .join("");
 
-  const total = state.produtos.concat(state.retirados).reduce((acc, p) => {
-    const dist = p.distribuicaoAtual || p.distribuicaoOriginal;
-    return acc + dist.A + dist.B + dist.C + dist.D;
-  }, 0);
+  // 🧮 PROGRESSO
+  const total = state.totalPecas || 0;
 
   const retiradasPecas = (() => {
     const totalOriginal = state.produtos
@@ -120,6 +120,7 @@ export function atualizarInterface() {
 
   const percentual = porcentagem(retiradasPecas, total);
   const barra = document.getElementById("progressoPicking");
+
   barra.style.width = `${percentual}%`;
   barra.textContent = `${retiradasPecas}/${total} • ${percentual}%`;
 
@@ -130,6 +131,7 @@ export function atualizarInterface() {
 
   if (percentual === 100) soltarConfete();
 
+  // 🧾 Texto abaixo da barra
   document.getElementById("qtdRetiradas").textContent = retiradasPecas;
   document.getElementById("qtdTotal").textContent = total;
 }
