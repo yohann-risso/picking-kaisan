@@ -26,7 +26,11 @@ export async function carregarGrupos() {
 
   const dados = await res.json();
   const grupos = [
-    ...new Set(dados.map((d) => parseInt(d.grupo)).filter((g) => !isNaN(g))),
+    ...new Set(
+      dados
+        .map((d) => Number(String(d.grupo).trim()))
+        .filter((g) => Number.isInteger(g) && g > 0)
+    ),
   ].sort((a, b) => a - b);
 
   return grupos; // retorna os grupos para uso no main.js
