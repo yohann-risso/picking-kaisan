@@ -19,10 +19,11 @@ export async function carregarGrupos() {
   let offset = 0;
   let todosGrupos = [];
   let continuar = true;
+  let paginaMaxima = 20; // segurança contra loop infinito (até 50 mil registros)
 
-  while (continuar) {
-    const query = `/rest/v1/produtos?select=grupo&distinct=grupo&limit=${pageSize}&offset=${offset}`;
-    const res = await fetch(`/api/proxy?endpoint=/rest/v1/produtos?select=grupo&distinct=grupo&limit=${pageSize}&offset=${offset}`);
+  while (continuar && paginaMaxima-- > 0) {
+    const url = `/api/proxy?endpoint=/rest/v1/produtos?select=grupo&distinct=grupo&limit=${pageSize}&offset=${offset}`;
+    const res = await fetch(url);
 
     if (!res.ok) {
       const erro = await res.text();
@@ -31,9 +32,12 @@ export async function carregarGrupos() {
 
     const dados = await res.json();
 
-    if (dados.length === 0) {
+    if (!Array.isArray(dados) || dados.length === 0) {
       continuar = false;
     } else {
+      console.log(
+        `🔁 Página carregada: offset ${offset}, grupos: ${dados.length}`
+      );
       todosGrupos.push(...dados.map((d) => d.grupo));
       offset += pageSize;
     }
