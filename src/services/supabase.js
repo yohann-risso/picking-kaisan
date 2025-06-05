@@ -25,6 +25,7 @@ export async function carregarGrupos() {
   console.log("✅ Grupos carregados com sucesso");
 
   const dados = await res.json();
+  console.log("📦 Grupos brutos recebidos:", dados.map(d => d.grupo));
   const grupos = [
     ...new Set(
       dados
