@@ -51,7 +51,7 @@ export async function zerarEnderecoExterno(endereco) {
     console.log("📤 Zeramento enviado:", url);
     console.log("📩 Resposta:", txt);
     toast(`✅ Endereço ${endereco} marcado para zeramento.`, "success");
-    moverProdutoParaFimPorEndereco(endereco);
+    moverProdutoParaFimPorEndereco(endereco.trim());
   } catch (e) {
     toast("❌ Falha ao marcar zeramento.", "error");
   } finally {
@@ -67,8 +67,8 @@ function extrairOrdemEndereco(endereco = "") {
 
 function moverProdutoParaFimPorEndereco(enderecoZerado) {
   const idx = state.produtos.findIndex((p) => {
-    const enderecoPrimario = p.endereco?.split("•")[0]?.trim();
-    return enderecoPrimario === enderecoZerado;
+    const enderecoPrimario = p.endereco?.split("•")[0]?.trim().toUpperCase();
+    return enderecoPrimario === enderecoZerado.trim().toUpperCase();
   });
 
   if (idx === -1) {
