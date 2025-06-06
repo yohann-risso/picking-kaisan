@@ -12,24 +12,29 @@ export async function zerarEnderecoExterno(endereco) {
   const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
   if (!match) return toast("❌ Endereço inválido", "error");
 
-  const operador = encodeURIComponent(
-    window.operadorSelecionado || "DESCONHECIDO"
-  );
-  const time = encodeURIComponent(new Date().toLocaleString());
+  const operador = (window.operadorSelecionado || "DESCONHECIDO")
+    .toLowerCase()
+    .replace(/\s+/g, "");
+
+  const time = new Date().toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+  });
+
   const ws = `${match[1]}-${match[2]}-${match[3]}`;
   const loaderId = `loader-zerar-${endereco}`;
-
   const gasURL = window?.env?.GAS_ZERAR_URL;
+
   if (!gasURL) {
     toast("❌ URL de zeramento não configurada", "error");
     return;
   }
 
   const url =
-    `${window.env.GAS_ZERAR_URL}&` +
-    `WS=${encodeURIComponent(ws)}` +
+    `${gasURL}?` +
+    `ID=1CuMvGDxbquqG9oKR45tHwuHtpxZLAgDayvbPCdPpTCQ` +
+    `&WS=${ws}` +
     `&func=Update` +
-    `&ENDERECO=${encodeURIComponent(endereco)}` +
+    `&ENDERECO=${endereco}` +
     `&SKU=VAZIO` +
     `&OPERADOR=${operador}` +
     `&TIME=${time}`;
