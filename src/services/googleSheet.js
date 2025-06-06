@@ -16,9 +16,11 @@ export async function zerarEnderecoExterno(endereco) {
     .toLowerCase()
     .replace(/\s+/g, "");
 
-  const time = new Date().toLocaleString("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-  });
+  const time = new Date()
+    .toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+    })
+    .replace(",", "");
 
   const ws = `${match[1]}-${match[2]}-${match[3]}`;
   const loaderId = `loader-zerar-${endereco}`;
@@ -33,7 +35,7 @@ export async function zerarEnderecoExterno(endereco) {
     `${gasURL}` +
     `&WS=${ws}` +
     `&func=Update` +
-    `&ENDERECO=${endereco}` +
+    `&ENDERECO=${encodeURIComponent(endereco.trim())}` +
     `&SKU=VAZIO` +
     `&OPERADOR=${operador}` +
     `&TIME=${time}`;
