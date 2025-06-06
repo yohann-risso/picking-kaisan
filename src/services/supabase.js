@@ -230,19 +230,22 @@ export async function carregarProdutos() {
       const romaneio = linha.romaneio;
       const caixa = (linha.caixa || "").toUpperCase();
       const qtd = parseInt(linha.qtd || 0, 10);
-      const endereco =
-        (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
+      const enderecoCompleto = linha.endereco || "";
+      const [endPrimario = "SEM ENDEREÇO"] = enderecoCompleto
+        .split("•")
+        .map((e) => e.trim());
+
       const ref = mapaRef.get(sku);
 
       const key = `${sku}__${romaneio}`;
 
       if (!mapaSKUs[key]) {
-        const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
+        const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endPrimario);
         mapaSKUs[key] = {
           ...linha,
           sku,
           romaneio,
-          endereco,
+          endereco: enderecoCompleto,
           imagem: ref?.imagem || "https://placehold.co/120x120?text=Sem+Img",
           colecao: ref?.colecao || "—",
           distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },

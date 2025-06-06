@@ -9,8 +9,7 @@ export function criarCardProduto(produto, destaque = false) {
     (a, b) => a + b,
     0
   );
-  const end1 = produto.endereco?.split("•")[0] || "SEM LOCAL";
-  const end2 = produto.endereco?.split("•")[1] || "—";
+  const [end1 = "SEM LOCAL", end2 = "—"] = (produto.endereco || "").split("•");
 
   const miniCards = ["A", "B", "C", "D"]
     .map(

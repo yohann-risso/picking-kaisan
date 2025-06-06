@@ -53,6 +53,12 @@ export async function zerarEnderecoExterno(endereco) {
   }
 }
 
+function extrairOrdemEndereco(endereco = "") {
+  const [endPrimario = ""] = endereco.split("•").map((e) => e.trim());
+  const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endPrimario);
+  return match ? match.slice(1).map(Number) : [999, 999, 999, 999, 999];
+}
+
 function moverProdutoParaFimPorEndereco(enderecoZerado) {
   const idx = state.produtos.findIndex((p) => {
     const enderecoPrimario = p.endereco?.split("•")[0]?.trim();
@@ -80,13 +86,7 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
 
   produto.endereco = novo;
 
-  const novaOrdem = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/
-    .exec(novo)
-    ?.slice(1)
-    .map(Number) || [999, 999, 999, 999, 999];
-
-  produto.ordemEndereco = novaOrdem;
-
+  produto.ordemEndereco = extrairOrdemEndereco(novo);
   // ✅ Posição atual do operador (primeiro produto visível ou primeiro retirado)
   const referencia = state.produtos[0]?.ordemEndereco ??
     state.retirados[0]?.ordemEndereco ?? [0, 0, 0, 0, 0];
