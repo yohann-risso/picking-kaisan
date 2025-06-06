@@ -90,17 +90,14 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
   }
 
   produto.endereco = novo;
-
   produto.ordemEndereco = extrairOrdemEndereco(novo);
-  // ✅ Posição atual do operador (primeiro produto visível ou primeiro retirado)
+
   const referencia = state.produtos[0]?.ordemEndereco ??
     state.retirados[0]?.ordemEndereco ?? [0, 0, 0, 0, 0];
 
-  // ✅ Decide onde recolocar
-  const novoVemDepois = novaOrdem.some((n, i) => n > referencia[i]);
+  const novoVemDepois = produto.ordemEndereco.some((n, i) => n > referencia[i]);
 
   if (novoVemDepois) {
-    // Inserir na ordem correta
     state.produtos.push(produto);
     state.produtos.sort((a, b) => {
       for (let i = 0; i < a.ordemEndereco.length; i++) {
@@ -111,12 +108,10 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
       return 0;
     });
   } else {
-    // Coloca no fim
     state.produtos.push(produto);
   }
 
   console.log(`🔁 Produto ${produto.sku} reposicionado após zeramento.`);
-
   atualizarInterface();
   salvarProgressoLocal();
 }
