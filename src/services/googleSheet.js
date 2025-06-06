@@ -30,7 +30,7 @@ export async function zerarEnderecoExterno(endereco) {
   }
 
   const url =
-    `${gasURL}?` +
+    `${gasURL}` +
     `&WS=${ws}` +
     `&func=Update` +
     `&ENDERECO=${endereco}` +
