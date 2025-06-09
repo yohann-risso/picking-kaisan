@@ -66,16 +66,23 @@ export function criarCardProduto(produto, destaque = false) {
         </div>
       </div>
 
-      <!-- Imagem -->
-      <div class="image-container text-center">
+      <!-- Imagem e botão de bipagem -->
+      <div class="image-container text-center position-relative">
+        <button
+          class="btn btn-sm btn-outline-secondary position-absolute top-0 start-50 translate-middle-x mt-1"
+          title="Simular Bipagem"
+          onclick="simularBipagem('${produto.sku}')"
+        >
+          <i class="bi bi-upc-scan"></i>
+        </button>
+
         <img
-          src="${
-            produto.imagem || "https://via.placeholder.com/120?text=Sem+Img"
-          }"
+          src="${produto.imagem || "https://via.placeholder.com/120?text=Sem+Img"}"
           alt="Imagem do Produto"
           class="img-fluid rounded border border-primary"
           style="max-width: 120px; height: auto;"
-          onerror="this.onerror=null;this.src='https://via.placeholder.com/120?text=Sem+Img';">
+          onerror="this.onerror=null;this.src='https://via.placeholder.com/120?text=Sem+Img';"
+        >
       </div>
     </div>
   `;
