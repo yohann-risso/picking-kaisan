@@ -38,15 +38,14 @@ export function criarCardProduto(produto, destaque = false) {
       <!-- COLUNA 1 - Informações -->
       <div class="flex-grow-1 pe-md-4">
         <div class="fw-bold fs-6 mb-2 text-dark">
-          ${produto.descricao || "Sem descrição"} |
-          <strong>Ref: ${produto.sku.split("-")[0]}</strong>
+          ${produto.descricao || "Sem descrição"}
         </div>
 
         <div class="text-primary fw-bold mb-2">SKU: ${produto.sku}</div>
 
         <div class="mb-1 fw-bold fs-6" style="word-break: break-word;">
           ENDEREÇO:
-          <span class="texto-endereco text-primary fw-bolder">${end1}</span>
+          <span class="badge-endereco">${end1}</span>
           <i class="bi bi-x-circle-fill text-danger ms-1"
             title="Zerar Endereço"
             style="cursor: pointer;"
