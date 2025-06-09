@@ -280,15 +280,40 @@ export async function carregarProdutos() {
       }
     }
 
-    // 4. Ordenar os produtos por endereço
-    state.produtos.sort((a, b) => {
-      for (let i = 0; i < a.ordemEndereco.length; i++) {
-        if (a.ordemEndereco[i] !== b.ordemEndereco[i]) {
-          return a.ordemEndereco[i] - b.ordemEndereco[i];
-        }
+    // 4. Ordenar os produtos com base na posição atual do operador
+    function compararOrdem(a, b) {
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return a[i] - b[i];
       }
       return 0;
-    });
+    }
+
+    // 🔄 Ponto de referência = último endereço retirado (ou início)
+    const ultimaRetirada = state.retirados.at(-1);
+    const posicaoAtual = ultimaRetirada?.ordemEndereco || [0, 0, 0, 0, 0];
+
+    state.ordemAtual = posicaoAtual; // (para debug ou usos futuros)
+
+    const aindaNaRota = [];
+    const foraDaRota = [];
+
+    for (const p of state.produtos) {
+      const comp = compararOrdem(
+        p.ordemEndereco || [999, 999, 999, 999, 999],
+        posicaoAtual
+      );
+      if (comp >= 0) {
+        aindaNaRota.push(p);
+      } else {
+        foraDaRota.push(p);
+      }
+    }
+
+    aindaNaRota.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
+    foraDaRota.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
+
+    // 👉 Atualiza lista ordenada
+    state.produtos = [...aindaNaRota, ...foraDaRota];
 
     // 5. Calcular e armazenar total de peças (Fixo)
     const totalPecas = Object.values(mapaSKUs).reduce((acc, p) => {
