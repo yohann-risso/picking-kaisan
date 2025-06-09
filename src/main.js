@@ -144,15 +144,11 @@ window.addEventListener("load", () => {
   console.log("💡 Entrou no window.load");
   inicializarApp();
 
-  // ⏱️ Inicia verificação automática com polling inteligente
-  setInterval(() => {
-    if (document.visibilityState === "visible") {
-      const input = document.getElementById("skuInput");
-      if (input && (document.activeElement === input || input.disabled)) return;
+  // 🛰️ Verifica imediatamente se há mudanças
+  verificarMudancaProdutos();
 
-      verificarMudancaProdutos();
-    }
-  }, 60000); // a cada 60 segundos
+  // ⏱️ Inicia monitoramento automático (a cada 60s)
+  iniciarPollingProdutos(60);
 });
 
 aguardarElemento("btnLimparCache", (btn) => {
