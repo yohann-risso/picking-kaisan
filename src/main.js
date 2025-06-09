@@ -15,7 +15,10 @@ import {
 import { carregarOperadores, biparProduto } from "./core/picking.js";
 import { finalizarPicking } from "./core/finalizar.js";
 import { zerarEnderecoExterno } from "./services/googleSheet.js";
-import { iniciarPollingProdutos } from "./utils/polling.js";
+import {
+  iniciarPollingProdutos,
+  verificarMudancaProdutos,
+} from "./utils/polling.js";
 
 // 🔧 Aguarda um elemento existir no DOM
 function aguardarElemento(id, callback) {
