@@ -170,7 +170,6 @@ body {
   background-color: var(--color-primary-dark);
 }
 
-.card-produto:hover,
 .btn:hover,
 .badge-endereco:hover {
   transform: scale(1.02);
@@ -191,10 +190,21 @@ textarea {
 }
 
 .btn:hover,
-.card-produto:hover,
 .badge-endereco:hover {
   transform: scale(1.02);
   box-shadow: var(--shadow-md);
+}
+
+.badge-endereco {
+  font-weight: bold;
+  padding: 0.4em 0.6em;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: var(--color-primary);
+  color: var(--color-white);
 }
 /* === CARD DE PRODUTO === */
 .card-produto {

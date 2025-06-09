@@ -129,15 +129,16 @@
 
         <!-- INPUT SKU -->
         <div class="input-group mb-4">
+          <span class="input-group-text">SKU/EAN</span>
           <input
-            id="skuInput"
-            aria-label="Digite ou bip o SKU ou EAN"
             type="text"
+            id="skuInput"
             class="form-control"
-            placeholder="Digite ou bip o SKU/EAN"
+            placeholder="Bipe o código de barras ou digite a SKU"
+            disabled
           />
-          <button class="btn btn-success" id="btnConfirmarSKU">
-            ✔️ Confirmar
+          <button id="btnBipar" class="btn btn-success">
+            <i class="bi bi-check2-all"></i> Bipar
           </button>
           <span
             id="loaderBipagem"
