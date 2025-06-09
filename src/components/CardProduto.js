@@ -34,7 +34,8 @@ export function criarCardProduto(produto, destaque = false) {
     <div class="card-produto shadow-sm p-3 rounded border-start border-4 border-primary bg-light-subtle d-flex flex-column flex-md-row gap-4 ${
       destaque ? "primary" : ""
     }">
-      <!-- Informações -->
+      
+      <!-- COLUNA 1 - Informações -->
       <div class="flex-grow-1 pe-md-4">
         <div class="fw-bold fs-6 mb-2 text-dark">
           ${produto.descricao || "Sem descrição"} |
@@ -47,9 +48,9 @@ export function criarCardProduto(produto, destaque = false) {
           ENDEREÇO:
           <span class="texto-endereco text-primary fw-bolder">${end1}</span>
           <i class="bi bi-x-circle-fill text-danger ms-1"
-             title="Zerar Endereço"
-             style="cursor: pointer;"
-             onclick="zerarEnderecoExterno('${end1}')"></i>
+            title="Zerar Endereço"
+            style="cursor: pointer;"
+            onclick="zerarEnderecoExterno('${end1}')"></i>
           <span class="spinner-border spinner-border-sm text-primary ms-2 d-none"
                 role="status" id="loader-zerar-${end1}"></span>
         </div>
@@ -66,18 +67,22 @@ export function criarCardProduto(produto, destaque = false) {
         </div>
       </div>
 
-      <!-- Imagem e botão de bipagem -->
-      <div class="image-container text-center position-relative">
+      <!-- COLUNA 2 - Botão e Imagem -->
+      <div class="d-flex flex-column align-items-center gap-2" style="min-width: 140px;">
         <button
-          class="btn btn-sm btn-outline-secondary position-absolute top-0 start-50 translate-middle-x mt-1"
+          class="btn btn-sm btn-outline-secondary"
           title="Simular Bipagem"
-          onclick="simularBipagem('${produto.sku}')"
+          onclick="simularBipagem('${
+            produto.sku
+          }'); this.classList.add('active'); setTimeout(() => this.classList.remove('active'), 300);"
         >
-          <i class="bi bi-upc-scan"></i>
+          <i class="bi bi-upc-scan"></i> Bipar
         </button>
 
         <img
-          src="${produto.imagem || "https://via.placeholder.com/120?text=Sem+Img"}"
+          src="${
+            produto.imagem || "https://via.placeholder.com/120?text=Sem+Img"
+          }"
           alt="Imagem do Produto"
           class="img-fluid rounded border border-primary"
           style="max-width: 120px; height: auto;"
@@ -86,5 +91,6 @@ export function criarCardProduto(produto, destaque = false) {
       </div>
     </div>
   `;
+
   return wrapper;
 }

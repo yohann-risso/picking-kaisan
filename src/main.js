@@ -88,6 +88,33 @@ async function inicializarApp() {
   new bootstrap.Modal(document.getElementById("modalInicio")).show();
 }
 
+function simularBipagem(sku) {
+  const input = document.getElementById("skuInput");
+  const btn = document.getElementById("btnConfirmarSKU");
+
+  if (input && btn) {
+    input.value = sku;
+
+    // 🔔 Feedback visual: borda verde rápida
+    input.classList.add("border", "border-success", "fw-bold");
+    setTimeout(() => {
+      input.classList.remove("border-success", "fw-bold");
+    }, 800);
+
+    // Foco para reforçar a ação
+    input.focus();
+
+    // Dispara bipagem
+    btn.click();
+  } else {
+    console.warn("❌ Elemento de bipagem não encontrado.");
+  }
+}
+
+window.simularBipagem = simularBipagem;
+ // Torna acessível globalmente
+
+
 // 🎯 Confirmação no modal
 aguardarElemento("btnConfirmarInicio", (btn) => {
   btn.addEventListener("click", async () => {
