@@ -90,7 +90,7 @@ async function inicializarApp() {
 
 function simularBipagem(sku) {
   const input = document.getElementById("skuInput");
-  const btn = document.getElementById("btnConfirmarSKU");
+  const btn = document.getElementById("btnBipar");
 
   if (input && btn) {
     input.value = sku;
