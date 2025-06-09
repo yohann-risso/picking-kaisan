@@ -33,7 +33,7 @@ function aguardarElemento(id, callback) {
 }
 
 // ✅ Eventos
-aguardarElemento("btnConfirmarSKU", (btn) => {
+aguardarElemento("btnBipar", (btn) => {
   btn.addEventListener("click", biparProduto);
 });
 
