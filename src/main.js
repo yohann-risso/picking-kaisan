@@ -15,6 +15,7 @@ import {
 import { carregarOperadores, biparProduto } from "./core/picking.js";
 import { finalizarPicking } from "./core/finalizar.js";
 import { zerarEnderecoExterno } from "./services/googleSheet.js";
+import { iniciarPollingProdutos } from "../utils/polling.js";
 
 // 🔧 Aguarda um elemento existir no DOM
 function aguardarElemento(id, callback) {
@@ -112,8 +113,7 @@ function simularBipagem(sku) {
 }
 
 window.simularBipagem = simularBipagem;
- // Torna acessível globalmente
-
+// Torna acessível globalmente
 
 // 🎯 Confirmação no modal
 aguardarElemento("btnConfirmarInicio", (btn) => {
@@ -143,6 +143,16 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 window.addEventListener("load", () => {
   console.log("💡 Entrou no window.load");
   inicializarApp();
+
+  // ⏱️ Inicia verificação automática com polling inteligente
+  setInterval(() => {
+    if (document.visibilityState === "visible") {
+      const input = document.getElementById("skuInput");
+      if (input && (document.activeElement === input || input.disabled)) return;
+
+      verificarMudancaProdutos();
+    }
+  }, 60000); // a cada 60 segundos
 });
 
 aguardarElemento("btnLimparCache", (btn) => {
@@ -239,4 +249,8 @@ Object.assign(window, {
     document.getElementById("loaderGlobal").style.display = "none";
     document.getElementById("overlayCaixa").style.display = "none";
   },
+});
+
+window.addEventListener("load", () => {
+  iniciarPollingProdutos(60); // a cada 60 segundos
 });
