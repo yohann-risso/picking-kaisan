@@ -183,10 +183,10 @@ input,
 select,
 textarea {
   transition: background-color var(--transition-base),
-              color var(--transition-base),
-              border-color var(--transition-base),
-              transform var(--transition-base),
-              box-shadow var(--transition-base);
+    color var(--transition-base),
+    border-color var(--transition-base),
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
 }
 
 .btn:hover,
@@ -195,9 +195,17 @@ textarea {
   box-shadow: var(--shadow-md);
 }
 
-.text-primary → color: var(--color-primary);
-.text-danger → color: var(--color-danger);
-.bg-light-subtle → background-color: var(--color-primary-light);
+.text-primary {
+  color: var(--color-primary);
+}
+
+.text-danger {
+  color: var(--color-danger);
+}
+
+.bg-light-subtle {
+  background-color: var(--color-primary-light);
+}
 
 .badge-endereco {
   font-weight: bold;
@@ -210,6 +218,7 @@ textarea {
   background-color: var(--color-primary);
   color: var(--color-white);
 }
+
 /* === CARD DE PRODUTO === */
 .card-produto {
   background-color: var(--color-info-bg);
