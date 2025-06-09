@@ -4,6 +4,7 @@ import { registrarRetirada } from "../services/supabase.js";
 import { atualizarInterface } from "./interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
 import { mostrarAnimacaoCaixa } from "./interface.js";
+import { inserirProdutoNaRota } from "../utils/roteamento.js";
 
 export function carregarOperadores() {
   const ops = [
@@ -110,6 +111,6 @@ export function moverProdutoParaTopo(sku) {
   );
   if (idx !== -1) {
     const [item] = state.produtos.splice(idx, 1);
-    state.produtos.unshift(item);
+    inserirProdutoNaRota(item);
   }
 }

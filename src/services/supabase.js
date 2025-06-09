@@ -4,7 +4,7 @@ import { salvarProgressoLocal } from "../utils/storage.js";
 import { toast } from "../components/Toast.js";
 import { iniciarCronometro } from "../core/cronometro.js";
 import { calcularTempoIdeal } from "../utils/format.js";
-
+import { inserirProdutoNaRota } from "../utils/roteamento.js";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl =
@@ -334,34 +334,5 @@ export async function carregarProdutos() {
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
     mostrarToast("Erro ao carregar dados do Supabase", "error");
-  }
-}
-
-function inserirProdutoNaRota(produto) {
-  const referencia = state.retirados.at(-1)?.ordemEndereco ?? [0, 0, 0, 0, 0];
-
-  function compararOrdem(a, b) {
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) return a[i] - b[i];
-    }
-    return 0;
-  }
-
-  const comp = compararOrdem(produto.ordemEndereco || [999, 999, 999, 999, 999], referencia);
-
-  if (comp < 0) {
-    // Já passou da rota → vai para o fim
-    state.produtos.push(produto);
-  } else {
-    // Ainda está à frente → inserir ordenado
-    let inserido = false;
-    for (let i = 0; i < state.produtos.length; i++) {
-      if (compararOrdem(produto.ordemEndereco, state.produtos[i].ordemEndereco) < 0) {
-        state.produtos.splice(i, 0, produto);
-        inserido = true;
-        break;
-      }
-    }
-    if (!inserido) state.produtos.push(produto);
   }
 }

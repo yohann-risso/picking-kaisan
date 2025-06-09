@@ -7,6 +7,7 @@ import {
   mostrarLoaderInline,
   esconderLoaderInline,
 } from "../core/interface.js";
+import { inserirProdutoNaRota } from "../utils/roteamento.js";
 
 export async function zerarEnderecoExterno(endereco) {
   const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
@@ -78,7 +79,7 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
 
   const [produto] = state.produtos.splice(idx, 1);
 
-  // ✅ Atualiza endereço para o secundário
+  // Atualiza para o segundo endereço
   const [_, novoEndereco] = (produto.endereco || "").split("•");
   const novo = novoEndereco?.trim();
 
@@ -93,39 +94,7 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
   produto.endereco = novo;
   produto.ordemEndereco = extrairOrdemEndereco(novo);
 
-  // 🔄 Ponto de referência = última retirada (ou início)
-  const referencia = state.retirados.at(-1)?.ordemEndereco ?? [0, 0, 0, 0, 0];
-
-  function compararOrdem(a, b) {
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) return a[i] - b[i];
-    }
-    return 0;
-  }
-
-  const novoVemDepois = compararOrdem(produto.ordemEndereco, referencia) < 0;
-
-  if (novoVemDepois) {
-    // ❌ Novo endereço já ficou para trás → final da lista
-    state.produtos.push(produto);
-  } else {
-    // ✅ Novo endereço ainda está à frente → inserir no ponto correto
-    let inserido = false;
-    for (let i = 0; i < state.produtos.length; i++) {
-      const comp = compararOrdem(
-        produto.ordemEndereco,
-        state.produtos[i].ordemEndereco
-      );
-      if (comp < 0) {
-        state.produtos.splice(i, 0, produto);
-        inserido = true;
-        break;
-      }
-    }
-    if (!inserido) {
-      state.produtos.push(produto);
-    }
-  }
+  inserirProdutoNaRota(produto, state);
 
   console.log(`🔁 Produto ${produto.sku} reposicionado após zeramento.`);
   atualizarInterface();
