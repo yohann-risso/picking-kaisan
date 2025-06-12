@@ -269,12 +269,21 @@ export async function carregarProdutos() {
     for (const prod of Object.values(mapaSKUs)) {
       const key = `${prod.sku}__${prod.romaneio}`;
       const caixasRetiradas = mapaRetiradas.get(key) || [];
+
       if (caixasRetiradas.length > 0) {
+        const agregadas = { A: 0, B: 0, C: 0, D: 0 };
         caixasRetiradas.forEach((caixa) => {
-          const duplicado = structuredClone(prod);
-          duplicado.caixa = caixa;
-          state.retirados.push(duplicado);
+          const c = caixa.toUpperCase();
+          if (["A", "B", "C", "D"].includes(c)) agregadas[c]++;
         });
+
+        const retirado = {
+          ...structuredClone(prod),
+          grupo,
+          retiradas: agregadas,
+        };
+
+        state.retirados.push(retirado);
       } else {
         state.produtos.push(prod);
       }

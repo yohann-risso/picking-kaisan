@@ -1,5 +1,4 @@
 import { toast } from "../components/Toast.js";
-import { calcularTempoIdeal } from "../utils/format.js";
 import { state } from "../config.js";
 import { atualizarInterface } from "../core/interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";

@@ -97,11 +97,21 @@ export function atualizarInterface() {
       <div class="mb-2">
         ✅ <strong>${p.sku}</strong>
         <span class="badge bg-primary">Grupo ${p.grupo}</span>
-        <span class="badge bg-secondary">Caixa ${p.caixa}</span>
+        ${
+          p.retiradas
+            ? Object.entries(p.retiradas)
+                .filter(([_, qtde]) => qtde > 0)
+                .map(
+                  ([cx, qtde]) =>
+                    `<span class="badge bg-secondary">${qtde}x Caixa ${cx}</span>`
+                )
+                .join(" ")
+            : `<span class="badge bg-secondary">Caixa ${p.caixa}</span>`
+        }
         <button
           class="btn btn-sm btn-outline-light ms-3"
           title="Desfazer"
-          onclick="desfazerRetirada('${p.sku}', ${p.romaneio}, '${p.caixa}', ${p.grupo})"
+          onclick="desfazerRetirada('${p.sku}', ${p.romaneio}, '', ${p.grupo})"
         >
           🔄
         </button>
