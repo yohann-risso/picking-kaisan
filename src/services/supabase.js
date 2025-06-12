@@ -270,21 +270,40 @@ export async function carregarProdutos() {
       const key = `${prod.sku}__${prod.romaneio}`;
       const caixasRetiradas = mapaRetiradas.get(key) || [];
 
-      if (caixasRetiradas.length > 0) {
-        const agregadas = { A: 0, B: 0, C: 0, D: 0 };
-        caixasRetiradas.forEach((caixa) => {
-          const c = caixa.toUpperCase();
-          if (["A", "B", "C", "D"].includes(c)) agregadas[c]++;
-        });
+      const retiradas = { A: 0, B: 0, C: 0, D: 0 };
+      caixasRetiradas.forEach((caixa) => {
+        const c = caixa.toUpperCase();
+        if (["A", "B", "C", "D"].includes(c)) retiradas[c]++;
+      });
 
+      // Atualiza quantidade restante
+      prod.distribuicaoAtual = {
+        A: prod.distribuicaoOriginal.A - retiradas.A,
+        B: prod.distribuicaoOriginal.B - retiradas.B,
+        C: prod.distribuicaoOriginal.C - retiradas.C,
+        D: prod.distribuicaoOriginal.D - retiradas.D,
+      };
+
+      const totalRestante =
+        prod.distribuicaoAtual.A +
+        prod.distribuicaoAtual.B +
+        prod.distribuicaoAtual.C +
+        prod.distribuicaoAtual.D;
+
+      const totalRetirado =
+        retiradas.A + retiradas.B + retiradas.C + retiradas.D;
+
+      if (totalRetirado > 0) {
         const retirado = {
           ...structuredClone(prod),
           grupo,
-          retiradas: agregadas,
+          retiradas,
         };
 
         state.retirados.push(retirado);
-      } else {
+      }
+
+      if (totalRestante > 0) {
         state.produtos.push(prod);
       }
     }
