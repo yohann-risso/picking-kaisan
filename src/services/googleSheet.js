@@ -84,7 +84,16 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
 
   if (!novo || !/A\d+-B\d+-R\d+-C\d+-N\d+/.test(novo)) {
     console.warn("Endereço secundário inválido:", novo);
-    state.produtos.push(produto);
+
+    // ⚠️ Garante que não duplica
+    const jaExiste = state.produtos.some(
+      (p) => p.sku === produto.sku && p.romaneio === produto.romaneio
+    );
+
+    if (!jaExiste) {
+      state.produtos.push(produto);
+    }
+
     atualizarInterface();
     salvarProgressoLocal();
     return;
@@ -93,7 +102,14 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
   produto.endereco = novo;
   produto.ordemEndereco = extrairOrdemEndereco(novo);
 
-  inserirProdutoNaRota(produto, state);
+  // ⚠️ Garante que não duplica
+  const jaExiste = state.produtos.some(
+    (p) => p.sku === produto.sku && p.romaneio === produto.romaneio
+  );
+
+  if (!jaExiste) {
+    inserirProdutoNaRota(produto, state);
+  }
 
   console.log(`🔁 Produto ${produto.sku} reposicionado após zeramento.`);
   atualizarInterface();
