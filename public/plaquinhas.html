@@ -10,7 +10,8 @@
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
       const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
-      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io"; // 🔒 Troque pela sua public anon key
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const { jsPDF } = window.jspdf;
@@ -35,21 +36,24 @@
             const base64 = canvas.toDataURL("image/png");
             resolve(base64);
           };
-          img.onerror = (err) => reject(new Error("Erro ao carregar o logo"));
+          img.onerror = () => reject(new Error("Erro ao carregar o logo"));
         });
       }
 
       async function gerarPDF(grupo) {
         try {
-          const logoBase64 = await carregarImagemBase64(
-            "/img/logo_picking.png"
-          );
+          const grupoNum = Number(grupo);
+
+          console.log("🔍 Grupo:", grupoNum);
 
           const { data, error } = await supabase
             .from("romaneios")
             .select("romaneio, qtd_pedidos, qtd_pecas")
-            .eq("conjunto", grupo)
+            .eq("conjunto", grupoNum)
             .order("romaneio", { ascending: true });
+
+          console.log("📦 Dados retornados:", data);
+          console.log("⚠️ Erro Supabase:", error);
 
           if (error || !data || data.length === 0) {
             alert("Erro ao carregar romaneios ou nenhum encontrado.");
@@ -61,6 +65,14 @@
             unit: "mm",
             format: "a4",
           });
+
+          // ✅ DEBUG – garantir que aparece algo
+          doc.setFontSize(14);
+          doc.setTextColor(255, 0, 0);
+          doc.text("DEBUG TESTE", 20, 15);
+
+          // opcional: carregar o logo se quiser testar depois
+          // const logoBase64 = await carregarImagemBase64("/img/logo_picking.png");
 
           const largura = 95;
           const altura = 70;
@@ -87,8 +99,7 @@
 
             doc.setDrawColor(0).setLineWidth(0.5).rect(x, y, largura, altura);
 
-            // Logo
-            doc.addImage(logoBase64, "PNG", x + 4, y + 4, 20, 20);
+            // doc.addImage(logoBase64, "PNG", x + 4, y + 4, 20, 20);
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
@@ -117,7 +128,7 @@
               .setTextColor(255)
               .rect(faixaX, y, 10, altura, "F");
 
-            const lateralText = [`${grupo}`, "CAIXA", `${box}`];
+            const lateralText = [`${grupoNum}`, "CAIXA", `${box}`];
             const lateralFontSizes = [10, 10, 16];
             const lateralOffsetY = y + 15;
 
@@ -131,7 +142,7 @@
 
           doc.output("dataurlnewwindow");
         } catch (err) {
-          console.error("Erro ao gerar PDF:", err);
+          console.error("❌ Erro ao gerar PDF:", err);
           alert("Erro ao gerar PDF: " + err.message);
         }
       }
