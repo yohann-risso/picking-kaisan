@@ -83,21 +83,21 @@
 
             // Título "ROMANEIO"
             doc.setFont("helvetica", "bold").setFontSize(18).setTextColor(0);
-            doc.text("ROMANEIO", x + largura / 2, y + 10, { align: "center" });
+            doc.text("ROMANEIO", x + largura / 2, y + 8, { align: "center" });
 
             // Faixa preta com número
-            const faixaY = y + 14;
-            const faixaAltura = 22;
+            const faixaY = y + 12;
+            const faixaAltura = 24;
             doc
               .setFillColor(0)
               .rect(x + 10, faixaY, largura - 30, faixaAltura, "F");
             doc.setTextColor(255).setFontSize(65);
-            doc.text(`${rom.romaneio}`, x + largura / 2, faixaY + 16, {
+            doc.text(`${rom.romaneio}`, x + largura / 2, faixaY + 17, {
               align: "center",
             });
 
             // Tabela de informações
-            const tabelaY = faixaY + faixaAltura + 3;
+            const tabelaY = faixaY + faixaAltura + 4;
             const rowHeight = 10;
             const infos = [
               ["DATA", dataHoje],
@@ -120,27 +120,25 @@
             const faixaLateralX = x + largura - 15;
             doc.setFillColor(0).rect(faixaLateralX, y, 15, altura, "F");
 
-            // Grupo
-            doc.setTextColor(255).setFontSize(24);
-            doc.text(`${grupoNum}`, faixaLateralX + 7.5, y + 10, {
+            // Número do grupo no topo
+            doc.setTextColor(255).setFontSize(14);
+            doc.text(`${grupoNum}`, faixaLateralX + 7.5, y + 8, {
               align: "center",
             });
 
             // Texto vertical "CAIXA" centralizado
             doc.saveGraphicsState();
-            doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(255);
-
-            // Centro vertical da faixa preta
-            const centroFaixaY = y + altura / 2;
-            doc.text("CAIXA", faixaLateralX + 7.5, centroFaixaY, {
+            doc.setFont("helvetica", "bold").setFontSize(20).setTextColor(255);
+            const centroVertical = y + altura / 2;
+            doc.text("CAIXA", faixaLateralX + 7.5, centroVertical, {
               angle: -90,
               align: "center",
             });
             doc.restoreGraphicsState();
 
-            // Letra da caixa
-            doc.setFontSize(36);
-            doc.text(boxLetra, faixaLateralX + 7.5, y + altura - 5, {
+            // Letra da caixa (A, B, C...)
+            doc.setFontSize(32).setTextColor(255);
+            doc.text(boxLetra, faixaLateralX + 7.5, y + altura - 6, {
               align: "center",
             });
           });
