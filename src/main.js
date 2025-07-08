@@ -257,6 +257,8 @@ window.addEventListener("load", () => {
 });
 
 async function gerarPlaquinhas(grupo) {
+  const { jsPDF } = window.jspdf;
+
   const { data, error } = await supabase
     .from("romaneios")
     .select("romaneio, qtd_pedidos, qtd_pecas")
@@ -269,14 +271,83 @@ async function gerarPlaquinhas(grupo) {
     return;
   }
 
-  // Mapeia os dados no formato que a plaquinha espera
   const romaneios = data.map((item) => ({
     numero: item.romaneio,
     pedidos: item.qtd_pedidos,
     pecas: item.qtd_pecas,
   }));
 
-  const dadosCompactados = encodeURIComponent(JSON.stringify(romaneios));
-  const url = `/plaquinhas.html?grupo=${grupo}&romaneios=${dadosCompactados}`;
-  window.open(url, "_blank");
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  const largura = 95;
+  const altura = 65;
+  const marginX = 10;
+  const marginY = 10;
+  const espacoX = 5;
+  const espacoY = 10;
+
+  let x = marginX;
+  let y = marginY;
+  let contador = 0;
+
+  const dataHoje = new Date().toLocaleDateString("pt-BR");
+
+  romaneios.forEach((rom, index) => {
+    const box = String.fromCharCode(65 + index); // A, B, C...
+
+    // Caixinha
+    doc.setDrawColor(0);
+    doc.rect(x, y, largura, altura);
+
+    doc.setFontSize(10);
+    doc.text("kaisan", x + 4, y + 6);
+    doc.setFontSize(8);
+    doc.text("Fluxo de Armazenagem", x + 4, y + 10);
+
+    doc.setFontSize(10);
+    doc.text("ROMANEIO", x + 4, y + 18);
+    doc.setFillColor(0, 0, 0);
+    doc.setTextColor(255);
+    doc.rect(x + 4, y + 20, largura - 8, 12, "F");
+    doc.setFontSize(22);
+    doc.text(`${rom.numero}`, x + largura / 2, y + 29, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setTextColor(0);
+    doc.text(`DATA: ${dataHoje}`, x + 4, y + 38);
+    doc.text(`QTDE. PEDIDOS: ${rom.pedidos}`, x + 4, y + 44);
+    doc.text(`QTDE. PEÇAS: ${rom.pecas}`, x + 4, y + 50);
+
+    // Caixa lateral
+    doc.setFillColor(0, 0, 0);
+    doc.setTextColor(255);
+    doc.rect(x + largura - 10, y, 10, altura, "F");
+    doc.setFontSize(12);
+    doc.text(`${grupo}`, x + largura - 5, y + 15, {
+      align: "center",
+      angle: 90,
+    });
+    doc.text("CAIXA", x + largura - 5, y + 35, { align: "center", angle: 90 });
+    doc.setFontSize(16);
+    doc.text(`${box}`, x + largura - 5, y + 55, { align: "center", angle: 90 });
+
+    // Próxima posição
+    contador++;
+    if (contador % 2 === 0) {
+      x = marginX;
+      y += altura + espacoY;
+    } else {
+      x += largura + espacoX;
+    }
+
+    if (contador % 6 === 0 && index !== romaneios.length - 1) {
+      doc.addPage();
+      x = marginX;
+      y = marginY;
+    }
+  });
+
+  doc.save(`plaquinhas-grupo-${grupo}.pdf`);
+  // Ou para abrir no navegador:
+  // window.open(doc.output("bloburl"), "_blank");
 }

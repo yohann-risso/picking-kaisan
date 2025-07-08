@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.42.5",
+    "jspdf": "^3.0.1",
     "vite": "^4.5.0"
   },
   "license": "MIT"
