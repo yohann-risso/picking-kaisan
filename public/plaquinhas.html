@@ -22,12 +22,12 @@
 
     <script type="module">
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      const { jsPDF } = window.jspdf;
 
       const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
       const SUPABASE_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-      const { jsPDF } = window.jspdf;
       const grupo = new URLSearchParams(location.search).get("grupo");
 
       if (!grupo) {
@@ -79,41 +79,56 @@
             const box = String.fromCharCode(65 + index);
 
             // Moldura
-            doc.setDrawColor(0).setLineWidth(0.6).rect(x, y, largura, altura);
+            doc.setDrawColor(0).setLineWidth(0.5).rect(x, y, largura, altura);
 
-            // Cabeçalho
+            // Título ROMANEIO
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
+            doc.setFontSize(11);
             doc.setTextColor(0);
-            doc.text("ROMANEIO", x + 6, y + 12);
+            doc.text("ROMANEIO", x + 8, y + 12);
 
-            // Faixa preta do número
+            // Número em faixa preta
             doc.setFillColor(0, 0, 0);
             doc.setTextColor(255);
-            doc.rect(x + 6, y + 14, largura - 18, 14, "F");
-            doc.setFontSize(24);
-            doc.text(`${rom.romaneio}`, x + 6 + (largura - 18) / 2, y + 24, {
+            doc.rect(x + 8, y + 14, largura - 24, 18, "F");
+            doc.setFontSize(28);
+            doc.text(`${rom.romaneio}`, x + 8 + (largura - 24) / 2, y + 27, {
               align: "center",
             });
 
-            // Informações adicionais
-            doc.setFontSize(10);
+            // Tabela de dados
+            doc.setFontSize(11);
             doc.setTextColor(0);
-            doc.text(`DATA: ${dataHoje}`, x + 6, y + 35);
-            doc.text(`QTDE. PEDIDOS: ${rom.qtd_pedidos}`, x + 6, y + 42);
-            doc.text(`QTDE. PEÇAS: ${rom.qtd_pecas}`, x + 6, y + 49);
 
-            // Faixa lateral preta com grupo e letra da caixa
+            const linha1Y = y + 38;
+            const col1X = x + 8;
+            const col2X = x + largura - 24;
+
+            doc.text("DATA", col1X, linha1Y);
+            doc.text(dataHoje, col2X, linha1Y, { align: "right" });
+
+            doc.text("QTDE. PEDIDOS", col1X, linha1Y + 7);
+            doc.text(String(rom.qtd_pedidos), col2X, linha1Y + 7, {
+              align: "right",
+            });
+
+            doc.text("QTDE. PEÇAS", col1X, linha1Y + 14);
+            doc.text(String(rom.qtd_pecas), col2X, linha1Y + 14, {
+              align: "right",
+            });
+
+            // Faixa lateral vertical
             const faixaX = x + largura - 10;
             doc.setFillColor(0, 0, 0).rect(faixaX, y, 10, altura, "F");
             doc.setTextColor(255);
-            const lateral = [`${grupoNum}`, "CAIXA", `${box}`];
-            const tamanhos = [10, 10, 18];
-            const baseY = y + 20;
-
-            lateral.forEach((txt, i) => {
-              doc.setFontSize(tamanhos[i]);
-              doc.text(txt, faixaX + 5, baseY + i * 16, { align: "center" });
+            doc.setFontSize(11);
+            doc.text(`${grupoNum}`, faixaX + 5, y + 10, { align: "center" });
+            doc.text("CAIXA", faixaX + 5, y + altura / 2 - 2, {
+              align: "center",
+            });
+            doc.setFontSize(20);
+            doc.text(`${box}`, faixaX + 5, y + altura - 10, {
+              align: "center",
             });
           });
 
