@@ -139,6 +139,8 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 
     await carregarRefsPorGrupo(grupo);
     await carregarProdutos();
+
+    gerarPlaquinhas(grupo);
   });
 });
 
@@ -253,3 +255,28 @@ Object.assign(window, {
 window.addEventListener("load", () => {
   iniciarPollingProdutos(60); // a cada 60 segundos
 });
+
+async function gerarPlaquinhas(grupo) {
+  const { data, error } = await supabase
+    .from("romaneios")
+    .select("romaneio, qtd_pedidos, qtd_pecas")
+    .eq("conjunto", grupo)
+    .order("romaneio", { ascending: true });
+
+  if (error) {
+    console.error("❌ Erro ao buscar romaneios:", error);
+    toast("Erro ao gerar plaquinhas", "danger");
+    return;
+  }
+
+  // Mapeia os dados no formato que a plaquinha espera
+  const romaneios = data.map((item) => ({
+    numero: item.romaneio,
+    pedidos: item.qtd_pedidos,
+    pecas: item.qtd_pecas,
+  }));
+
+  const dadosCompactados = encodeURIComponent(JSON.stringify(romaneios));
+  const url = `/plaquinhas.html?grupo=${grupo}&romaneios=${dadosCompactados}`;
+  window.open(url, "_blank");
+}

@@ -10,17 +10,17 @@ export function carregarOperadores() {
   const ops = [
     "Alan Ramos",
     "Anderson Dutra",
-    "Arthur Oliveira",
+    "Deygles Matos",
     "Felipe Moraes",
     "Filipe Silva",
     "Gabriel Lagoa",
     "João Alves",
     "Kaique Teixeira",
+    "Lucas Paiva",
     "Marrony Portugal",
     "Nalbert Pereira",
-    "Rodrigo Novaes",
     "Rony Côrrea",
-    "Ykaro Oliveira",
+    "Wesley Conceição",
     "Yohann Risso",
   ];
 
