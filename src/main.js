@@ -257,6 +257,6 @@ window.addEventListener("load", () => {
 });
 
 function gerarPlaquinhas(grupo) {
-  const url = `/pages/plaquinhas.html?grupo=${grupo}`;
+  const url = `/plaquinhas.html?grupo=${grupo}`;
   window.open(url, "_blank");
 }
