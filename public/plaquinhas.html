@@ -123,23 +123,37 @@
               });
             });
 
-            // Faixa lateral (simulando vertical com letras)
+            // Faixa lateral preta
             const faixaX = x + largura - 10;
             doc.setFillColor(0, 0, 0).rect(faixaX, y, 10, altura, "F");
+
+            // Texto branco
+            doc.setTextColor(255);
+            doc.setFontSize(10);
+            doc.text(`${grupoNum}`, faixaX + 5, y + 8, { align: "center" });
+
+            // Texto rotacionado: "CAIXA"
+            doc.saveGraphicsState();
+            doc.setFontSize(11);
             doc.setTextColor(255);
 
-            const lateralTexto = [`${grupoNum}`, "CAIXA", `${box}`];
-            const lateralFontSizes = [10, 11, 20];
-            let offsetY = y + 10;
+            // Ponto de rotação: centro da palavra
+            doc.setFont("helvetica", "bold");
 
-            lateralTexto.forEach((txt, i) => {
-              doc.setFontSize(lateralFontSizes[i]);
-              txt.split("").forEach((letra) => {
-                doc.text(letra, faixaX + 5, offsetY, { align: "center" });
-                offsetY += 5;
-              });
-              offsetY += 4;
+            const caixaX = faixaX + 5;
+            const caixaY = y + altura / 2;
+
+            doc.setFontSize(12);
+            doc.setTextColor(255);
+            doc.text("CAIXA", caixaX, caixaY, {
+              angle: -90,
+              align: "center",
             });
+            doc.restoreGraphicsState();
+
+            // Letra da caixa (ex: A)
+            doc.setFontSize(20);
+            doc.text(box, faixaX + 5, y + altura - 10, { align: "center" });
           });
 
           doc.output("dataurlnewwindow");
