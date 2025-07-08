@@ -9,10 +9,22 @@
     <script type="module">
       import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-      function carregarImagemBase64(url) {
+      const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
+      const SUPABASE_KEY = "SEU_PUBLIC_ANON_KEY_AQUI"; // 🔒 Troque pela sua public anon key
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const { jsPDF } = window.jspdf;
+      const grupo = new URLSearchParams(location.search).get("grupo");
+
+      if (!grupo) {
+        alert("Grupo não informado.");
+        throw new Error("Grupo ausente.");
+      }
+
+      async function carregarImagemBase64(url) {
         return new Promise((resolve, reject) => {
           const img = new Image();
-          img.crossOrigin = "Anonymous"; // importante para Vercel
+          img.crossOrigin = "Anonymous";
           img.src = url;
           img.onload = () => {
             const canvas = document.createElement("canvas");
@@ -23,117 +35,108 @@
             const base64 = canvas.toDataURL("image/png");
             resolve(base64);
           };
-          img.onerror = reject;
+          img.onerror = (err) => reject(new Error("Erro ao carregar o logo"));
         });
       }
 
-      const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
-      const SUPABASE_KEY = "public-anon-key"; // substitua por variável ou exponha só se for pública
-      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+      async function gerarPDF(grupo) {
+        try {
+          const logoBase64 = await carregarImagemBase64(
+            "/img/logo_picking.png"
+          );
 
-      const { jsPDF } = window.jspdf;
+          const { data, error } = await supabase
+            .from("romaneios")
+            .select("romaneio, qtd_pedidos, qtd_pecas")
+            .eq("conjunto", grupo)
+            .order("romaneio", { ascending: true });
 
-      const grupo = new URLSearchParams(location.search).get("grupo");
+          if (error || !data || data.length === 0) {
+            alert("Erro ao carregar romaneios ou nenhum encontrado.");
+            return;
+          }
 
-      if (!grupo) {
-        alert("Grupo não informado.");
-        throw new Error("Grupo ausente.");
+          const doc = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4",
+          });
+
+          const largura = 95;
+          const altura = 70;
+          const marginLeft = 10;
+          const marginTop = 20;
+          const espacoX = 10;
+          const espacoY = 15;
+
+          const posicoes = [
+            { x: marginLeft, y: marginTop },
+            { x: marginLeft + largura + espacoX, y: marginTop },
+            { x: marginLeft, y: marginTop + altura + espacoY },
+            {
+              x: marginLeft + largura + espacoX,
+              y: marginTop + altura + espacoY,
+            },
+          ];
+
+          const dataHoje = new Date().toLocaleDateString("pt-BR");
+
+          data.slice(0, 4).forEach((rom, index) => {
+            const { x, y } = posicoes[index];
+            const box = String.fromCharCode(65 + index);
+
+            doc.setDrawColor(0).setLineWidth(0.5).rect(x, y, largura, altura);
+
+            // Logo
+            doc.addImage(logoBase64, "PNG", x + 4, y + 4, 20, 20);
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(0);
+            doc.text("ROMANEIO", x + 4, y + 27);
+
+            doc.setFillColor(0, 0, 0);
+            doc.setTextColor(255);
+            doc.rect(x + 4, y + 29, largura - 16, 14, "F");
+
+            doc.setFontSize(22);
+            doc.text(`${rom.romaneio}`, x + 4 + (largura - 16) / 2, y + 39, {
+              align: "center",
+            });
+
+            doc.setFontSize(10);
+            doc.setTextColor(0);
+            doc.text(`DATA: ${dataHoje}`, x + 4, y + 50);
+            doc.text(`QTDE. PEDIDOS: ${rom.qtd_pedidos}`, x + 4, y + 56);
+            doc.text(`QTDE. PEÇAS: ${rom.qtd_pecas}`, x + 4, y + 62);
+
+            // Lateral
+            const faixaX = x + largura - 10;
+            doc
+              .setFillColor(0, 0, 0)
+              .setTextColor(255)
+              .rect(faixaX, y, 10, altura, "F");
+
+            const lateralText = [`${grupo}`, "CAIXA", `${box}`];
+            const lateralFontSizes = [10, 10, 16];
+            const lateralOffsetY = y + 15;
+
+            lateralText.forEach((txt, i) => {
+              doc.setFontSize(lateralFontSizes[i]);
+              doc.text(txt, faixaX + 5, lateralOffsetY + i * 18, {
+                align: "center",
+              });
+            });
+          });
+
+          doc.output("dataurlnewwindow");
+        } catch (err) {
+          console.error("Erro ao gerar PDF:", err);
+          alert("Erro ao gerar PDF: " + err.message);
+        }
       }
 
       gerarPDF(grupo);
-
-      async function gerarPDF(grupo) {
-        const logoBase64 = await carregarImagemBase64(
-          "../public/img/logo_picking.png"
-        );
-
-        const { data, error } = await supabase
-          .from("romaneios")
-          .select("romaneio, qtd_pedidos, qtd_pecas")
-          .eq("conjunto", grupo)
-          .order("romaneio", { ascending: true });
-
-        if (error || !data) {
-          alert("Erro ao carregar romaneios.");
-          return;
-        }
-
-        const doc = new jsPDF({
-          orientation: "portrait",
-          unit: "mm",
-          format: "a4",
-        });
-
-        const largura = 95;
-        const altura = 70;
-        const marginLeft = 10;
-        const marginTop = 20;
-        const espacoX = 10;
-        const espacoY = 15;
-
-        const posicoes = [
-          { x: marginLeft, y: marginTop },
-          { x: marginLeft + largura + espacoX, y: marginTop },
-          { x: marginLeft, y: marginTop + altura + espacoY },
-          {
-            x: marginLeft + largura + espacoX,
-            y: marginTop + altura + espacoY,
-          },
-        ];
-
-        const dataHoje = new Date().toLocaleDateString("pt-BR");
-
-        data.slice(0, 4).forEach((rom, index) => {
-          const { x, y } = posicoes[index];
-          const box = String.fromCharCode(65 + index);
-
-          // Moldura
-          doc.setDrawColor(0).setLineWidth(0.5).rect(x, y, largura, altura);
-
-          // ✅ Logo (canto superior esquerdo)
-          doc.addImage(logoBase64, "PNG", x + 4, y + 4, 20, 20);
-
-          // ROMANEIO
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(10);
-          doc.setTextColor(0);
-          doc.text("ROMANEIO", x + 4, y + 27);
-
-          doc.setFillColor(0, 0, 0);
-          doc.setTextColor(255);
-          doc.rect(x + 4, y + 29, largura - 16, 14, "F");
-
-          doc.setFontSize(22);
-          doc.text(`${rom.romaneio}`, x + 4 + (largura - 16) / 2, y + 39, {
-            align: "center",
-          });
-
-          doc.setFontSize(10);
-          doc.setTextColor(0);
-          doc.text(`DATA: ${dataHoje}`, x + 4, y + 50);
-          doc.text(`QTDE. PEDIDOS: ${rom.qtd_pedidos}`, x + 4, y + 56);
-          doc.text(`QTDE. PEÇAS: ${rom.qtd_pecas}`, x + 4, y + 62);
-
-          // Faixa lateral (sem rotate)
-          const faixaX = x + largura - 10;
-          doc.setFillColor(0, 0, 0);
-          doc.setTextColor(255);
-          doc.rect(faixaX, y, 10, altura, "F");
-
-          const lateralText = [`${grupo}`, "CAIXA", `${box}`];
-          const lateralFontSizes = [10, 10, 16];
-          const lateralOffsetY = y + 15;
-
-          lateralText.forEach((txt, i) => {
-            doc.setFontSize(lateralFontSizes[i]);
-            doc.text(txt, faixaX + 5, lateralOffsetY + i * 18, {
-              align: "center",
-            });
-          });
-        });
-
-        doc.output("dataurlnewwindow");
-      }
     </script>
   </body>
 </html>
