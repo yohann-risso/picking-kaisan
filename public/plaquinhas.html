@@ -81,13 +81,13 @@
             // Moldura externa
             doc.setDrawColor(0).setLineWidth(0.4).rect(x, y, largura, altura);
 
-            // "ROMANEIO"
+            // Título ROMANEIO
             doc.setFont("helvetica", "bold");
             doc.setFontSize(12);
             doc.setTextColor(0);
             doc.text("ROMANEIO", x + 8, y + 12);
 
-            // Faixa preta com número grande
+            // Faixa preta com número
             const faixaY = y + 14;
             doc
               .setFillColor(0, 0, 0)
@@ -98,25 +98,24 @@
               `${rom.romaneio}`,
               x + 8 + (largura - 26) / 2,
               faixaY + 13,
-              { align: "center" }
+              {
+                align: "center",
+              }
             );
 
-            // Tabela com 3 linhas (DATA, PEDIDOS, PEÇAS)
-            const tableStartY = faixaY + 22;
+            // Tabela
+            const tableY = faixaY + 22;
             const rowHeight = 10;
             const rowWidth = largura - 26;
-
-            const linhas = [
+            const infos = [
               ["DATA", dataHoje],
               ["QTDE. PEDIDOS", String(rom.qtd_pedidos)],
               ["QTDE. PEÇAS", String(rom.qtd_pecas)],
             ];
 
-            linhas.forEach(([label, valor], i) => {
-              const yLinha = tableStartY + i * rowHeight;
-              doc.setDrawColor(0);
-              doc.rect(x + 8, yLinha, rowWidth, rowHeight);
-
+            infos.forEach(([label, valor], i) => {
+              const yLinha = tableY + i * rowHeight;
+              doc.setDrawColor(0).rect(x + 8, yLinha, rowWidth, rowHeight);
               doc.setTextColor(0).setFontSize(11);
               doc.text(label, x + 10, yLinha + 6);
               doc.text(valor, x + 8 + rowWidth - 4, yLinha + 6, {
@@ -124,33 +123,23 @@
               });
             });
 
-            // Faixa lateral (vertical) com grupo, CAIXA e letra
+            // Faixa lateral (simulando vertical com letras)
             const faixaX = x + largura - 10;
             doc.setFillColor(0, 0, 0).rect(faixaX, y, 10, altura, "F");
-
-            doc.saveGraphicsState();
             doc.setTextColor(255);
 
-            // Gira o canvas em torno do centro da faixa
-            const centerX = faixaX + 5;
-            const centerY = y + altura / 2;
+            const lateralTexto = [`${grupoNum}`, "CAIXA", `${box}`];
+            const lateralFontSizes = [10, 11, 20];
+            let offsetY = y + 10;
 
-            doc.setFont("Geist", "bold");
-
-            // Rotaciona -90 graus (em radianos)
-            doc.rotate(-90, { origin: [centerX, centerY] });
-
-            // Texto girado na vertical (de baixo para cima)
-            doc.setFontSize(10);
-            doc.text(`${grupoNum}`, centerX, centerY - 20, { align: "center" });
-
-            doc.setFontSize(12);
-            doc.text("CAIXA", centerX, centerY, { align: "center" });
-
-            doc.setFontSize(22);
-            doc.text(box, centerX, centerY + 20, { align: "center" });
-
-            doc.restoreGraphicsState();
+            lateralTexto.forEach((txt, i) => {
+              doc.setFontSize(lateralFontSizes[i]);
+              txt.split("").forEach((letra) => {
+                doc.text(letra, faixaX + 5, offsetY, { align: "center" });
+                offsetY += 5;
+              });
+              offsetY += 4;
+            });
           });
 
           doc.output("dataurlnewwindow");
