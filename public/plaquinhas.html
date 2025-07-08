@@ -61,25 +61,22 @@
           }
 
           const doc = new jsPDF({
-            orientation: "portrait",
+            orientation: "landscape",
             unit: "mm",
             format: "a4",
           });
 
-          // ✅ DEBUG – garantir que aparece algo
-          doc.setFontSize(14);
-          doc.setTextColor(255, 0, 0);
-          doc.text("DEBUG TESTE", 20, 15);
-
           // opcional: carregar o logo se quiser testar depois
-          // const logoBase64 = await carregarImagemBase64("/img/logo_picking.png");
+          const logoBase64 = await carregarImagemBase64(
+            "/img/logo_picking.png"
+          );
 
-          const largura = 95;
-          const altura = 70;
-          const marginLeft = 10;
-          const marginTop = 20;
-          const espacoX = 10;
-          const espacoY = 15;
+          const largura = 130;
+          const altura = 85;
+          const marginLeft = 20;
+          const marginTop = 10;
+          const espacoX = 15;
+          const espacoY = 10;
 
           const posicoes = [
             { x: marginLeft, y: marginTop },
@@ -99,7 +96,7 @@
 
             doc.setDrawColor(0).setLineWidth(0.5).rect(x, y, largura, altura);
 
-            // doc.addImage(logoBase64, "PNG", x + 4, y + 4, 20, 20);
+            doc.addImage(logoBase64, "PNG", x + 4, y + 4, 20, 20);
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
