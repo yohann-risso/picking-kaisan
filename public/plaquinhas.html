@@ -126,11 +126,13 @@
               align: "center",
             });
 
-            // Texto vertical "CAIXA"
+            // Texto vertical "CAIXA" centralizado
             doc.saveGraphicsState();
-            doc.setFont("helvetica", "bold").setFontSize(22);
-            doc.setTextColor(255);
-            doc.text("CAIXA", faixaLateralX + 7.5, y + altura - 10, {
+            doc.setFont("helvetica", "bold").setFontSize(22).setTextColor(255);
+
+            // Centro vertical da faixa preta
+            const centroFaixaY = y + altura / 2;
+            doc.text("CAIXA", faixaLateralX + 7.5, centroFaixaY, {
               angle: -90,
               align: "center",
             });
