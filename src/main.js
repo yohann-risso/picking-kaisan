@@ -256,7 +256,7 @@ window.addEventListener("load", () => {
   iniciarPollingProdutos(60); // a cada 60 segundos
 });
 
-async function gerarPlaquinhas(grupo) {
+async function gerarPdfPlaquinhas(grupo) {
   const { jsPDF } = window.jspdf;
 
   const { data, error } = await supabase
@@ -280,74 +280,73 @@ async function gerarPlaquinhas(grupo) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
   const largura = 95;
-  const altura = 65;
-  const marginX = 10;
-  const marginY = 10;
-  const espacoX = 5;
-  const espacoY = 10;
+  const altura = 70;
+  const marginLeft = 10;
+  const marginTop = 20;
+  const espacoX = 10;
+  const espacoY = 15;
 
-  let x = marginX;
-  let y = marginY;
-  let contador = 0;
+  const posicoes = [
+    { x: marginLeft, y: marginTop },
+    { x: marginLeft + largura + espacoX, y: marginTop },
+    { x: marginLeft, y: marginTop + altura + espacoY },
+    { x: marginLeft + largura + espacoX, y: marginTop + altura + espacoY },
+  ];
 
   const dataHoje = new Date().toLocaleDateString("pt-BR");
 
   romaneios.forEach((rom, index) => {
-    const box = String.fromCharCode(65 + index); // A, B, C...
+    const { x, y } = posicoes[index % 4];
+    const box = String.fromCharCode(65 + index);
 
-    // Caixinha
+    // Caixa
     doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
     doc.rect(x, y, largura, altura);
 
-    doc.setFontSize(10);
-    doc.text("kaisan", x + 4, y + 6);
-    doc.setFontSize(8);
-    doc.text("Fluxo de Armazenagem", x + 4, y + 10);
-
-    doc.setFontSize(10);
-    doc.text("ROMANEIO", x + 4, y + 18);
-    doc.setFillColor(0, 0, 0);
-    doc.setTextColor(255);
-    doc.rect(x + 4, y + 20, largura - 8, 12, "F");
-    doc.setFontSize(22);
-    doc.text(`${rom.numero}`, x + largura / 2, y + 29, { align: "center" });
-
+    // Cabeçalho
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(0);
-    doc.text(`DATA: ${dataHoje}`, x + 4, y + 38);
-    doc.text(`QTDE. PEDIDOS: ${rom.pedidos}`, x + 4, y + 44);
-    doc.text(`QTDE. PEÇAS: ${rom.pecas}`, x + 4, y + 50);
+    doc.text("kaisan", x + 4, y + 7);
+    doc.setFontSize(7);
+    doc.text("Fluxo de Armazenagem", x + 4, y + 11);
 
-    // Caixa lateral
+    // Título e número
+    doc.setFontSize(10);
+    doc.text("ROMANEIO", x + 4, y + 19);
+
     doc.setFillColor(0, 0, 0);
     doc.setTextColor(255);
-    doc.rect(x + largura - 10, y, 10, altura, "F");
-    doc.setFontSize(12);
-    doc.text(`${grupo}`, x + largura - 5, y + 15, {
+    doc.rect(x + 4, y + 21, largura - 16, 14, "F");
+
+    doc.setFontSize(22);
+    doc.text(`${rom.numero}`, x + 4 + (largura - 16) / 2, y + 31, {
       align: "center",
-      angle: 90,
     });
-    doc.text("CAIXA", x + largura - 5, y + 35, { align: "center", angle: 90 });
+
+    // Detalhes
+    doc.setFontSize(10);
+    doc.setTextColor(0);
+    doc.text(`DATA: ${dataHoje}`, x + 4, y + 42);
+    doc.text(`QTDE. PEDIDOS: ${rom.pedidos}`, x + 4, y + 49);
+    doc.text(`QTDE. PEÇAS: ${rom.pecas}`, x + 4, y + 56);
+
+    // Lateral
+    const faixaX = x + largura - 10;
+    doc.setFillColor(0, 0, 0);
+    doc.setTextColor(255);
+    doc.rect(faixaX, y, 10, altura, "F");
+
+    doc.setFontSize(10);
+    doc.saveGraphicsState();
+    doc.rotate(-90, { origin: [faixaX + 5, y + altura / 2] });
+    doc.text(`${grupo}`, faixaX + 5, y + altura / 2 - 15, { align: "center" });
+    doc.text("CAIXA", faixaX + 5, y + altura / 2, { align: "center" });
     doc.setFontSize(16);
-    doc.text(`${box}`, x + largura - 5, y + 55, { align: "center", angle: 90 });
-
-    // Próxima posição
-    contador++;
-    if (contador % 2 === 0) {
-      x = marginX;
-      y += altura + espacoY;
-    } else {
-      x += largura + espacoX;
-    }
-
-    if (contador % 6 === 0 && index !== romaneios.length - 1) {
-      doc.addPage();
-      x = marginX;
-      y = marginY;
-    }
+    doc.text(box, faixaX + 5, y + altura / 2 + 15, { align: "center" });
+    doc.restoreGraphicsState();
   });
 
-  doc.save(`plaquinhas-grupo-${grupo}.pdf`);
-  // Ou para abrir no navegador:
-  // window.open(doc.output("bloburl"), "_blank");
+  doc.output("dataurlnewwindow");
 }
