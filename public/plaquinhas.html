@@ -57,108 +57,95 @@
 
           const largura = 130;
           const altura = 85;
-          const marginLeft = 20;
-          const marginTop = 10;
-          const espacoX = 15;
-          const espacoY = 10;
+          const margemX = 20;
+          const margemY = 10;
+          const espacamentoX = 20;
+          const espacamentoY = 15;
 
           const posicoes = [
-            { x: marginLeft, y: marginTop },
-            { x: marginLeft + largura + espacoX, y: marginTop },
-            { x: marginLeft, y: marginTop + altura + espacoY },
+            { x: margemX, y: margemY },
+            { x: margemX + largura + espacamentoX, y: margemY },
+            { x: margemX, y: margemY + altura + espacamentoY },
             {
-              x: marginLeft + largura + espacoX,
-              y: marginTop + altura + espacoY,
+              x: margemX + largura + espacamentoX,
+              y: margemY + altura + espacamentoY,
             },
           ];
 
           const dataHoje = new Date().toLocaleDateString("pt-BR");
 
-          data.slice(0, 4).forEach((rom, index) => {
-            const { x, y } = posicoes[index];
-            const box = String.fromCharCode(65 + index);
+          data.slice(0, 4).forEach((rom, i) => {
+            const { x, y } = posicoes[i];
+            const boxLetra = String.fromCharCode(65 + i);
 
             // Moldura externa
             doc.setDrawColor(0).setLineWidth(0.4).rect(x, y, largura, altura);
 
-            // Título ROMANEIO
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(20);
-            doc.setTextColor(0);
-            doc.text("ROMANEIO", x + 8, y + 12, { align: "center" });
+            // Título "ROMANEIO"
+            doc.setFont("helvetica", "bold").setFontSize(18).setTextColor(0);
+            doc.text("ROMANEIO", x + largura / 2, y + 10, { align: "center" });
 
             // Faixa preta com número
             const faixaY = y + 14;
+            const faixaAltura = 22;
             doc
-              .setFillColor(0, 0, 0)
-              .rect(x + 8, faixaY, largura - 26, 20, "F");
-            doc.setTextColor(255);
-            doc.setFontSize(70);
-            doc.text(
-              `${rom.romaneio}`,
-              x + 8 + (largura - 26) / 2,
-              faixaY + 13,
-              {
-                align: "center",
-              }
-            );
+              .setFillColor(0)
+              .rect(x + 10, faixaY, largura - 30, faixaAltura, "F");
+            doc.setTextColor(255).setFontSize(65);
+            doc.text(`${rom.romaneio}`, x + largura / 2, faixaY + 16, {
+              align: "center",
+            });
 
-            // Tabela
-            const tableY = faixaY + 22;
+            // Tabela de informações
+            const tabelaY = faixaY + faixaAltura + 3;
             const rowHeight = 10;
-            const rowWidth = largura - 26;
             const infos = [
               ["DATA", dataHoje],
               ["QTDE. PEDIDOS", String(rom.qtd_pedidos)],
               ["QTDE. PEÇAS", String(rom.qtd_pecas)],
             ];
 
-            infos.forEach(([label, valor], i) => {
-              const yLinha = tableY + i * rowHeight;
-              doc.setDrawColor(0).rect(x + 8, yLinha, rowWidth, rowHeight);
+            infos.forEach(([label, valor], j) => {
+              const linhaY = tabelaY + j * rowHeight;
+              const rowWidth = largura - 30;
+              doc.setDrawColor(0).rect(x + 10, linhaY, rowWidth, rowHeight);
               doc.setTextColor(0).setFontSize(11);
-              doc.text(label, x + 10, yLinha + 6);
-              doc.text(valor, x + 8 + rowWidth - 4, yLinha + 6, {
+              doc.text(label, x + 12, linhaY + 7);
+              doc.text(valor, x + 10 + rowWidth - 4, linhaY + 7, {
                 align: "right",
               });
             });
 
             // Faixa lateral preta
-            const faixaX = x + largura - 15;
-            doc.setFillColor(0, 0, 0).rect(faixaX, y, 15, altura, "F");
+            const faixaLateralX = x + largura - 15;
+            doc.setFillColor(0).rect(faixaLateralX, y, 15, altura, "F");
 
-            // Texto branco
-            doc.setTextColor(255);
-            doc.setFontSize(25);
-            doc.text(`${grupoNum}`, faixaX + 5, y + 8, { align: "center" });
+            // Grupo
+            doc.setTextColor(255).setFontSize(24);
+            doc.text(`${grupoNum}`, faixaLateralX + 7.5, y + 10, {
+              align: "center",
+            });
 
-            // Texto rotacionado: "CAIXA"
+            // Texto vertical "CAIXA"
             doc.saveGraphicsState();
-            doc.setFontSize(25);
+            doc.setFont("helvetica", "bold").setFontSize(22);
             doc.setTextColor(255);
-
-            // Ponto de rotação: centro da palavra
-            doc.setFont("helvetica", "bold");
-
-            const caixaX = faixaX;
-            const caixaY = y + altura;
-
-            doc.setFontSize(25);
-            doc.setTextColor(255);
-            doc.text("CAIXA", caixaX, caixaY, {
+            doc.text("CAIXA", faixaLateralX + 7.5, y + altura - 10, {
               angle: -90,
-              align: "justify",
+              align: "center",
             });
             doc.restoreGraphicsState();
 
-            // Letra da caixa (ex: A)
-            doc.setFontSize(40);
-            doc.text(box, faixaX + 5, y + altura - 10, { align: "center" });
+            // Letra da caixa
+            doc.setFontSize(36);
+            doc.text(boxLetra, faixaLateralX + 7.5, y + altura - 5, {
+              align: "center",
+            });
           });
 
           doc.output("dataurlnewwindow");
         } catch (err) {
-          console.error("❌ Erro ao gerar PDF:", err);
+          console.error("Erro ao gerar PDF:", err);
           alert("Erro ao gerar PDF: " + err.message);
         }
       }
