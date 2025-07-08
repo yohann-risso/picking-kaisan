@@ -2,95 +2,138 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Plaquinhas de Romaneio</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
-        padding: 20px;
-      }
-
-      .plaquinha {
-        border: 2px solid black;
-        display: grid;
-        grid-template-columns: 85% 15%;
-        height: 180px;
-        padding: 10px;
-      }
-
-      .main-content {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-
-      .romaneio-num {
-        font-size: 40px;
-        background: black;
-        color: white;
-        text-align: center;
-        padding: 5px 0;
-        font-weight: bold;
-      }
-
-      .row {
-        display: flex;
-        justify-content: space-between;
-        border-top: 1px solid #000;
-        padding: 4px 0;
-        font-size: 14px;
-      }
-
-      .box-info {
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-        font-weight: bold;
-        background: black;
-        color: white;
-        text-align: center;
-        font-size: 18px;
-      }
-
-      .logo {
-        font-size: 12px;
-        font-weight: bold;
-      }
-    </style>
+    <title>Plaquinhas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   </head>
-  <body id="container">
-    <script>
-      const params = new URLSearchParams(location.search);
-      const grupo = params.get("grupo");
-      const dados = JSON.parse(
-        decodeURIComponent(params.get("romaneios") || "[]")
-      );
-      const dataHoje = new Date().toLocaleDateString("pt-BR");
+  <body>
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-      const container = document.getElementById("container");
+      function carregarImagemBase64(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "Anonymous"; // importante para Vercel
+          img.src = url;
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const base64 = canvas.toDataURL("image/png");
+            resolve(base64);
+          };
+          img.onerror = reject;
+        });
+      }
 
-      dados.forEach((item, i) => {
-        const box = String.fromCharCode(65 + i); // A, B, C...
+      const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
+      const SUPABASE_KEY = "public-anon-key"; // substitua por variável ou exponha só se for pública
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const div = document.createElement("div");
-        div.className = "plaquinha";
-        div.innerHTML = `
-        <div class="main-content">
-          <div class="logo">kaisan<br><small>Fluxo de Armazenagem</small></div>
-          <div class="romaneio-num">${item.numero}</div>
-          <div class="row"><span>DATA</span><span>${dataHoje}</span></div>
-          <div class="row"><span>QTDE. PEDIDOS</span><span>${item.pedidos}</span></div>
-          <div class="row"><span>QTDE. PEÇAS</span><span>${item.pecas}</span></div>
-        </div>
-        <div class="box-info">
-          ${grupo}<br>CAIXA<br>${box}
-        </div>
-      `;
-        container.appendChild(div);
-      });
+      const { jsPDF } = window.jspdf;
 
-      window.onload = () => window.print();
+      const grupo = new URLSearchParams(location.search).get("grupo");
+
+      if (!grupo) {
+        alert("Grupo não informado.");
+        throw new Error("Grupo ausente.");
+      }
+
+      gerarPDF(grupo);
+
+      async function gerarPDF(grupo) {
+        const logoBase64 = await carregarImagemBase64(
+          "../public/img/logo_picking.png"
+        );
+
+        const { data, error } = await supabase
+          .from("romaneios")
+          .select("romaneio, qtd_pedidos, qtd_pecas")
+          .eq("conjunto", grupo)
+          .order("romaneio", { ascending: true });
+
+        if (error || !data) {
+          alert("Erro ao carregar romaneios.");
+          return;
+        }
+
+        const doc = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+
+        const largura = 95;
+        const altura = 70;
+        const marginLeft = 10;
+        const marginTop = 20;
+        const espacoX = 10;
+        const espacoY = 15;
+
+        const posicoes = [
+          { x: marginLeft, y: marginTop },
+          { x: marginLeft + largura + espacoX, y: marginTop },
+          { x: marginLeft, y: marginTop + altura + espacoY },
+          {
+            x: marginLeft + largura + espacoX,
+            y: marginTop + altura + espacoY,
+          },
+        ];
+
+        const dataHoje = new Date().toLocaleDateString("pt-BR");
+
+        data.slice(0, 4).forEach((rom, index) => {
+          const { x, y } = posicoes[index];
+          const box = String.fromCharCode(65 + index);
+
+          // Moldura
+          doc.setDrawColor(0).setLineWidth(0.5).rect(x, y, largura, altura);
+
+          // ✅ Logo (canto superior esquerdo)
+          doc.addImage(logoBase64, "PNG", x + 4, y + 4, 20, 20);
+
+          // ROMANEIO
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10);
+          doc.setTextColor(0);
+          doc.text("ROMANEIO", x + 4, y + 27);
+
+          doc.setFillColor(0, 0, 0);
+          doc.setTextColor(255);
+          doc.rect(x + 4, y + 29, largura - 16, 14, "F");
+
+          doc.setFontSize(22);
+          doc.text(`${rom.romaneio}`, x + 4 + (largura - 16) / 2, y + 39, {
+            align: "center",
+          });
+
+          doc.setFontSize(10);
+          doc.setTextColor(0);
+          doc.text(`DATA: ${dataHoje}`, x + 4, y + 50);
+          doc.text(`QTDE. PEDIDOS: ${rom.qtd_pedidos}`, x + 4, y + 56);
+          doc.text(`QTDE. PEÇAS: ${rom.qtd_pecas}`, x + 4, y + 62);
+
+          // Faixa lateral (sem rotate)
+          const faixaX = x + largura - 10;
+          doc.setFillColor(0, 0, 0);
+          doc.setTextColor(255);
+          doc.rect(faixaX, y, 10, altura, "F");
+
+          const lateralText = [`${grupo}`, "CAIXA", `${box}`];
+          const lateralFontSizes = [10, 10, 16];
+          const lateralOffsetY = y + 15;
+
+          lateralText.forEach((txt, i) => {
+            doc.setFontSize(lateralFontSizes[i]);
+            doc.text(txt, faixaX + 5, lateralOffsetY + i * 18, {
+              align: "center",
+            });
+          });
+        });
+
+        doc.output("dataurlnewwindow");
+      }
     </script>
   </body>
 </html>
