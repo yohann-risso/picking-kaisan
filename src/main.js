@@ -339,13 +339,14 @@ async function gerarPlaquinhas(grupo) {
     doc.rect(faixaX, y, 10, altura, "F");
 
     doc.setFontSize(10);
-    doc.saveGraphicsState();
-    doc.rotate(-90, { origin: [faixaX + 5, y + altura / 2] });
-    doc.text(`${grupo}`, faixaX + 5, y + altura / 2 - 15, { align: "center" });
-    doc.text("CAIXA", faixaX + 5, y + altura / 2, { align: "center" });
-    doc.setFontSize(16);
-    doc.text(box, faixaX + 5, y + altura / 2 + 15, { align: "center" });
-    doc.restoreGraphicsState();
+    const lateralText = [`${grupo}`, "CAIXA", `${box}`];
+    const lateralFontSizes = [10, 10, 16];
+    const lateralOffsetY = y + 10;
+
+    lateralText.forEach((txt, i) => {
+      doc.setFontSize(lateralFontSizes[i]);
+      doc.text(txt, faixaX + 5, lateralOffsetY + i * 20, { align: "center" });
+    });
   });
 
   doc.output("dataurlnewwindow");
