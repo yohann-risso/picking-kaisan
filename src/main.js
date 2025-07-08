@@ -340,7 +340,6 @@ async function gerarPlaquinhas(grupo) {
 
     doc.setFontSize(10);
     doc.saveGraphicsState();
-    doc.rotate(-90, { origin: [faixaX + 5, y + altura / 2] });
     doc.text(`${grupo}`, faixaX + 5, y + altura / 2 - 15, { align: "center" });
     doc.text("CAIXA", faixaX + 5, y + altura / 2, { align: "center" });
     doc.setFontSize(16);
