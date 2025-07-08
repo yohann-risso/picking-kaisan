@@ -256,7 +256,7 @@ window.addEventListener("load", () => {
   iniciarPollingProdutos(60); // a cada 60 segundos
 });
 
-async function gerarPdfPlaquinhas(grupo) {
+async function gerarPlaquinhas(grupo) {
   const { jsPDF } = window.jspdf;
 
   const { data, error } = await supabase
