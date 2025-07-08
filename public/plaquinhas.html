@@ -127,15 +127,30 @@
             // Faixa lateral (vertical) com grupo, CAIXA e letra
             const faixaX = x + largura - 10;
             doc.setFillColor(0, 0, 0).rect(faixaX, y, 10, altura, "F");
+
+            doc.saveGraphicsState();
             doc.setTextColor(255);
+
+            // Gira o canvas em torno do centro da faixa
+            const centerX = faixaX + 5;
+            const centerY = y + altura / 2;
+
+            doc.setFont("Geist", "bold");
+
+            // Rotaciona -90 graus (em radianos)
+            doc.rotate(-90, { origin: [centerX, centerY] });
+
+            // Texto girado na vertical (de baixo para cima)
             doc.setFontSize(10);
-            doc.text(`${grupoNum}`, faixaX + 5, y + 8, { align: "center" });
+            doc.text(`${grupoNum}`, centerX, centerY - 20, { align: "center" });
+
             doc.setFontSize(12);
-            doc.text("CAIXA", faixaX + 5, y + altura / 2 - 4, {
-              align: "center",
-            });
-            doc.setFontSize(20);
-            doc.text(box, faixaX + 5, y + altura - 10, { align: "center" });
+            doc.text("CAIXA", centerX, centerY, { align: "center" });
+
+            doc.setFontSize(22);
+            doc.text(box, centerX, centerY + 20, { align: "center" });
+
+            doc.restoreGraphicsState();
           });
 
           doc.output("dataurlnewwindow");
