@@ -83,9 +83,9 @@
 
             // Título ROMANEIO
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
+            doc.setFontSize(20);
             doc.setTextColor(0);
-            doc.text("ROMANEIO", x + 8, y + 12);
+            doc.text("ROMANEIO", x + 8, y + 12, { align: "center" });
 
             // Faixa preta com número
             const faixaY = y + 14;
@@ -93,7 +93,7 @@
               .setFillColor(0, 0, 0)
               .rect(x + 8, faixaY, largura - 26, 20, "F");
             doc.setTextColor(255);
-            doc.setFontSize(28);
+            doc.setFontSize(70);
             doc.text(
               `${rom.romaneio}`,
               x + 8 + (largura - 26) / 2,
@@ -124,8 +124,8 @@
             });
 
             // Faixa lateral preta
-            const faixaX = x + largura - 20;
-            doc.setFillColor(0, 0, 0).rect(faixaX, y, 10, altura, "F");
+            const faixaX = x + largura - 15;
+            doc.setFillColor(0, 0, 0).rect(faixaX, y, 15, altura, "F");
 
             // Texto branco
             doc.setTextColor(255);
