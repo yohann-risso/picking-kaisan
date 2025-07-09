@@ -8,12 +8,11 @@
       body {
         font-family: "Geist", "Segoe UI", sans-serif;
         background: #f8f9fa;
-        color: #1a1d20;
-        font-size: 15px;
         display: flex;
         align-items: center;
         justify-content: center;
         height: 100vh;
+        margin: 0;
       }
     </style>
   </head>
@@ -25,8 +24,7 @@
       const { jsPDF } = window.jspdf;
 
       const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
-      const SUPABASE_KEY =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
       const grupo = new URLSearchParams(location.search).get("grupo");
 
@@ -57,95 +55,102 @@
 
           const largura = 130;
           const altura = 85;
-          const margemX = 20;
-          const margemY = 10;
-          const espacamentoX = 20;
-          const espacamentoY = 15;
+          const marginLeft = 20;
+          const marginTop = 10;
+          const espacoX = 15;
+          const espacoY = 10;
 
           const posicoes = [
-            { x: margemX, y: margemY },
-            { x: margemX + largura + espacamentoX, y: margemY },
-            { x: margemX, y: margemY + altura + espacamentoY },
+            { x: marginLeft, y: marginTop },
+            { x: marginLeft + largura + espacoX, y: marginTop },
+            { x: marginLeft, y: marginTop + altura + espacoY },
             {
-              x: margemX + largura + espacamentoX,
-              y: margemY + altura + espacamentoY,
+              x: marginLeft + largura + espacoX,
+              y: marginTop + altura + espacoY,
             },
           ];
 
           const dataHoje = new Date().toLocaleDateString("pt-BR");
 
-          data.slice(0, 4).forEach((rom, i) => {
-            const { x, y } = posicoes[i];
-            const boxLetra = String.fromCharCode(65 + i);
+          data.slice(0, 4).forEach((rom, index) => {
+            const { x, y } = posicoes[index];
+            const box = String.fromCharCode(65 + index);
 
-            // Moldura externa
+            // 🔲 Moldura externa
             doc.setDrawColor(0).setLineWidth(0.4).rect(x, y, largura, altura);
 
-            // Título "ROMANEIO"
-            doc.setFont("helvetica", "bold").setFontSize(18).setTextColor(0);
-            doc.text("ROMANEIO", x + largura / 2, y + 8, { align: "center" });
+            // 🧾 Cabeçalho
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(0);
+            doc.text("ROMANEIO", x + 8, y + 12);
 
-            // Faixa preta com número
-            const faixaY = y + 12;
-            const faixaAltura = 24;
+            // 🖤 Faixa preta com número
+            const faixaY = y + 14;
             doc
-              .setFillColor(0)
-              .rect(x + 10, faixaY, largura - 30, faixaAltura, "F");
-            doc.setTextColor(255).setFontSize(65);
-            doc.text(`${rom.romaneio}`, x + largura / 2, faixaY + 17, {
-              align: "center",
-            });
+              .setFillColor(0, 0, 0)
+              .rect(x + 8, faixaY, largura - 26, 20, "F");
+            doc.setTextColor(255);
+            doc.setFontSize(28);
+            doc.text(
+              `${rom.romaneio}`,
+              x + 8 + (largura - 26) / 2,
+              faixaY + 13,
+              {
+                align: "center",
+              }
+            );
 
-            // Tabela de informações
-            const tabelaY = faixaY + faixaAltura + 4;
+            // 📋 Bloco de dados
+            const tableStartY = faixaY + 22;
             const rowHeight = 10;
-            const infos = [
+            const rowWidth = largura - 26;
+
+            const linhas = [
               ["DATA", dataHoje],
-              ["QTDE. PEDIDOS", String(rom.qtd_pedidos)],
-              ["QTDE. PEÇAS", String(rom.qtd_pecas)],
+              ["QTDE. PEDIDOS", rom.qtd_pedidos],
+              ["QTDE. PEÇAS", rom.qtd_pecas],
             ];
 
-            infos.forEach(([label, valor], j) => {
-              const linhaY = tabelaY + j * rowHeight;
-              const rowWidth = largura - 30;
-              doc.setDrawColor(0).rect(x + 10, linhaY, rowWidth, rowHeight);
+            linhas.forEach(([label, valor], i) => {
+              const yLinha = tableStartY + i * rowHeight;
+              doc.setDrawColor(0).rect(x + 8, yLinha, rowWidth, rowHeight);
               doc.setTextColor(0).setFontSize(11);
-              doc.text(label, x + 12, linhaY + 7);
-              doc.text(valor, x + 10 + rowWidth - 4, linhaY + 7, {
+              doc.text(label, x + 10, yLinha + 6);
+              doc.text(String(valor), x + 8 + rowWidth - 4, yLinha + 6, {
                 align: "right",
               });
             });
 
-            // Faixa lateral preta
-            const faixaLateralX = x + largura - 15;
-            doc.setFillColor(0).rect(faixaLateralX, y, 15, altura, "F");
+            // ⬛ Faixa lateral à direita
+            const faixaX = x + largura - 15;
+            doc.setFillColor(0, 0, 0).rect(faixaX, y, 15, altura, "F");
 
-            // Número do grupo no topo
-            doc.setTextColor(255).setFontSize(14);
-            doc.text(`${grupoNum}`, faixaLateralX + 7.5, y + 8, {
+            // Número do grupo (topo)
+            doc.setTextColor(255);
+            doc.setFontSize(11);
+            doc.text(String(grupoNum), faixaX + 7.5, y + 10, {
               align: "center",
             });
 
-            // Texto vertical "CAIXA" centralizado
-            doc.saveGraphicsState();
-            doc.setFont("helvetica", "bold").setFontSize(20).setTextColor(255);
-            const centroVertical = y + altura / 2;
-            doc.text("CAIXA", faixaLateralX + 7.5, centroVertical, {
-              angle: -90,
-              align: "center",
+            // "CAIXA" rotacionado letra a letra
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            const letras = "CAIXA".split("");
+            let letraY = y + 25;
+            letras.forEach((letra) => {
+              doc.text(letra, faixaX + 7.5, letraY, { align: "center" });
+              letraY += 5;
             });
-            doc.restoreGraphicsState();
 
-            // Letra da caixa (A, B, C...)
-            doc.setFontSize(32).setTextColor(255);
-            doc.text(boxLetra, faixaLateralX + 7.5, y + altura - 6, {
-              align: "center",
-            });
+            // Letra da caixa grande no rodapé
+            doc.setFontSize(24);
+            doc.text(box, faixaX + 7.5, y + altura - 10, { align: "center" });
           });
 
           doc.output("dataurlnewwindow");
         } catch (err) {
-          console.error("Erro ao gerar PDF:", err);
+          console.error("❌ Erro ao gerar PDF:", err);
           alert("Erro ao gerar PDF: " + err.message);
         }
       }
