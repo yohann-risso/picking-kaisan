@@ -148,7 +148,23 @@
             doc.text(box, faixaX + 7.5, y + altura - 10, { align: "center" });
           });
 
-          doc.output("dataurlnewwindow");
+          const blob = doc.output("blob");
+          const url = URL.createObjectURL(
+            new Blob([blob], { type: "application/pdf" })
+          );
+
+          const iframe = document.createElement("iframe");
+          iframe.style.display = "none";
+          iframe.src = url;
+
+          document.body.appendChild(iframe);
+
+          iframe.onload = () => {
+            setTimeout(() => {
+              iframe.contentWindow.focus();
+              iframe.contentWindow.print(); // aciona o "compartilhar > imprimir"
+            }, 500);
+          };
         } catch (err) {
           console.error("❌ Erro ao gerar PDF:", err);
           alert("Erro ao gerar PDF: " + err.message);
