@@ -24,9 +24,13 @@
       const { jsPDF } = window.jspdf;
 
       const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
-      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-      const grupo = new URLSearchParams(location.search).get("grupo");
+
+      const urlParams = new URLSearchParams(location.search);
+      const grupo = urlParams.get("grupo");
+      const operador = urlParams.get("operador") || "-";
 
       if (!grupo) {
         alert("Grupo não informado.");
@@ -76,44 +80,44 @@
             const { x, y } = posicoes[index];
             const box = String.fromCharCode(65 + index);
 
-            // 🔲 Moldura externa
+            // Moldura externa
             doc.setDrawColor(0).setLineWidth(0.4).rect(x, y, largura, altura);
 
-            // 🧾 Cabeçalho
+            // Cabeçalho
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
+            doc.setFontSize(16);
             doc.setTextColor(0);
             doc.text("ROMANEIO", x + 8, y + 12);
 
-            // 🖤 Faixa preta com número
-            const faixaY = y + 14;
+            // Faixa preta com número
+            const faixaY = y + 16;
             doc
               .setFillColor(0, 0, 0)
-              .rect(x + 8, faixaY, largura - 26, 20, "F");
+              .rect(x + 8, faixaY, largura - 26, 22, "F");
             doc.setTextColor(255);
-            doc.setFontSize(28);
+            doc.setFontSize(30);
             doc.text(
               `${rom.romaneio}`,
               x + 8 + (largura - 26) / 2,
-              faixaY + 13,
+              faixaY + 14,
               {
                 align: "center",
               }
             );
 
-            // 📋 Bloco de dados
-            const tableStartY = faixaY + 22;
+            // Tabela com operador
+            const tableY = faixaY + 26;
             const rowHeight = 10;
             const rowWidth = largura - 26;
-
-            const linhas = [
+            const infos = [
               ["DATA", dataHoje],
               ["QTDE. PEDIDOS", rom.qtd_pedidos],
               ["QTDE. PEÇAS", rom.qtd_pecas],
+              ["OPERADOR", operador],
             ];
 
-            linhas.forEach(([label, valor], i) => {
-              const yLinha = tableStartY + i * rowHeight;
+            infos.forEach(([label, valor], i) => {
+              const yLinha = tableY + i * rowHeight;
               doc.setDrawColor(0).rect(x + 8, yLinha, rowWidth, rowHeight);
               doc.setTextColor(0).setFontSize(11);
               doc.text(label, x + 10, yLinha + 6);
@@ -122,47 +126,44 @@
               });
             });
 
-            // ⬛ Faixa lateral à direita
+            // Faixa lateral
             const faixaX = x + largura - 15;
             doc.setFillColor(0, 0, 0).rect(faixaX, y, 15, altura, "F");
-
-            // Número do grupo (topo)
             doc.setTextColor(255);
-            doc.setFontSize(11);
-            doc.text(String(grupoNum), faixaX + 7.5, y + 10, {
+
+            // Grupo
+            doc.setFontSize(14);
+            doc.text(String(grupoNum), faixaX + 7.5, y + 12, {
               align: "center",
             });
 
-            // "CAIXA" rotacionado letra a letra
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(10);
+            // "CAIXA" vertical
+            doc.setFontSize(11);
             const letras = "CAIXA".split("");
-            let letraY = y + 25;
+            let letraY = y + 30;
             letras.forEach((letra) => {
               doc.text(letra, faixaX + 7.5, letraY, { align: "center" });
               letraY += 5;
             });
 
-            // Letra da caixa grande no rodapé
-            doc.setFontSize(24);
+            // Letra da caixa
+            doc.setFontSize(26);
             doc.text(box, faixaX + 7.5, y + altura - 10, { align: "center" });
           });
 
+          // Impressão direta
           const blob = doc.output("blob");
           const url = URL.createObjectURL(
             new Blob([blob], { type: "application/pdf" })
           );
-
           const iframe = document.createElement("iframe");
           iframe.style.display = "none";
           iframe.src = url;
-
           document.body.appendChild(iframe);
-
           iframe.onload = () => {
             setTimeout(() => {
               iframe.contentWindow.focus();
-              iframe.contentWindow.print(); // aciona o "compartilhar > imprimir"
+              iframe.contentWindow.print();
             }, 500);
           };
         } catch (err) {
