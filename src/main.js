@@ -15,6 +15,10 @@ import {
 import { carregarOperadores, biparProduto } from "./core/picking.js";
 import { finalizarPicking } from "./core/finalizar.js";
 import { zerarEnderecoExterno } from "./services/googleSheet.js";
+import {
+  iniciarPollingProdutos,
+  verificarMudancaProdutos,
+} from "./utils/polling.js";
 
 // 🔧 Aguarda um elemento existir no DOM
 function aguardarElemento(id, callback) {
@@ -33,7 +37,7 @@ function aguardarElemento(id, callback) {
 }
 
 // ✅ Eventos
-aguardarElemento("btnConfirmarSKU", (btn) => {
+aguardarElemento("btnBipar", (btn) => {
   btn.addEventListener("click", biparProduto);
 });
 
@@ -88,6 +92,32 @@ async function inicializarApp() {
   new bootstrap.Modal(document.getElementById("modalInicio")).show();
 }
 
+function simularBipagem(sku) {
+  const input = document.getElementById("skuInput");
+  const btn = document.getElementById("btnBipar");
+
+  if (input && btn) {
+    input.value = sku;
+
+    // 🔔 Feedback visual: borda verde rápida
+    input.classList.add("border", "border-success", "fw-bold");
+    setTimeout(() => {
+      input.classList.remove("border-success", "fw-bold");
+    }, 800);
+
+    // Foco para reforçar a ação
+    input.focus();
+
+    // Dispara bipagem
+    btn.click();
+  } else {
+    console.warn("❌ Elemento de bipagem não encontrado.");
+  }
+}
+
+window.simularBipagem = simularBipagem;
+// Torna acessível globalmente
+
 // 🎯 Confirmação no modal
 aguardarElemento("btnConfirmarInicio", (btn) => {
   btn.addEventListener("click", async () => {
@@ -109,6 +139,8 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 
     await carregarRefsPorGrupo(grupo);
     await carregarProdutos();
+
+    gerarPlaquinhas(grupo);
   });
 });
 
@@ -116,6 +148,12 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 window.addEventListener("load", () => {
   console.log("💡 Entrou no window.load");
   inicializarApp();
+
+  // 🛰️ Verifica imediatamente se há mudanças
+  verificarMudancaProdutos();
+
+  // ⏱️ Inicia monitoramento automático (a cada 60s)
+  iniciarPollingProdutos(60);
 });
 
 aguardarElemento("btnLimparCache", (btn) => {
@@ -213,3 +251,12 @@ Object.assign(window, {
     document.getElementById("overlayCaixa").style.display = "none";
   },
 });
+
+window.addEventListener("load", () => {
+  iniciarPollingProdutos(60); // a cada 60 segundos
+});
+
+function gerarPlaquinhas(grupo) {
+  const url = `/plaquinhas.html?grupo=${grupo}`;
+  window.open(url, "_blank");
+}

@@ -4,22 +4,23 @@ import { registrarRetirada } from "../services/supabase.js";
 import { atualizarInterface } from "./interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
 import { mostrarAnimacaoCaixa } from "./interface.js";
+import { inserirProdutoNaRota } from "../utils/roteamento.js";
 
 export function carregarOperadores() {
   const ops = [
     "Alan Ramos",
     "Anderson Dutra",
-    "Arthur Oliveira",
+    "Deygles Matos",
     "Felipe Moraes",
     "Filipe Silva",
     "Gabriel Lagoa",
     "João Alves",
     "Kaique Teixeira",
+    "Lucas Paiva",
     "Marrony Portugal",
     "Nalbert Pereira",
-    "Rodrigo Novaes",
     "Rony Côrrea",
-    "Ykaro Oliveira",
+    "Wesley Conceição",
     "Yohann Risso",
   ];
 
@@ -110,6 +111,6 @@ export function moverProdutoParaTopo(sku) {
   );
   if (idx !== -1) {
     const [item] = state.produtos.splice(idx, 1);
-    state.produtos.unshift(item);
+    inserirProdutoNaRota(item);
   }
 }

@@ -4,7 +4,7 @@ import { salvarProgressoLocal } from "../utils/storage.js";
 import { toast } from "../components/Toast.js";
 import { iniciarCronometro } from "../core/cronometro.js";
 import { calcularTempoIdeal } from "../utils/format.js";
-
+import { inserirProdutoNaRota } from "../utils/roteamento.js";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl =
@@ -15,21 +15,45 @@ const supabaseKey =
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function carregarGrupos() {
-  const res = await fetch("/api/proxy?endpoint=/rest/v1/produtos?select=grupo");
+  const pageSize = 1000;
+  let offset = 0;
+  const todosGrupos = [];
+  const maxPaginas = 100;
 
-  if (!res.ok) {
-    const textoErro = await res.text();
-    throw new Error(`Erro ao carregar grupos: ${textoErro}`);
+  for (let i = 0; i < maxPaginas; i++) {
+    const query = `/rest/v1/produtos?select=grupo&limit=${pageSize}&offset=${offset}`;
+    const url = `/api/proxy?endpoint=${encodeURIComponent(query)}`;
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      const erro = await res.text();
+      throw new Error(`Erro ao carregar grupos: ${erro}`);
+    }
+
+    const dados = await res.json();
+
+    if (!Array.isArray(dados) || dados.length === 0) {
+      console.log(`✅ Fim da paginação no offset ${offset}`);
+      break;
+    }
+
+    console.log(
+      `🔁 Página ${i + 1} (offset ${offset}) → ${dados.length} registros`
+    );
+    todosGrupos.push(...dados.map((d) => d.grupo));
+    offset += pageSize;
   }
 
-  console.log("✅ Grupos carregados com sucesso");
-
-  const dados = await res.json();
   const grupos = [
-    ...new Set(dados.map((d) => parseInt(d.grupo)).filter((g) => !isNaN(g))),
+    ...new Set(
+      todosGrupos
+        .map((g) => Number(String(g).trim()))
+        .filter((g) => Number.isInteger(g) && g > 0)
+    ),
   ].sort((a, b) => a - b);
 
-  return grupos; // retorna os grupos para uso no main.js
+  console.log("✅ Grupos finais únicos:", grupos);
+  return grupos;
 }
 
 let refsCarregadas = false;
@@ -138,7 +162,7 @@ export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
     if (idx !== -1) {
       const item = state.retirados.splice(idx, 1)[0];
       item.distribuicaoAtual = { ...item.distribuicaoOriginal };
-      state.produtos.unshift(item);
+      inserirProdutoNaRota(item);
       salvarProgressoLocal();
       atualizarInterface();
       toast(
@@ -206,19 +230,22 @@ export async function carregarProdutos() {
       const romaneio = linha.romaneio;
       const caixa = (linha.caixa || "").toUpperCase();
       const qtd = parseInt(linha.qtd || 0, 10);
-      const endereco =
-        (linha.endereco || "").split("•")[0]?.trim() || "SEM ENDEREÇO";
+      const enderecoCompleto = linha.endereco || "";
+      const [endPrimario = "SEM ENDEREÇO"] = enderecoCompleto
+        .split("•")
+        .map((e) => e.trim());
+
       const ref = mapaRef.get(sku);
 
       const key = `${sku}__${romaneio}`;
 
       if (!mapaSKUs[key]) {
-        const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endereco);
+        const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endPrimario);
         mapaSKUs[key] = {
           ...linha,
           sku,
           romaneio,
-          endereco,
+          endereco: enderecoCompleto,
           imagem: ref?.imagem || "https://placehold.co/120x120?text=Sem+Img",
           colecao: ref?.colecao || "—",
           distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
@@ -242,26 +269,79 @@ export async function carregarProdutos() {
     for (const prod of Object.values(mapaSKUs)) {
       const key = `${prod.sku}__${prod.romaneio}`;
       const caixasRetiradas = mapaRetiradas.get(key) || [];
-      if (caixasRetiradas.length > 0) {
-        caixasRetiradas.forEach((caixa) => {
-          const duplicado = structuredClone(prod);
-          duplicado.caixa = caixa;
-          state.retirados.push(duplicado);
-        });
-      } else {
+
+      const retiradas = { A: 0, B: 0, C: 0, D: 0 };
+      caixasRetiradas.forEach((caixa) => {
+        const c = caixa.toUpperCase();
+        if (["A", "B", "C", "D"].includes(c)) retiradas[c]++;
+      });
+
+      // Atualiza quantidade restante
+      prod.distribuicaoAtual = {
+        A: prod.distribuicaoOriginal.A - retiradas.A,
+        B: prod.distribuicaoOriginal.B - retiradas.B,
+        C: prod.distribuicaoOriginal.C - retiradas.C,
+        D: prod.distribuicaoOriginal.D - retiradas.D,
+      };
+
+      const totalRestante =
+        prod.distribuicaoAtual.A +
+        prod.distribuicaoAtual.B +
+        prod.distribuicaoAtual.C +
+        prod.distribuicaoAtual.D;
+
+      const totalRetirado =
+        retiradas.A + retiradas.B + retiradas.C + retiradas.D;
+
+      if (totalRetirado > 0) {
+        const retirado = {
+          ...structuredClone(prod),
+          grupo,
+          retiradas,
+        };
+
+        state.retirados.push(retirado);
+      }
+
+      if (totalRestante > 0) {
         state.produtos.push(prod);
       }
     }
 
-    // 4. Ordenar os produtos por endereço
-    state.produtos.sort((a, b) => {
-      for (let i = 0; i < a.ordemEndereco.length; i++) {
-        if (a.ordemEndereco[i] !== b.ordemEndereco[i]) {
-          return a.ordemEndereco[i] - b.ordemEndereco[i];
-        }
+    // 4. Ordenar os produtos com base na posição atual do operador
+    function compararOrdem(a, b) {
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return a[i] - b[i];
       }
       return 0;
-    });
+    }
+
+    // 🔄 Ponto de referência = último endereço retirado (ou início)
+    const ultimaRetirada = state.retirados.at(-1);
+    const posicaoAtual = ultimaRetirada?.ordemEndereco || [0, 0, 0, 0, 0];
+
+    state.ordemAtual = posicaoAtual; // (para debug ou usos futuros)
+
+    const aindaNaRota = [];
+    const foraDaRota = [];
+
+    for (const p of state.produtos) {
+      const comp = compararOrdem(
+        p.ordemEndereco || [999, 999, 999, 999, 999],
+        posicaoAtual
+      );
+      if (comp >= 0) {
+        aindaNaRota.push(p);
+      } else {
+        foraDaRota.push(p);
+      }
+    }
+
+    aindaNaRota.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
+    foraDaRota.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
+
+    // 👉 Atualiza lista ordenada
+    state.produtos = [...aindaNaRota, ...foraDaRota];
 
     // 5. Calcular e armazenar total de peças (Fixo)
     const totalPecas = Object.values(mapaSKUs).reduce((acc, p) => {

@@ -7,7 +7,7 @@
   "description": "Sistema de picking otimizado para operação logística",
   "icons": [
     {
-      "src": "/img/logo.png?v=2",
+      "src": "/img/logo_picking.png?v=2",
       "sizes": "192x192",
       "type": "image/png"
     },

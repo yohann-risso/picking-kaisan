@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Plaquinhas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+      body {
+        font-family: "Geist", "Segoe UI", sans-serif;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <span>Gerando plaquinhas...</span>
+
+    <script type="module">
+      import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+      const { jsPDF } = window.jspdf;
+
+      const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
+      const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const urlParams = new URLSearchParams(location.search);
+      const grupo = urlParams.get("grupo");
+      const operador = urlParams.get("operador") || "-";
+
+      if (!grupo) {
+        alert("Grupo não informado.");
+        throw new Error("Grupo ausente.");
+      }
+
+      async function gerarPDF(grupo) {
+        try {
+          const grupoNum = Number(grupo);
+          const { data, error } = await supabase
+            .from("romaneios")
+            .select("romaneio, qtd_pedidos, qtd_pecas")
+            .eq("conjunto", grupoNum)
+            .order("romaneio", { ascending: true });
+
+          if (error || !data || data.length === 0) {
+            alert("Erro ao carregar romaneios ou nenhum encontrado.");
+            return;
+          }
+
+          const doc = new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4",
+          });
+
+          const largura = 130;
+          const altura = 85;
+          const marginLeft = 20;
+          const marginTop = 10;
+          const espacoX = 15;
+          const espacoY = 10;
+
+          const posicoes = [
+            { x: marginLeft, y: marginTop },
+            { x: marginLeft + largura + espacoX, y: marginTop },
+            { x: marginLeft, y: marginTop + altura + espacoY },
+            {
+              x: marginLeft + largura + espacoX,
+              y: marginTop + altura + espacoY,
+            },
+          ];
+
+          const dataHoje = new Date().toLocaleDateString("pt-BR");
+
+          data.slice(0, 4).forEach((rom, index) => {
+            const { x, y } = posicoes[index];
+            const box = String.fromCharCode(65 + index);
+
+            // Moldura externa
+            doc.setDrawColor(0).setLineWidth(0.4).rect(x, y, largura, altura);
+
+            // Cabeçalho
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.setTextColor(0);
+            doc.text("ROMANEIO", x + 8, y + 12);
+
+            // Faixa preta com número
+            const faixaY = y + 16;
+            doc
+              .setFillColor(0, 0, 0)
+              .rect(x + 8, faixaY, largura - 26, 22, "F");
+            doc.setTextColor(255);
+            doc.setFontSize(30);
+            doc.text(
+              `${rom.romaneio}`,
+              x + 8 + (largura - 26) / 2,
+              faixaY + 14,
+              {
+                align: "center",
+              }
+            );
+
+            // Tabela com operador
+            const tableY = faixaY + 26;
+            const rowHeight = 10;
+            const rowWidth = largura - 26;
+            const infos = [
+              ["DATA", dataHoje],
+              ["QTDE. PEDIDOS", rom.qtd_pedidos],
+              ["QTDE. PEÇAS", rom.qtd_pecas],
+              ["OPERADOR", operador],
+            ];
+
+            infos.forEach(([label, valor], i) => {
+              const yLinha = tableY + i * rowHeight;
+              doc.setDrawColor(0).rect(x + 8, yLinha, rowWidth, rowHeight);
+              doc.setTextColor(0).setFontSize(11);
+              doc.text(label, x + 10, yLinha + 6);
+              doc.text(String(valor), x + 8 + rowWidth - 4, yLinha + 6, {
+                align: "right",
+              });
+            });
+
+            // Faixa lateral
+            const faixaX = x + largura - 15;
+            doc.setFillColor(0, 0, 0).rect(faixaX, y, 15, altura, "F");
+            doc.setTextColor(255);
+
+            // Grupo
+            doc.setFontSize(14);
+            doc.text(String(grupoNum), faixaX + 7.5, y + 12, {
+              align: "center",
+            });
+
+            // "CAIXA" vertical
+            doc.setFontSize(11);
+            const letras = "CAIXA".split("");
+            let letraY = y + 30;
+            letras.forEach((letra) => {
+              doc.text(letra, faixaX + 7.5, letraY, { align: "center" });
+              letraY += 5;
+            });
+
+            // Letra da caixa
+            doc.setFontSize(26);
+            doc.text(box, faixaX + 7.5, y + altura - 10, { align: "center" });
+          });
+
+          // Impressão direta
+          const blob = doc.output("blob");
+          const url = URL.createObjectURL(
+            new Blob([blob], { type: "application/pdf" })
+          );
+          const iframe = document.createElement("iframe");
+          iframe.style.display = "none";
+          iframe.src = url;
+          document.body.appendChild(iframe);
+          iframe.onload = () => {
+            setTimeout(() => {
+              iframe.contentWindow.focus();
+              iframe.contentWindow.print();
+            }, 500);
+          };
+        } catch (err) {
+          console.error("❌ Erro ao gerar PDF:", err);
+          alert("Erro ao gerar PDF: " + err.message);
+        }
+      }
+
+      gerarPDF(grupo);
+    </script>
+  </body>
+</html>

@@ -9,8 +9,7 @@ export function criarCardProduto(produto, destaque = false) {
     (a, b) => a + b,
     0
   );
-  const end1 = produto.endereco?.split("•")[0] || "SEM LOCAL";
-  const end2 = produto.endereco?.split("•")[1] || "—";
+  const [end1 = "SEM LOCAL", end2 = "—"] = (produto.endereco || "").split("•");
 
   const miniCards = ["A", "B", "C", "D"]
     .map(
@@ -35,22 +34,22 @@ export function criarCardProduto(produto, destaque = false) {
     <div class="card-produto shadow-sm p-3 rounded border-start border-4 border-primary bg-light-subtle d-flex flex-column flex-md-row gap-4 ${
       destaque ? "primary" : ""
     }">
-      <!-- Informações -->
+      
+      <!-- COLUNA 1 - Informações -->
       <div class="flex-grow-1 pe-md-4">
         <div class="fw-bold fs-6 mb-2 text-dark">
-          ${produto.descricao || "Sem descrição"} |
-          <strong>Ref: ${produto.sku.split("-")[0]}</strong>
+          ${produto.descricao || "Sem descrição"}
         </div>
 
         <div class="text-primary fw-bold mb-2">SKU: ${produto.sku}</div>
 
         <div class="mb-1 fw-bold fs-6" style="word-break: break-word;">
           ENDEREÇO:
-          <span class="texto-endereco text-primary fw-bolder">${end1}</span>
+          <span class="badge-endereco">${end1}</span>
           <i class="bi bi-x-circle-fill text-danger ms-1"
-             title="Zerar Endereço"
-             style="cursor: pointer;"
-             onclick="zerarEnderecoExterno('${end1}')"></i>
+            title="Zerar Endereço"
+            style="cursor: pointer;"
+            onclick="zerarEnderecoExterno('${end1}')"></i>
           <span class="spinner-border spinner-border-sm text-primary ms-2 d-none"
                 role="status" id="loader-zerar-${end1}"></span>
         </div>
@@ -67,8 +66,18 @@ export function criarCardProduto(produto, destaque = false) {
         </div>
       </div>
 
-      <!-- Imagem -->
-      <div class="image-container text-center">
+      <!-- COLUNA 2 - Botão e Imagem -->
+      <div class="d-flex flex-column align-items-center gap-2" style="min-width: 140px;">
+        <button
+          class="btn btn-sm btn-outline-secondary"
+          title="Simular Bipagem"
+          onclick="simularBipagem('${
+            produto.sku
+          }'); this.classList.add('active'); setTimeout(() => this.classList.remove('active'), 300);"
+        >
+          <i class="bi bi-upc-scan"></i> Bipar
+        </button>
+
         <img
           src="${
             produto.imagem || "https://via.placeholder.com/120?text=Sem+Img"
@@ -76,9 +85,11 @@ export function criarCardProduto(produto, destaque = false) {
           alt="Imagem do Produto"
           class="img-fluid rounded border border-primary"
           style="max-width: 120px; height: auto;"
-          onerror="this.onerror=null;this.src='https://via.placeholder.com/120?text=Sem+Img';">
+          onerror="this.onerror=null;this.src='https://via.placeholder.com/120?text=Sem+Img';"
+        >
       </div>
     </div>
   `;
+
   return wrapper;
 }

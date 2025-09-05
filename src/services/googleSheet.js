@@ -1,5 +1,4 @@
 import { toast } from "../components/Toast.js";
-import { calcularTempoIdeal } from "../utils/format.js";
 import { state } from "../config.js";
 import { atualizarInterface } from "../core/interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
@@ -7,29 +6,36 @@ import {
   mostrarLoaderInline,
   esconderLoaderInline,
 } from "../core/interface.js";
+import { inserirProdutoNaRota } from "../utils/roteamento.js";
 
 export async function zerarEnderecoExterno(endereco) {
   const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
   if (!match) return toast("❌ Endereço inválido", "error");
 
-  const operador = encodeURIComponent(
-    window.operadorSelecionado || "DESCONHECIDO"
-  );
-  const time = encodeURIComponent(new Date().toLocaleString());
+  const operador = (window.operadorSelecionado || "DESCONHECIDO")
+    .toLowerCase()
+    .replace(/\s+/g, "");
+
+  const time = new Date()
+    .toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+    })
+    .replace(",", "");
+
   const ws = `${match[1]}-${match[2]}-${match[3]}`;
   const loaderId = `loader-zerar-${endereco}`;
-
   const gasURL = window?.env?.GAS_ZERAR_URL;
+
   if (!gasURL) {
     toast("❌ URL de zeramento não configurada", "error");
     return;
   }
 
   const url =
-    `${window.env.GAS_ZERAR_URL}&` +
-    `WS=${encodeURIComponent(ws)}` +
+    `${gasURL}` +
+    `&WS=${ws}` +
     `&func=Update` +
-    `&ENDERECO=${encodeURIComponent(endereco)}` +
+    `&ENDERECO=${encodeURIComponent(endereco.trim())}` +
     `&SKU=VAZIO` +
     `&OPERADOR=${operador}` +
     `&TIME=${time}`;
@@ -45,7 +51,7 @@ export async function zerarEnderecoExterno(endereco) {
     console.log("📤 Zeramento enviado:", url);
     console.log("📩 Resposta:", txt);
     toast(`✅ Endereço ${endereco} marcado para zeramento.`, "success");
-    moverProdutoParaFimPorEndereco(endereco);
+    moverProdutoParaFimPorEndereco(endereco.trim());
   } catch (e) {
     toast("❌ Falha ao marcar zeramento.", "error");
   } finally {
@@ -53,10 +59,16 @@ export async function zerarEnderecoExterno(endereco) {
   }
 }
 
+function extrairOrdemEndereco(endereco = "") {
+  const [endPrimario = ""] = endereco.split("•").map((e) => e.trim());
+  const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endPrimario);
+  return match ? match.slice(1).map(Number) : [999, 999, 999, 999, 999];
+}
+
 function moverProdutoParaFimPorEndereco(enderecoZerado) {
   const idx = state.produtos.findIndex((p) => {
-    const enderecoPrimario = p.endereco?.split("•")[0]?.trim();
-    return enderecoPrimario === enderecoZerado;
+    const enderecoPrimario = p.endereco?.split("•")[0]?.trim().toUpperCase();
+    return enderecoPrimario === enderecoZerado.trim().toUpperCase();
   });
 
   if (idx === -1) {
@@ -66,52 +78,40 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
 
   const [produto] = state.produtos.splice(idx, 1);
 
-  // ✅ Atualiza endereço para o secundário
+  // Atualiza para o segundo endereço
   const [_, novoEndereco] = (produto.endereco || "").split("•");
   const novo = novoEndereco?.trim();
 
   if (!novo || !/A\d+-B\d+-R\d+-C\d+-N\d+/.test(novo)) {
     console.warn("Endereço secundário inválido:", novo);
-    state.produtos.push(produto);
+
+    // ⚠️ Garante que não duplica
+    const jaExiste = state.produtos.some(
+      (p) => p.sku === produto.sku && p.romaneio === produto.romaneio
+    );
+
+    if (!jaExiste) {
+      state.produtos.push(produto);
+    }
+
     atualizarInterface();
     salvarProgressoLocal();
     return;
   }
 
   produto.endereco = novo;
+  produto.ordemEndereco = extrairOrdemEndereco(novo);
 
-  const novaOrdem = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/
-    .exec(novo)
-    ?.slice(1)
-    .map(Number) || [999, 999, 999, 999, 999];
+  // ⚠️ Garante que não duplica
+  const jaExiste = state.produtos.some(
+    (p) => p.sku === produto.sku && p.romaneio === produto.romaneio
+  );
 
-  produto.ordemEndereco = novaOrdem;
-
-  // ✅ Posição atual do operador (primeiro produto visível ou primeiro retirado)
-  const referencia = state.produtos[0]?.ordemEndereco ??
-    state.retirados[0]?.ordemEndereco ?? [0, 0, 0, 0, 0];
-
-  // ✅ Decide onde recolocar
-  const novoVemDepois = novaOrdem.some((n, i) => n > referencia[i]);
-
-  if (novoVemDepois) {
-    // Inserir na ordem correta
-    state.produtos.push(produto);
-    state.produtos.sort((a, b) => {
-      for (let i = 0; i < a.ordemEndereco.length; i++) {
-        if (a.ordemEndereco[i] !== b.ordemEndereco[i]) {
-          return a.ordemEndereco[i] - b.ordemEndereco[i];
-        }
-      }
-      return 0;
-    });
-  } else {
-    // Coloca no fim
-    state.produtos.push(produto);
+  if (!jaExiste) {
+    inserirProdutoNaRota(produto, state);
   }
 
   console.log(`🔁 Produto ${produto.sku} reposicionado após zeramento.`);
-
   atualizarInterface();
   salvarProgressoLocal();
 }
