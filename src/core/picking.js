@@ -8,20 +8,10 @@ import { inserirProdutoNaRota } from "../utils/roteamento.js";
 
 export function carregarOperadores() {
   const ops = [
-    "Alan Ramos",
-    "Anderson Dutra",
     "Deygles Matos",
-    "Felipe Moraes",
-    "Filipe Silva",
-    "Gabriel Lagoa",
-    "João Alves",
     "Kaique Teixeira",
     "Lucas Paiva",
     "Marrony Portugal",
-    "Nalbert Pereira",
-    "Rony Côrrea",
-    "Wesley Conceição",
-    "Yohann Risso",
   ];
 
   if (!window.aguardarElemento) {
