@@ -1,19 +1,9 @@
 export function carregarOperadores() {
   const operadores = [
-    "Alan Ramos",
-    "Anderson Dutra",
-    "Arthur Oliveira",
-    "Felipe Moraes",
-    "Filipe Silva",
-    "Gabriel Lagoa",
-    "João Alves",
+    "Deygles Matos",
     "Kaique Teixeira",
+    "Lucas Paiva",
     "Marrony Portugal",
-    "Nalbert Pereira",
-    "Rodrigo Novaes",
-    "Rony Côrrea",
-    "Ykaro Oliveira",
-    "Yohann Risso",
   ];
 
   const seletor = document.getElementById("operadorModal");
