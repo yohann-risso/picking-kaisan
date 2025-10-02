@@ -61,9 +61,9 @@ export function atualizarInterface() {
   const maxCards = parseInt(document.getElementById("qtdCards").value, 10) || 2;
   const filtroBlocoValor = document.getElementById("filtroBloco")?.value || "";
   const filtroBlocoNum = parseInt(filtroBlocoValor, 10);
-  const usarFiltroBloco = !Number.isNaN(filtroBlocoNum);
+  const usarFiltroBloco = filtroBlocoValor !== "";
 
-  // === CARDS VISÍVEIS (aplica filtro por Bloco) ===
+  // === CARDS VISÍVEIS (filtrados por Bloco ou Sem Local) ===
   const visiveis = state.produtos
     .filter((p) => {
       const dist = p.distribuicaoAtual || {};
@@ -75,9 +75,15 @@ export function atualizarInterface() {
         // Endereço primário no formato Axx-Bxx-Rxx-Cxx-Nxx (pode vir sem zero à esquerda)
         const endPrimario = (p.endereco || "").split("•")[0] || "";
         const match = /B(\d+)/i.exec(endPrimario);
+
+        if (filtroBlocoValor === "SEM LOCAL") {
+          return !match; // só produtos sem Bxx no endereço
+        }
+
         const blocoNum = match ? parseInt(match[1], 10) : NaN;
         return blocoNum === filtroBlocoNum;
       }
+
       return true;
     })
     .slice(0, maxCards);
@@ -87,7 +93,7 @@ export function atualizarInterface() {
     cards.appendChild(card);
   });
 
-  // === PENDENTES (sem filtro de Bloco, visão geral) ===
+  // === PENDENTES (não filtrados, visão geral) ===
   const pendentesVisiveis = state.produtos.filter((p) => {
     const dist = p.distribuicaoAtual || {};
     const total = (dist.A || 0) + (dist.B || 0) + (dist.C || 0) + (dist.D || 0);

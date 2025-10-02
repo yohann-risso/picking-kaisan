@@ -60,6 +60,42 @@ aguardarElemento("qtdCards", (input) => {
   input.addEventListener("input", atualizarQtdCards);
 });
 
+function atualizarFiltroBlocos() {
+  const select = document.getElementById("filtroBloco");
+  if (!select) return;
+
+  // Extrair blocos únicos dos produtos atuais
+  const blocos = new Set();
+
+  state.produtos.forEach((p) => {
+    const endPrimario = (p.endereco || "").split("•")[0];
+    const match = /B(\d+)/i.exec(endPrimario);
+    if (match) {
+      blocos.add(parseInt(match[1], 10));
+    } else {
+      blocos.add("SEM LOCAL");
+    }
+  });
+
+  // Montar opções
+  const options = [`<option value="">Todos</option>`];
+
+  // "SEM LOCAL" primeiro se existir
+  if (blocos.has("SEM LOCAL")) {
+    options.push(`<option value="SEM LOCAL">Sem Local</option>`);
+  }
+
+  // Blocos ordenados
+  [...blocos]
+    .filter((b) => b !== "SEM LOCAL")
+    .sort((a, b) => a - b)
+    .forEach((b) => {
+      options.push(`<option value="${b}">Bloco ${b}</option>`);
+    });
+
+  select.innerHTML = options.join("");
+}
+
 // 🚀 Inicializa modal e dados
 async function inicializarApp() {
   console.log("🧪 main.js version: FINAL");
@@ -247,6 +283,7 @@ Object.assign(window, {
   carregarOperadores,
   aguardarElemento,
   desfazerRetirada,
+  atualizarFiltroBlocos,
   lockInterface: () => {
     document.getElementById("loaderGlobal").style.display = "flex";
     document.getElementById("overlayCaixa").style.display = "block";

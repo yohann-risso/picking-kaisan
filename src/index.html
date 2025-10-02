@@ -146,19 +146,17 @@
           ></span>
         </div>
 
-        <div class="row g-3 justify-content-center" id="cards"></div>
-      </div>
+        <div class="mb-3">
+          <label for="filtroBloco" class="form-label fw-bold">
+            <i class="bi bi-filter"></i> Filtrar por Bloco:
+          </label>
+          <select id="filtroBloco" class="form-select">
+            <option value="">Todos</option>
+            <!-- opções de blocos + "Sem Local" serão inseridas dinamicamente -->
+          </select>
+        </div>
 
-      <div class="mb-3">
-        <label for="filtroBloco" class="form-label fw-bold"
-          >Filtrar por Bloco:</label
-        >
-        <select id="filtroBloco" class="form-select">
-          <option value="">Todos</option>
-          <option value="1">Bloco 1</option>
-          <option value="2">Bloco 2</option>
-          <option value="3">Bloco 3</option>
-        </select>
+        <div class="row g-3 justify-content-center" id="cards"></div>
       </div>
 
       <div class="card shadow-sm p-4 mb-4">
