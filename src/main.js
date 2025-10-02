@@ -64,9 +64,7 @@ function atualizarFiltroBlocos() {
   const select = document.getElementById("filtroBloco");
   if (!select) return;
 
-  // Extrair blocos únicos dos produtos atuais
   const blocos = new Set();
-
   state.produtos.forEach((p) => {
     const endPrimario = (p.endereco || "").split("•")[0];
     const match = /B(\d+)/i.exec(endPrimario);
@@ -77,15 +75,10 @@ function atualizarFiltroBlocos() {
     }
   });
 
-  // Montar opções
   const options = [`<option value="">Todos</option>`];
-
-  // "SEM LOCAL" primeiro se existir
   if (blocos.has("SEM LOCAL")) {
     options.push(`<option value="SEM LOCAL">Sem Local</option>`);
   }
-
-  // Blocos ordenados
   [...blocos]
     .filter((b) => b !== "SEM LOCAL")
     .sort((a, b) => a - b)
@@ -95,6 +88,10 @@ function atualizarFiltroBlocos() {
 
   select.innerHTML = options.join("");
 }
+
+Object.assign(window, {
+  atualizarFiltroBlocos,
+});
 
 // 🚀 Inicializa modal e dados
 async function inicializarApp() {

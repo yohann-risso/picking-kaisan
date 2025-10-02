@@ -6,7 +6,6 @@ import { iniciarCronometro } from "../core/cronometro.js";
 import { calcularTempoIdeal } from "../utils/format.js";
 import { inserirProdutoNaRota } from "../utils/roteamento.js";
 import { createClient } from "@supabase/supabase-js";
-import { atualizarFiltroBlocos } from "../main.js";
 
 const supabaseUrl =
   window.env?.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
@@ -358,7 +357,9 @@ export async function carregarProdutos() {
 
     state.tempoInicio = new Date();
     iniciarCronometro();
-    atualizarFiltroBlocos();
+    if (typeof window.atualizarFiltroBlocos === "function") {
+      window.atualizarFiltroBlocos();
+    }
     atualizarInterface();
     salvarProgressoLocal();
   } catch (err) {
