@@ -203,7 +203,6 @@ body {
 
 .btn,
 .card-produto,
-.badge-endereco,
 input,
 select,
 textarea {
@@ -245,14 +244,14 @@ textarea {
   border-radius: 12px;
   color: #131212;
   background: linear-gradient(135deg, var(--color-primary), #94d2f7);
-  box-shadow: 0 3px 8px rgba(223, 222, 222, 0.15);
+  box-shadow: 0 3px 8px rgba(255, 255, 255, 0.5);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   word-break: break-word;
 }
 
 .badge-endereco:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.5);
 }
 
 
