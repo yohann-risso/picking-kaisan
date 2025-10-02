@@ -19,6 +19,7 @@ import {
   iniciarPollingProdutos,
   verificarMudancaProdutos,
 } from "./utils/polling.js";
+import { atualizarInterface } from "./core/interface.js";
 
 // 🔧 Aguarda um elemento existir no DOM
 function aguardarElemento(id, callback) {
