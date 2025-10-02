@@ -125,33 +125,58 @@ body {
   width: 1px;
 }
 
-/* === LISTAS === */
-.list {
-  background: var(--color-info-bg);
-  padding: 10px;
-  border-radius: 6px;
-  max-height: 200px;
-  overflow-y: auto;
+/* === LISTA DE RETIRADOS === */
+#retiradosList .mb-2 {
+  background: rgba(46, 125, 50, 0.05);
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.5rem;
 }
 
-.pendente-item {
+#retiradosList strong {
+  color: var(--color-success-dark);
+}
+
+/* === FILTRO POR BLOCO === */
+#filtroBloco {
+  border-radius: 12px;
+  padding: 0.6rem;
+  font-size: 0.95rem;
+  border: 1px solid #d1d5db;
   background: #fff;
-  margin-bottom: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-  font-size: 15px;
-  line-height: 1.4;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+#filtroBloco:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(28, 63, 96, 0.2);
+}
+
+/* === LISTAS === */
+.pendente-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.6rem;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.pendente-item:hover {
+  background: #eef2f6;
+  transform: translateX(2px);
 }
 
 .pendente-item .sku {
-  font-weight: bold;
+  font-weight: 600;
   color: var(--color-danger);
 }
 
 .pendente-item .descricao {
-  font-weight: 500;
-  color: var(--color-text);
+  font-size: 0.95rem;
+  color: #374151;
 }
 
 .pendente-item .endereco {
@@ -208,29 +233,47 @@ textarea {
 }
 
 .badge-endereco {
-  font-weight: 700;
-  padding: .5rem;
+  background: linear-gradient(135deg, #1c3f60, #2d5a88);
+  color: #fff;
+  font-weight: 600;
   border-radius: 12px;
-  font-size: 1.25rem;
-  display: inline-flex;
-  align-items: center;
-  gap: .25rem;
-  background-color: var(--color-primary);
-  color: var(--color-white);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.95rem;
+}
+
+/* === BOTÃO BIPAR === */
+.btn-bipar {
+  background: var(--color-success);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-bipar:hover {
+  background: #1b5e20;
+  transform: scale(1.03);
 }
 
 /* === CARD DE PRODUTO === */
 .card-produto {
-  background-color: var(--color-info-bg);
-  border-left: 6px solid var(--color-primary);
-  border-radius: 12px;
-  box-shadow: var(--shadow-md);
+  background: #fff;
+  border-radius: 16px;
   padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-produto:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.card-produto .fw-bold {
+  font-size: 1.1rem;
+  color: var(--color-primary);
 }
 
 .card-produto.primary {
