@@ -189,7 +189,7 @@ export async function carregarProdutos() {
 
   if (!grupo || !operador) {
     console.warn("🚫 Grupo ou operador não definidos.");
-    return mostrarToast("Grupo ou operador não selecionado", "warning");
+    return toast("Grupo ou operador não selecionado", "warning");
   }
 
   document.getElementById("btnFinalizar").classList.remove("d-none");
@@ -364,6 +364,6 @@ export async function carregarProdutos() {
     salvarProgressoLocal();
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
-    mostrarToast("Erro ao carregar dados do Supabase", "error");
+    toast("Erro ao carregar dados do Supabase", "error");
   }
 }
