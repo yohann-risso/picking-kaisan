@@ -20,6 +20,7 @@ import {
   verificarMudancaProdutos,
 } from "./utils/polling.js";
 import { atualizarInterface } from "./core/interface.js";
+import { state } from "./config.js";
 
 // 🔧 Aguarda um elemento existir no DOM
 function aguardarElemento(id, callback) {
