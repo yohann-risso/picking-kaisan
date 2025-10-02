@@ -59,20 +59,24 @@ export function atualizarInterface() {
   cards.innerHTML = "";
 
   const maxCards = parseInt(document.getElementById("qtdCards").value, 10) || 2;
-  const filtroBloco = document.getElementById("filtroBloco")?.value || "";
+  const filtroBlocoValor = document.getElementById("filtroBloco")?.value || "";
+  const filtroBlocoNum = parseInt(filtroBlocoValor, 10);
+  const usarFiltroBloco = !Number.isNaN(filtroBlocoNum);
 
-  // === CARDS VISÍVEIS ===
+  // === CARDS VISÍVEIS (aplica filtro por Bloco) ===
   const visiveis = state.produtos
     .filter((p) => {
       const dist = p.distribuicaoAtual || {};
-      const total = dist.A + dist.B + dist.C + dist.D;
+      const total =
+        (dist.A || 0) + (dist.B || 0) + (dist.C || 0) + (dist.D || 0);
       if (total <= 0) return false;
 
-      if (filtroBloco) {
-        const endPrimario = p.endereco?.split("•")[0] || "";
-        const match = /B(\d+)/.exec(endPrimario);
-        const bloco = match ? match[1] : "";
-        return bloco === filtroBloco.padStart(2, "0"); // garante "02"
+      if (usarFiltroBloco) {
+        // Endereço primário no formato Axx-Bxx-Rxx-Cxx-Nxx (pode vir sem zero à esquerda)
+        const endPrimario = (p.endereco || "").split("•")[0] || "";
+        const match = /B(\d+)/i.exec(endPrimario);
+        const blocoNum = match ? parseInt(match[1], 10) : NaN;
+        return blocoNum === filtroBlocoNum;
       }
       return true;
     })
@@ -83,10 +87,10 @@ export function atualizarInterface() {
     cards.appendChild(card);
   });
 
-  // === PENDENTES (sem filtro de Bloco, mostra todos que restam) ===
+  // === PENDENTES (sem filtro de Bloco, visão geral) ===
   const pendentesVisiveis = state.produtos.filter((p) => {
     const dist = p.distribuicaoAtual || {};
-    const total = dist.A + dist.B + dist.C + dist.D;
+    const total = (dist.A || 0) + (dist.B || 0) + (dist.C || 0) + (dist.D || 0);
     return total > 0;
   });
 
@@ -98,7 +102,7 @@ export function atualizarInterface() {
         <div class="descricao">${p.descricao} | Ref: ${
         p.sku.split("-")[0]
       }</div>
-        <div class="endereco">${p.endereco?.split("•")[0]}</div>
+        <div class="endereco">${(p.endereco || "").split("•")[0]}</div>
       </div>`
     )
     .join("");
