@@ -570,3 +570,32 @@ textarea {
 #pollingStatus:hover {
   transform: scale(1.15);
 }
+
+/* LISTAS COM SCROLL */
+.list {
+  background: #f9fafb;
+  padding: 10px;
+  border-radius: 12px;
+  max-height: 300px;
+  /* limite de altura da lista */
+  overflow-y: auto;
+  /* scroll vertical */
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  /* Firefox */
+  scrollbar-color: #ccc transparent;
+}
+
+/* Scrollbar estilizado (Chrome, Edge, Safari) */
+.list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 8px;
+}
+
+.list::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
