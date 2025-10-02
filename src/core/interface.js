@@ -59,11 +59,22 @@ export function atualizarInterface() {
   cards.innerHTML = "";
 
   const maxCards = parseInt(document.getElementById("qtdCards").value, 10) || 2;
+  const filtroBloco = document.getElementById("filtroBloco")?.value || "";
+
+  // === CARDS VISÍVEIS ===
   const visiveis = state.produtos
     .filter((p) => {
       const dist = p.distribuicaoAtual || {};
       const total = dist.A + dist.B + dist.C + dist.D;
-      return total > 0;
+      if (total <= 0) return false;
+
+      if (filtroBloco) {
+        const endPrimario = p.endereco?.split("•")[0] || "";
+        const match = /B(\d+)/.exec(endPrimario);
+        const bloco = match ? match[1] : "";
+        return bloco === filtroBloco.padStart(2, "0"); // garante "02"
+      }
+      return true;
     })
     .slice(0, maxCards);
 
@@ -72,22 +83,11 @@ export function atualizarInterface() {
     cards.appendChild(card);
   });
 
-  const filtroBloco = document.getElementById("filtroBloco")?.value || "";
-
-  // PENDENTES
+  // === PENDENTES (sem filtro de Bloco, mostra todos que restam) ===
   const pendentesVisiveis = state.produtos.filter((p) => {
     const dist = p.distribuicaoAtual || {};
     const total = dist.A + dist.B + dist.C + dist.D;
-    if (total <= 0) return false;
-
-    if (filtroBloco) {
-      // Extrai o número do bloco do endereço principal (ex: A01-B02-R03...)
-      const endPrimario = p.endereco?.split("•")[0] || "";
-      const match = /B(\d+)/.exec(endPrimario);
-      const bloco = match ? match[1] : "";
-      return bloco === filtroBloco.padStart(2, "0"); // garante "02"
-    }
-    return true;
+    return total > 0;
   });
 
   document.getElementById("pendentesList").innerHTML = pendentesVisiveis
@@ -103,7 +103,7 @@ export function atualizarInterface() {
     )
     .join("");
 
-  // RETIRADOS
+  // === RETIRADOS ===
   document.getElementById("retiradosList").innerHTML = state.retirados
     .map(
       (p) => `
@@ -132,7 +132,7 @@ export function atualizarInterface() {
     )
     .join("");
 
-  // 🧮 PROGRESSO
+  // === PROGRESSO ===
   const total = state.totalPecas || 0;
 
   const retiradasPecas = (() => {
@@ -164,7 +164,7 @@ export function atualizarInterface() {
 
   if (percentual === 100) soltarConfete();
 
-  // 🧾 Texto abaixo da barra
+  // Texto abaixo da barra
   document.getElementById("qtdRetiradas").textContent = retiradasPecas;
   document.getElementById("qtdTotal").textContent = total;
 }
