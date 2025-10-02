@@ -243,8 +243,8 @@ textarea {
   letter-spacing: 1px;
   text-transform: uppercase;
   border-radius: 12px;
-  color: #fff;
-  background: linear-gradient(135deg, var(--color-primary), #0d6efd);
+  color: #131212;
+  background: linear-gradient(135deg, var(--color-primary), #94d2f7);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   word-break: break-word;
