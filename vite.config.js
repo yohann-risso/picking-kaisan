@@ -8,7 +8,7 @@ export default defineConfig({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
-    rollOutOptions: {
+    rollupOptions: {   // ✅ aqui corrigido
       input: {
         main: path.resolve(__dirname, "src/index.html"),
         admin: path.resolve(__dirname, "src/admin.html"),
