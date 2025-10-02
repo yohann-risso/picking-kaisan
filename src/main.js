@@ -41,6 +41,10 @@ aguardarElemento("btnBipar", (btn) => {
   btn.addEventListener("click", biparProduto);
 });
 
+aguardarElemento("filtroBloco", (select) => {
+  select.addEventListener("change", () => atualizarInterface());
+});
+
 aguardarElemento("btnFinalizar", (btn) => {
   btn.addEventListener("click", finalizarPicking);
 });

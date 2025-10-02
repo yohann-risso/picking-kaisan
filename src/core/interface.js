@@ -72,21 +72,34 @@ export function atualizarInterface() {
     cards.appendChild(card);
   });
 
+  const filtroBloco = document.getElementById("filtroBloco")?.value || "";
+
   // PENDENTES
   const pendentesVisiveis = state.produtos.filter((p) => {
     const dist = p.distribuicaoAtual || {};
     const total = dist.A + dist.B + dist.C + dist.D;
-    return total > 0;
+    if (total <= 0) return false;
+
+    if (filtroBloco) {
+      // Extrai o número do bloco do endereço principal (ex: A01-B02-R03...)
+      const endPrimario = p.endereco?.split("•")[0] || "";
+      const match = /B(\d+)/.exec(endPrimario);
+      const bloco = match ? match[1] : "";
+      return bloco === filtroBloco.padStart(2, "0"); // garante "02"
+    }
+    return true;
   });
 
   document.getElementById("pendentesList").innerHTML = pendentesVisiveis
     .map(
       (p) => `
-    <div class="pendente-item">
-      <div class="sku">SKU: ${p.sku}</div>
-      <div class="descricao">${p.descricao} | Ref: ${p.sku.split("-")[0]}</div>
-      <div class="endereco">${p.endereco?.split("•")[0]}</div>
-    </div>`
+      <div class="pendente-item">
+        <div class="sku">SKU: ${p.sku}</div>
+        <div class="descricao">${p.descricao} | Ref: ${
+        p.sku.split("-")[0]
+      }</div>
+        <div class="endereco">${p.endereco?.split("•")[0]}</div>
+      </div>`
     )
     .join("");
 
