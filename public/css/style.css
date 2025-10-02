@@ -232,14 +232,29 @@ textarea {
   background-color: var(--color-primary-light);
 }
 
+/* Badge estilizado para endereço */
 .badge-endereco {
-  background: linear-gradient(135deg, #1c3f60, #2d5a88);
-  color: #fff;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.2rem;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   border-radius: 12px;
-  padding: 0.4rem 0.8rem;
-  font-size: 0.95rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--color-primary), #0d6efd);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  word-break: break-word;
 }
+
+.badge-endereco:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
 
 /* === BOTÃO BIPAR === */
 .btn-bipar {
