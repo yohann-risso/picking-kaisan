@@ -3,13 +3,19 @@ import path from "path";
 
 export default defineConfig({
   base: "/",
-  root: 'src',
-  publicDir: '../public',
+  root: "src",
+  publicDir: "../public",
   build: {
-    outDir: '../dist',
+    outDir: "../dist",
     emptyOutDir: true,
+    rollOutOptions: {
+      input: {
+        main: path.resolve(__dirname, "src/index.html"),
+        admin: path.resolve(__dirname, "src/admin.html"),
+      },
+    },
   },
-    resolve: {
+  resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
