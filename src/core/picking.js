@@ -9,6 +9,8 @@ import { inserirProdutoNaRota } from "../utils/roteamento.js";
 export function carregarOperadores() {
   const ops = [
     "Deygles Matos",
+    "Filipe Lopes",
+    "Gabriel Lagoa",
     "Kaique Teixeira",
     "Lucas Paiva",
     "Marrony Portugal",

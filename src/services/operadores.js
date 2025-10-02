@@ -1,6 +1,8 @@
 export function carregarOperadores() {
   const operadores = [
     "Deygles Matos",
+    "Filipe Lopes",
+    "Gabriel Lagoa",
     "Kaique Teixeira",
     "Lucas Paiva",
     "Marrony Portugal",
