@@ -87,6 +87,14 @@ export function criarCardProduto(produto, destaque = false) {
           style="max-width: 120px; height: auto;"
           onerror="this.onerror=null;this.src='https://via.placeholder.com/120?text=Sem+Img';"
         >
+
+        <button
+          class="btn btn-sm btn-outline-primary mt-2"
+          title="Pular este produto e ir para o próximo"
+          onclick="pularProduto('${produto.sku}')"
+        >
+          <i class="bi bi-arrow-right-circle-fill fs-5"></i>
+        </button>
       </div>
     </div>
   `;

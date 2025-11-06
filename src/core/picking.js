@@ -106,3 +106,24 @@ export function moverProdutoParaTopo(sku) {
     inserirProdutoNaRota(item);
   }
 }
+
+export function pularProduto(sku) {
+  const idx = state.produtos.findIndex(
+    (p) => p.sku.toUpperCase() === sku.toUpperCase()
+  );
+  if (idx === -1) {
+    console.warn("Produto não encontrado para pular:", sku);
+    return;
+  }
+
+  // Remove o produto e coloca no fim
+  const [produto] = state.produtos.splice(idx, 1);
+  state.produtos.push(produto);
+
+  // Atualiza interface e cache
+  atualizarInterface();
+  salvarProgressoLocal();
+
+  mostrarToast(`➡️ ${produto.sku} movido para o final da lista.`, "info");
+}
+

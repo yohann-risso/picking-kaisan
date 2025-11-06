@@ -14,7 +14,11 @@ import {
   mostrarToast,
   atualizarInterface,
 } from "./core/interface.js";
-import { carregarOperadores, biparProduto } from "./core/picking.js";
+import {
+  carregarOperadores,
+  biparProduto,
+  pularProduto,
+} from "./core/picking.js";
 import { finalizarPicking } from "./core/finalizar.js";
 import { zerarEnderecoExterno } from "./services/googleSheet.js";
 import {
@@ -356,6 +360,7 @@ Object.assign(window, {
   aguardarElemento,
   desfazerRetirada,
   atualizarFiltroBlocos,
+  pularProduto,
   lockInterface: () => {
     document.getElementById("loaderGlobal").style.display = "flex";
     document.getElementById("overlayCaixa").style.display = "block";
