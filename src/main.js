@@ -61,6 +61,89 @@ aguardarElemento("qtdCards", (input) => {
   input.addEventListener("input", atualizarQtdCards);
 });
 
+aguardarElemento("btnAtualizarEnderecos", (btn) => {
+  btn.addEventListener("click", async () => {
+    if (
+      !window.pendentes ||
+      !Array.isArray(window.pendentes) ||
+      window.pendentes.length === 0
+    ) {
+      mostrarToast("⚠️ Nenhum produto pendente para atualizar.", "warning");
+      return;
+    }
+
+    mostrarToast("🔄 Atualizando endereços pendentes...", "info");
+
+    try {
+      // 1️⃣ Coloca loader visual em todos os pendentes
+      window.pendentes.forEach((p) => {
+        const skuNorm = p.sku?.trim().toUpperCase();
+        if (skuNorm) window.setLoaderOnEndereco?.(p.pedido, skuNorm);
+      });
+
+      // 2️⃣ Busca endereços em paralelo
+      const promises = window.pendentes.map(async (p) => {
+        const skuNorm = p.sku?.trim().toUpperCase();
+        if (!skuNorm) return;
+        const novoEndereco = await buscarEnderecosPorSku(skuNorm);
+        p.endereco = novoEndereco;
+        window.setEnderecoFinal?.(p.pedido, skuNorm, novoEndereco);
+      });
+
+      await Promise.all(promises);
+
+      // 3️⃣ Atualiza cache local
+      const rom = window.romaneio || "romaneio-desconhecido";
+      localStorage.setItem(
+        `pendentes-${rom}`,
+        JSON.stringify(window.pendentes)
+      );
+
+      // 4️⃣ Re-renderiza interface mantendo rota
+      if (window.state?.produtos?.length) {
+        const ultimaRetirada = window.state.retirados?.at(-1);
+        const referencia = ultimaRetirada?.ordemEndereco || [0, 0, 0, 0, 0];
+        window.state.produtos.sort((a, b) =>
+          compararOrdem(a.ordemEndereco, b.ordemEndereco)
+        );
+        window.state.produtos = window.state.produtos.sort((a, b) =>
+          compararOrdem(a.ordemEndereco, referencia)
+        );
+      }
+
+      atualizarInterface();
+      salvarProgressoLocal();
+
+      mostrarToast("✅ Endereços atualizados com sucesso!", "success");
+    } catch (err) {
+      console.error("Erro ao atualizar endereços:", err);
+      mostrarToast("❌ Erro ao atualizar endereços.", "error");
+    }
+  });
+});
+
+async function buscarEnderecosPorSku(sku) {
+  const url = `https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec?sku=${encodeURIComponent(
+    sku
+  )}`;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Erro HTTP ${resp.status}`);
+    return await resp.text(); // exemplo: "A1-01 • A1-02"
+  } catch (err) {
+    console.error("❌ Erro no GAS:", err);
+    return "SEM LOCAL";
+  }
+}
+
+// 🔁 Função auxiliar (mesma usada em roteamento.js)
+function compararOrdem(a = [], b = []) {
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return a[i] - b[i];
+  }
+  return 0;
+}
+
 function atualizarFiltroBlocos() {
   const select = document.getElementById("filtroBloco");
   if (!select) return;
