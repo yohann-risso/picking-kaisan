@@ -64,26 +64,31 @@ aguardarElemento("qtdCards", (input) => {
 
 aguardarElemento("btnAtualizarEnderecos", (btn) => {
   btn.addEventListener("click", async () => {
-    if (
-      !window.pendentes ||
-      !Array.isArray(window.pendentes) ||
-      window.pendentes.length === 0
-    ) {
+    // usa os produtos atuais do estado
+    const pendentes =
+      state.produtos?.filter((p) => {
+        const dist = p.distribuicaoAtual || {};
+        const total =
+          (dist.A || 0) + (dist.B || 0) + (dist.C || 0) + (dist.D || 0);
+        return total > 0;
+      }) || [];
+
+    if (pendentes.length === 0) {
       mostrarToast("⚠️ Nenhum produto pendente para atualizar.", "warning");
       return;
     }
 
-    mostrarToast("🔄 Atualizando endereços pendentes...", "info");
+    mostrarToast("🔄 Atualizando endereços dos produtos pendentes...", "info");
 
     try {
-      // 1️⃣ Coloca loader visual em todos os pendentes
-      window.pendentes.forEach((p) => {
+      // 1️⃣ Coloca loader visual em todos
+      pendentes.forEach((p) => {
         const skuNorm = p.sku?.trim().toUpperCase();
         if (skuNorm) window.setLoaderOnEndereco?.(p.pedido, skuNorm);
       });
 
-      // 2️⃣ Busca endereços em paralelo
-      const promises = window.pendentes.map(async (p) => {
+      // 2️⃣ Busca endereços via GAS
+      const promises = pendentes.map(async (p) => {
         const skuNorm = p.sku?.trim().toUpperCase();
         if (!skuNorm) return;
         const novoEndereco = await buscarEnderecosPorSku(skuNorm);
@@ -93,24 +98,9 @@ aguardarElemento("btnAtualizarEnderecos", (btn) => {
 
       await Promise.all(promises);
 
-      // 3️⃣ Atualiza cache local
+      // 3️⃣ Atualiza cache e re-renderiza interface
       const rom = window.romaneio || "romaneio-desconhecido";
-      localStorage.setItem(
-        `pendentes-${rom}`,
-        JSON.stringify(window.pendentes)
-      );
-
-      // 4️⃣ Re-renderiza interface mantendo rota
-      if (window.state?.produtos?.length) {
-        const ultimaRetirada = window.state.retirados?.at(-1);
-        const referencia = ultimaRetirada?.ordemEndereco || [0, 0, 0, 0, 0];
-        window.state.produtos.sort((a, b) =>
-          compararOrdem(a.ordemEndereco, b.ordemEndereco)
-        );
-        window.state.produtos = window.state.produtos.sort((a, b) =>
-          compararOrdem(a.ordemEndereco, referencia)
-        );
-      }
+      localStorage.setItem(`pendentes-${rom}`, JSON.stringify(pendentes));
 
       atualizarInterface();
       salvarProgressoLocal();
@@ -130,7 +120,7 @@ async function buscarEnderecosPorSku(sku) {
   try {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(`Erro HTTP ${resp.status}`);
-    return await resp.text(); // exemplo: "A1-01 • A1-02"
+    return await resp.text();
   } catch (err) {
     console.error("❌ Erro no GAS:", err);
     return "SEM LOCAL";
