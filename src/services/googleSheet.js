@@ -9,7 +9,10 @@ import {
 import { inserirProdutoNaRota } from "../utils/roteamento.js";
 
 export async function zerarEnderecoExterno(endereco) {
-  const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
+  console.warn("🟡 Função zerarEnderecoExterno() está desativada.");
+  return;
+}
+/* const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
   if (!match) return toast("❌ Endereço inválido", "error");
 
   const operador = (window.operadorSelecionado || "DESCONHECIDO")
@@ -58,6 +61,7 @@ export async function zerarEnderecoExterno(endereco) {
     esconderLoaderInline(loaderId);
   }
 }
+  */
 
 function extrairOrdemEndereco(endereco = "") {
   const [endPrimario = ""] = endereco.split("•").map((e) => e.trim());
