@@ -2,73 +2,38 @@ import { toast } from "../components/Toast.js";
 import { state } from "../config.js";
 import { atualizarInterface } from "../core/interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
-import {
-  mostrarLoaderInline,
-  esconderLoaderInline,
-} from "../core/interface.js";
 import { inserirProdutoNaRota } from "../utils/roteamento.js";
 
+/**
+ * Ao clicar no ❌ do card, o endereço principal é desativado localmente
+ * e o produto passa a assumir o endereço secundário (se existir).
+ * A chamada remota ao GAS foi desativada.
+ */
 export async function zerarEnderecoExterno(endereco) {
-  console.warn("🟡 Função zerarEnderecoExterno() está desativada.");
-  return;
-}
-/* const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
+  const match = endereco.match(/A(\d+)-B(\d+)-R(\d+)/);
   if (!match) return toast("❌ Endereço inválido", "error");
 
-  const operador = (window.operadorSelecionado || "DESCONHECIDO")
-    .toLowerCase()
-    .replace(/\s+/g, "");
-
-  const time = new Date()
-    .toLocaleString("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-    })
-    .replace(",", "");
-
-  const ws = `${match[1]}-${match[2]}-${match[3]}`;
   const loaderId = `loader-zerar-${endereco}`;
-  const gasURL = window?.env?.GAS_ZERAR_URL;
+  console.log(`⚙️ Zerando endereço localmente: ${endereco}`);
 
-  if (!gasURL) {
-    toast("❌ URL de zeramento não configurada", "error");
-    return;
-  }
+  // 🔸 pula direto para o comportamento local, sem enviar ao GAS
+  moverProdutoParaFimPorEndereco(endereco.trim());
 
-  const url =
-    `${gasURL}` +
-    `&WS=${ws}` +
-    `&func=Update` +
-    `&ENDERECO=${encodeURIComponent(endereco.trim())}` +
-    `&SKU=VAZIO` +
-    `&OPERADOR=${operador}` +
-    `&TIME=${time}`;
-
-  console.log(`🔗 URL de zeramento: ${url}`);
-
-  mostrarLoaderInline(loaderId);
-  try {
-    const res = await fetch(url);
-    const txt = await res.text();
-    if (!res.ok) throw new Error(txt);
-
-    console.log("📤 Zeramento enviado:", url);
-    console.log("📩 Resposta:", txt);
-    toast(`✅ Endereço ${endereco} marcado para zeramento.`, "success");
-    moverProdutoParaFimPorEndereco(endereco.trim());
-  } catch (e) {
-    toast("❌ Falha ao marcar zeramento.", "error");
-  } finally {
-    esconderLoaderInline(loaderId);
-  }
+  // feedback visual
+  toast(
+    `🔁 Endereço ${endereco} movido para o endereço secundário (local).`,
+    "info"
+  );
 }
-  */
 
+/** Extrai a ordem de um endereço (A,B,R,C,N) */
 function extrairOrdemEndereco(endereco = "") {
   const [endPrimario = ""] = endereco.split("•").map((e) => e.trim());
   const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endPrimario);
   return match ? match.slice(1).map(Number) : [999, 999, 999, 999, 999];
 }
 
+/** Move o produto para o segundo endereço após o zeramento */
 function moverProdutoParaFimPorEndereco(enderecoZerado) {
   const idx = state.produtos.findIndex((p) => {
     const enderecoPrimario = p.endereco?.split("•")[0]?.trim().toUpperCase();
@@ -82,7 +47,7 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
 
   const [produto] = state.produtos.splice(idx, 1);
 
-  // Atualiza para o segundo endereço
+  // Atualiza para o segundo endereço (se existir)
   const [_, novoEndereco] = (produto.endereco || "").split("•");
   const novo = novoEndereco?.trim();
 
@@ -103,6 +68,7 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
     return;
   }
 
+  // Atualiza o produto com o novo endereço
   produto.endereco = novo;
   produto.ordemEndereco = extrairOrdemEndereco(novo);
 
@@ -115,7 +81,7 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
     inserirProdutoNaRota(produto, state);
   }
 
-  console.log(`🔁 Produto ${produto.sku} reposicionado após zeramento.`);
+  console.log(`🔁 Produto ${produto.sku} movido para o endereço secundário.`);
   atualizarInterface();
   salvarProgressoLocal();
 }
