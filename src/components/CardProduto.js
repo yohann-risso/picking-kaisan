@@ -46,12 +46,6 @@ export function criarCardProduto(produto, destaque = false) {
         <div class="mb-1 fw-bold fs-6" style="word-break: break-word;">
           ENDEREÇO:
           <span class="badge-endereco">${end1}</span>
-          <i class="bi bi-x-circle-fill text-danger ms-1"
-            title="Zerar Endereço"
-            style="cursor: pointer;"
-            onclick="zerarEnderecoExterno('${end1}')"></i>
-          <span class="spinner-border spinner-border-sm text-primary ms-2 d-none"
-                role="status" id="loader-zerar-${end1}"></span>
         </div>
 
         <div class="text-muted mb-1"><strong>Endereço secundário:</strong> ${end2}</div>
