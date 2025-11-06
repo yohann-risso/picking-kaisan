@@ -107,6 +107,10 @@ export function moverProdutoParaTopo(sku) {
   }
 }
 
+/**
+ * Move o produto para o endereço secundário, se existir.
+ * Caso não haja endereço secundário, move o produto para o fim da lista.
+ */
 export function pularProduto(sku) {
   const idx = state.produtos.findIndex(
     (p) => p.sku.toUpperCase() === sku.toUpperCase()
@@ -116,14 +120,44 @@ export function pularProduto(sku) {
     return;
   }
 
-  // Remove o produto e coloca no fim
   const [produto] = state.produtos.splice(idx, 1);
-  state.produtos.push(produto);
 
-  // Atualiza interface e cache
+  // Verifica se há endereço secundário
+  const [_, novoEndereco] = (produto.endereco || "").split("•");
+  const novo = novoEndereco?.trim();
+
+  if (novo && /A\d+-B\d+-R\d+-C\d+-N\d+/.test(novo)) {
+    // Atualiza endereço e ordem
+    produto.endereco = novo;
+    produto.ordemEndereco = extrairOrdemEndereco(novo);
+
+    // Garante que não duplica
+    const jaExiste = state.produtos.some(
+      (p) => p.sku === produto.sku && p.romaneio === produto.romaneio
+    );
+
+    if (!jaExiste) {
+      // insere novamente na rota (na nova posição ordenada)
+      inserirProdutoNaRota(produto, state);
+    }
+
+    mostrarToast(
+      `➡️ Produto ${produto.sku} avançou para o endereço secundário.`,
+      "info"
+    );
+  } else {
+    // Sem endereço secundário → manda pro fim
+    state.produtos.push(produto);
+    mostrarToast(`↪️ ${produto.sku} movido para o fim da lista.`, "info");
+  }
+
   atualizarInterface();
   salvarProgressoLocal();
-
-  mostrarToast(`➡️ ${produto.sku} movido para o final da lista.`, "info");
 }
 
+/** Extrai ordem numérica do endereço para comparação */
+function extrairOrdemEndereco(endereco = "") {
+  const [endPrimario = ""] = endereco.split("•").map((e) => e.trim());
+  const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endPrimario);
+  return match ? match.slice(1).map(Number) : [999, 999, 999, 999, 999];
+}
