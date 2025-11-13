@@ -2,48 +2,60 @@
 :root {
   --color-primary: #1c3f60;
   --color-primary-dark: #142f47;
-  --color-primary-light: #d9e9f2;
+  --color-primary-light: #d9e2f7;
+
   --color-success: #2e7d32;
   --color-success-dark: #1b5e20;
   --color-success-light: #e8f5e9;
+
   --color-danger: #c62828;
   --color-danger-dark: #b71c1c;
   --color-danger-light: #fdecea;
-  --color-bg: #f8f9fa;
+
+  --color-bg: #f3f4f6;
+  --color-bg-card: #ffffff;
   --color-white: #fff;
   --color-black: #000;
-  --color-text: #1a1d20;
-  --color-info-bg: #d9e9f2;
+  --color-text: #111827;
+  --color-muted: #6b7280;
+
+  --color-info-bg: #e5f0fb;
   --color-info-border: rgb(36 42 49 / 15%);
-  --font-default: "Geist", "Segoe UI", sans-serif;
+
+  --font-default: "Geist", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
   --font-size-md: 1rem;
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.5rem;
+
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
+
   --space-xxs: 0.25rem;
   --space-xs: 0.5rem;
   --space-sm: 0.75rem;
   --space-md: 1rem;
   --space-lg: 1.5rem;
   --space-xl: 2rem;
+
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-full: 9999px;
+
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 5%);
   --shadow-md: 0 4px 6px rgb(0 0 0 / 10%);
   --shadow-lg: 0 10px 15px rgb(0 0 0 / 15%);
   --shadow-inner: inset 0 2px 4px rgb(0 0 0 / 6%);
-  --transition-fast: 0.2s ease-in-out;
-  --transition-base: 0.3s ease-in-out;
+
+  --transition-fast: 0.15s ease-out;
+  --transition-base: 0.25s ease-out;
   --transition-slow: 0.5s ease;
 }
-
 
 html,
 body {
@@ -53,15 +65,22 @@ body {
   font-family: var(--font-default);
   font-size: 15px;
   background-color: var(--color-bg);
+  color: var(--color-text);
   touch-action: manipulation;
   overscroll-behavior: contain;
 }
 
+/* Evita seleção geral, mas libera para inputs/textarea */
 * {
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+input,
+textarea {
+  user-select: text;
 }
 
 /* === LAYOUT PRINCIPAL === */
@@ -105,10 +124,7 @@ body {
 /* Overlay de caixa */
 #overlayCaixa {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background: rgba(255, 255, 255, 0.95);
   color: var(--color-primary);
   font-size: 150px;
@@ -127,7 +143,7 @@ body {
 
 /* === LISTA DE RETIRADOS === */
 #retiradosList .mb-2 {
-  background: rgba(46, 125, 50, 0.05);
+  background: rgba(46, 125, 50, 0.06);
   border-radius: 12px;
   padding: 0.6rem 1rem;
   margin-bottom: 0.5rem;
@@ -144,46 +160,80 @@ body {
   font-size: 0.95rem;
   border: 1px solid #d1d5db;
   background: #fff;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
+  color: var(--color-text);
+  transition: border var(--transition-fast), box-shadow var(--transition-fast),
+    background var(--transition-fast);
 }
 
-#filtroBloco:focus {
+#filtroBloco:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(28, 63, 96, 0.2);
 }
 
 /* === LISTAS === */
+.list {
+  background: #f9fafb;
+  padding: 10px;
+  border-radius: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #9ca3af transparent;
+}
+
+/* Scrollbar estilizado (Chrome, Edge, Safari) */
+.list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 8px;
+}
+
+.list::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
 .pendente-item {
   display: flex;
   flex-direction: column;
   gap: 4px;
   background: #f9fafb;
   border-radius: 12px;
-  padding: 1rem;
+  padding: 0.9rem 1rem;
   margin-bottom: 0.6rem;
-  transition: background 0.2s ease, transform 0.2s ease;
+  border: 1px solid #e5e7eb;
+  transition: background var(--transition-fast),
+    transform var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .pendente-item:hover {
-  background: #eef2f6;
+  background: #eef2f7;
+  border-color: #cbd5f5;
   transform: translateX(2px);
 }
 
 .pendente-item .sku {
   font-weight: 600;
-  color: var(--color-danger);
+  color: var(--color-danger-dark);
 }
 
 .pendente-item .descricao {
-  font-size: 0.95rem;
-  color: #374151;
+  font-size: 0.9rem;
+  color: var(--color-muted);
 }
 
 .pendente-item .endereco {
   color: var(--color-primary);
-  font-size: 14px;
+  font-size: 0.9rem;
 }
 
+/* === BOTÕES === */
 .btn-primary {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
@@ -193,12 +243,8 @@ body {
 
 .btn-primary:hover {
   background-color: var(--color-primary-dark);
-}
-
-.btn:hover,
-.badge-endereco:hover {
-  transform: scale(1.02);
-  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-dark);
+  color: var(--color-white);
 }
 
 .btn,
@@ -213,50 +259,50 @@ textarea {
     box-shadow var(--transition-base);
 }
 
-.btn:hover,
-.badge-endereco:hover {
-  transform: scale(1.02);
+.btn:hover {
+  transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
 
+.btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* === ESTADOS DE TEXTO === */
 .text-primary {
-  color: var(--color-primary);
+  color: var(--color-primary) !important;
 }
 
 .text-danger {
-  color: var(--color-danger);
+  color: var(--color-danger) !important;
 }
 
-.bg-light-subtle {
-  background-color: var(--color-primary-light);
-}
-
-/* Badge estilizado para endereço */
+/* === BADGE DE ENDEREÇO (alta legibilidade) === */
 .badge-endereco {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.6rem 1.2rem;
-  font-size: 1.4rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  border-radius: 12px;
-  color: #131212;
-  background: linear-gradient(135deg, var(--color-primary), #94d2f7);
-  box-shadow: 0 3px 8px rgba(255, 255, 255, 0.5);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 10px;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.25);
   word-break: break-word;
 }
 
-.badge-endereco:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.5);
-}
-
-
 /* === BOTÃO BIPAR === */
-.btn-bipar {
+.btn-bipar,
+#btnBipar {
   background: var(--color-success);
   color: #fff;
   border: none;
@@ -266,33 +312,55 @@ textarea {
   transition: all 0.2s ease;
 }
 
-.btn-bipar:hover {
-  background: #1b5e20;
-  transform: scale(1.03);
+.btn-bipar:hover,
+#btnBipar:hover {
+  background: var(--color-success-dark);
+}
+
+/* === BOTÃO ESVAZIAR CESTO === */
+.btn-esvaziar-cesto {
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 999px;
+  line-height: 1.2;
+  padding-inline: 0.6rem;
+  padding-block: 0.2rem;
+  border-width: 1px;
+}
+
+.btn-esvaziar-cesto:hover {
+  transform: translateY(-1px);
+}
+
+.btn-esvaziar-cesto:active {
+  transform: translateY(0);
 }
 
 /* === CARD DE PRODUTO === */
 .card-produto {
-  background: #fff;
+  background: var(--color-bg-card);
   border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 1.4rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid #e5e7eb;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .card-produto:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
+  border-color: #cbd5f5;
 }
 
 .card-produto .fw-bold {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: var(--color-primary);
 }
 
 .card-produto.primary {
-  background-color: #a9ccec;
-  border-left-color: var(--color-primary);
+  background-color: #e0edff;
+  border-left: 4px solid var(--color-primary-dark);
 }
 
 .card-erro {
@@ -301,17 +369,17 @@ textarea {
   padding: 1rem;
   font-weight: bold;
   color: var(--color-danger-dark);
-  border-radius: 6px;
-  font-size: 1.2rem;
+  border-radius: 8px;
+  font-size: 1rem;
 }
 
 /* Feedback visual */
 .feedback-success {
-  background-color: #d4fcd4 !important;
+  background-color: #dcfce7 !important;
 }
 
 .feedback-error {
-  background-color: #ffdfdf !important;
+  background-color: #fee2e2 !important;
 }
 
 /* Imagem do produto */
@@ -320,61 +388,7 @@ textarea {
   width: 200px;
   height: 320px;
   object-fit: cover;
-  border-radius: 6px;
-}
-
-/* Info do card */
-.card-info {
-  display: flex;
-  justify-content: space-between;
-  gap: 1.2rem;
-  align-items: flex-start;
-}
-
-.card-info .details {
-  flex: 1;
-}
-
-.card-info .title {
-  font-weight: bold;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-}
-
-.card-info .sku,
-.card-info .pedido-undo {
-  font-size: 0.95rem;
-  color: var(--color-text);
-}
-
-.card-info .pedido-undo {
-  margin-top: 0.75rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* Badge e botão de desfazer */
-.card-number {
-  margin-top: 1rem;
-  font-size: 1.8rem;
-  font-weight: bold;
-  text-align: center;
-  color: var(--color-primary);
-}
-
-.btn-undo-simple {
-  font-size: 0.9rem;
-  border: none;
-  background: transparent;
-  color: var(--color-danger);
-  font-weight: 600;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.btn-undo-simple:hover {
-  color: #a50000;
+  border-radius: 10px;
 }
 
 /* === WRAPPER DOS CARDS === */
@@ -405,7 +419,7 @@ textarea {
   overflow-x: hidden;
 }
 
-/* === TEXTO ENDEREÇO === */
+/* === TEXTO ENDEREÇO (texto grande de rota) === */
 .texto-endereco {
   font-size: 1.6rem;
   color: var(--color-primary);
@@ -419,7 +433,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.3;
 }
@@ -431,13 +445,13 @@ textarea {
 /* === RESPONSIVO === */
 @media (max-width: 768px) {
   body {
-    font-size: 17px;
+    font-size: 16px;
   }
 
   .card-produto {
-    font-size: 1.9rem;
-    padding: 2.4rem !important;
-    margin-bottom: 2rem;
+    font-size: 1.5rem;
+    padding: 2rem !important;
+    margin-bottom: 1.5rem;
     flex-direction: column;
     align-items: center;
     width: 100% !important;
@@ -449,69 +463,30 @@ textarea {
     gap: 1rem;
   }
 
-  .card-produto p,
-  .card-produto .fs-5,
-  .card-produto .fs-6 {
-    font-size: 2rem;
-  }
-
-  .card-produto .fw-bold {
-    font-size: 2.1rem;
-  }
-
-  .card-produto .text-danger {
-    font-size: 2rem;
-    font-weight: bold;
-  }
-
   .texto-endereco {
-    font-size: 2.6rem;
-    font-weight: 900;
-  }
-
-  .fw-bold.text-muted.small {
-    font-size: 2rem;
-  }
-
-  .fs-4 {
-    font-size: 2.2rem;
-  }
-
-  .minicard .card-title {
-    font-size: 2.6rem;
-    font-weight: bold;
-  }
-
-  .minicard .card {
-    min-width: 90px;
-    padding: 1.8rem;
-    font-size: 2rem;
-    border: 2px solid var(--color-info-border);
-    border-radius: 0.5rem;
-    background-color: #ffffff;
+    font-size: 2.3rem;
   }
 
   .pendente-item {
-    font-size: 1.6rem;
-    padding: 14px;
+    font-size: 1.1rem;
+    padding: 0.9rem 1rem;
   }
 
   .pendente-item .sku {
-    font-size: 1.8rem;
-    font-weight: bold;
+    font-size: 1.15rem;
   }
 
   .pendente-item .descricao {
-    font-size: 1.7rem;
+    font-size: 1rem;
   }
 
   .list {
-    font-size: 1.5rem;
-    padding: 16px;
+    font-size: 1rem;
+    padding: 0.9rem;
   }
 
   .progress {
-    height: 24px;
+    height: 22px;
   }
 
   .vr {
@@ -531,7 +506,7 @@ textarea {
   #cards {
     flex-direction: row;
     overflow-x: auto;
-    gap: 1.5rem;
+    gap: 1.2rem;
     flex-wrap: nowrap;
   }
 
@@ -542,12 +517,12 @@ textarea {
 
   #cronometro,
   #ideal {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
   }
 
   .card-img-produto {
     width: 100%;
-    height: 200px;
+    height: 220px;
   }
 }
 
@@ -559,73 +534,31 @@ textarea {
   }
 }
 
+/* Botão limpar cache (long press) */
 #btnLimparCache.long-pressing {
-  transform: scale(0.95);
-  background-color: var(--color-warning, #ffc107) !important;
-  color: var(--color-black, #000) !important;
+  transform: scale(0.96);
+  background-color: #facc15 !important;
+  color: #111827 !important;
   transition: all 0.2s ease;
 }
 
+/* Ícone de polling */
 #pollingStatus {
   position: fixed;
   bottom: 12px;
   right: 12px;
   font-size: 20px;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 999px;
   padding: 6px 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.16);
   cursor: default;
   z-index: 9999;
   user-select: none;
-  transition: all 0.2s ease;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 #pollingStatus:hover {
-  transform: scale(1.15);
-}
-
-/* LISTAS COM SCROLL */
-.list {
-  background: #f9fafb;
-  padding: 10px;
-  border-radius: 12px;
-  max-height: 300px;
-  /* limite de altura da lista */
-  overflow-y: auto;
-  /* scroll vertical */
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  /* Firefox */
-  scrollbar-color: #ccc transparent;
-}
-
-/* Scrollbar estilizado (Chrome, Edge, Safari) */
-.list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.list::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 8px;
-}
-
-.list::-webkit-scrollbar-thumb:hover {
-  background: #999;
-}
-
-.btn-esvaziar-cesto {
-  font-size: 0.8rem;
-  font-weight: 500;
-  border-radius: 6px;
-  line-height: 1.2;
-  transition: all 0.2s ease;
-}
-
-.btn-esvaziar-cesto:hover {
-  transform: scale(1.03);
-}
-
-.btn-esvaziar-cesto:active {
-  transform: scale(0.97);
+  transform: scale(1.12);
+  box-shadow: var(--shadow-md);
 }
