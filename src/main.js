@@ -43,6 +43,8 @@ function aguardarElemento(id, callback) {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
+document.getElementById("loaderGlobal").style.display = "flex";
+
 // ✅ Eventos
 aguardarElemento("btnBipar", (btn) => {
   btn.addEventListener("click", biparProduto);
@@ -246,6 +248,8 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
       return;
     }
 
+    document.getElementById("loaderGlobal").style.display = "flex";
+
     document.getElementById("grupoAtivo").textContent = `Grupo ${grupo}`;
     document.getElementById("nomeOperador").textContent = operador;
 
@@ -254,10 +258,12 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 
     bootstrap.Modal.getInstance(document.getElementById("modalInicio")).hide();
 
-    await carregarRefsPorGrupo(grupo);
-    await carregarProdutos();
-
-    gerarPlaquinhas(grupo);
+    try {
+      await carregarRefsPorGrupo(grupo);
+      await carregarProdutos();
+    } finally {
+      document.getElementById("loaderGlobal").style.display = "none";
+    }
   });
 });
 

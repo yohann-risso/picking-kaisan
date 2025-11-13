@@ -184,6 +184,8 @@ export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
 export async function carregarProdutos() {
   console.log("⚙️ carregarProdutos chamado");
 
+  document.getElementById("loaderGlobal").style.display = "flex";
+
   const grupo = window.grupoSelecionado;
   const operador = window.operadorSelecionado;
 
@@ -365,5 +367,7 @@ export async function carregarProdutos() {
   } catch (err) {
     console.error("❌ Erro ao carregar produtos:", err);
     toast("Erro ao carregar dados do Supabase", "error");
+  } finally {
+    document.getElementById("loaderGlobal").style.display = "none";
   }
 }
