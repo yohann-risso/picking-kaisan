@@ -207,7 +207,7 @@ export async function carregarProdutos() {
     );
     const linhas = await resProdutos.json();
     const listaSkus = linhas.map((l) => l.sku?.trim().toUpperCase());
-    const mapaEnderecosAtualizados = await buscarEnderecosEmLote(listaSkus);
+    const mapaEnderecosAtualizados = await obterEnderecosInteligente(listaSkus);
 
     // 2. Buscar retiradas já feitas
     const resRet = await fetch(
@@ -375,97 +375,131 @@ export async function carregarProdutos() {
   }
 }
 
-async function buscarEnderecosEmLoteEmBatch(listaSkus, tamanhoBatch = 10) {
-  const baseURL =
-    "https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec";
+async function buscarEnderecoCacheSupabase(skus) {
+  const { data, error } = await supabase
+    .from("produtos_endereco_cache")
+    .select("sku, endereco")
+    .in("sku", skus);
 
+  if (error) {
+    console.warn("⚠️ Erro ao buscar cache Supabase:", error);
+    return new Map();
+  }
+
+  const mapa = new Map();
+  data.forEach((r) => mapa.set(r.sku.trim().toUpperCase(), r.endereco));
+
+  return mapa;
+}
+
+async function salvarEnderecoCacheSupabase(sku, endereco) {
+  await supabase.from("produtos_endereco_cache").upsert({
+    sku,
+    endereco,
+    atualizado_em: new Date().toISOString(),
+  });
+}
+
+function cacheLocal_getEndereco(sku) {
+  const data = JSON.parse(localStorage.getItem("cacheEnderecos") || "{}");
+  const item = data[sku];
+
+  if (!item) return null;
+
+  const expirou = Date.now() - item.timestamp > 60 * 60 * 1000;
+  return expirou ? null : item.endereco;
+}
+
+function cacheLocal_setEndereco(sku, endereco) {
+  const data = JSON.parse(localStorage.getItem("cacheEnderecos") || "{}");
+  data[sku] = {
+    endereco,
+    timestamp: Date.now(),
+  };
+  localStorage.setItem("cacheEnderecos", JSON.stringify(data));
+}
+
+async function promisePool(items, handler, concurrency = 10) {
+  const queue = [...items];
+  let active = 0;
+
+  return new Promise((resolve) => {
+    const results = [];
+    function next() {
+      while (active < concurrency && queue.length > 0) {
+        const item = queue.shift();
+        active++;
+
+        handler(item)
+          .then((res) => results.push({ item, res }))
+          .finally(() => {
+            active--;
+            if (queue.length === 0 && active === 0) resolve(results);
+            else next();
+          });
+      }
+    }
+    next();
+  });
+}
+
+async function obterEnderecosInteligente(listaSkus) {
   const skus = [
     ...new Set(listaSkus.map((s) => s?.trim().toUpperCase())),
   ].filter(Boolean);
-  const total = skus.length;
+
   const resultados = new Map();
 
-  const loaderProgress = document.getElementById("loaderProgress");
-  const loaderBar = document.getElementById("loaderBar");
-
-  let processados = 0;
-
-  // Divide em lotes
-  const batches = [];
-  for (let i = 0; i < skus.length; i += tamanhoBatch) {
-    batches.push(skus.slice(i, i + tamanhoBatch));
+  // 1️⃣ Primeiro tenta LOCAL
+  const faltandoLocal = [];
+  for (const sku of skus) {
+    const local = cacheLocal_getEndereco(sku);
+    if (local) resultados.set(sku, local);
+    else faltandoLocal.push(sku);
   }
 
-  console.log(`🚀 Iniciando busca de endereços em ${batches.length} batches`);
+  if (faltandoLocal.length === 0) return resultados;
 
-  // Função auxiliar que busca 1 SKU com retry
-  async function fetchSKU(sku, tentativas = 3) {
-    for (let t = 1; t <= tentativas; t++) {
-      try {
-        const resp = await fetch(`${baseURL}?sku=${encodeURIComponent(sku)}`);
+  // 2️⃣ Depois tenta SUPABASE
+  const mapaSupabase = await buscarEnderecoCacheSupabase(faltandoLocal);
+  const faltandoSupabase = [];
 
-        if (resp.ok) return await resp.text();
-
-        console.warn(
-          `⚠️ Erro HTTP (tentativa ${t}) para SKU ${sku}`,
-          resp.status
-        );
-      } catch (err) {
-        console.warn(`❌ Erro de rede para SKU ${sku} (tentativa ${t}):`, err);
-      }
-      await new Promise((r) => setTimeout(r, 300)); // evita spam no GAS
+  for (const sku of faltandoLocal) {
+    if (mapaSupabase.has(sku)) {
+      resultados.set(sku, mapaSupabase.get(sku));
+      cacheLocal_setEndereco(sku, mapaSupabase.get(sku));
+    } else {
+      faltandoSupabase.push(sku);
     }
-    return null; // Falhou mesmo após retries
   }
 
-  // Processa lote por lote
-  for (let i = 0; i < batches.length; i++) {
-    const lote = batches[i];
-    console.log(`📦 Processando lote ${i + 1}/${batches.length}`, lote);
+  if (faltandoSupabase.length === 0) return resultados;
 
-    let pendentes = [...lote];
+  // 3️⃣ Por último, busca no GAS com PromisePool
+  const baseURL =
+    "https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec";
 
-    // Enquanto houver SKUs que falharam, repete o lote
-    while (pendentes.length > 0) {
-      console.log(`🔄 Tentando SKUs pendentes`, pendentes);
-
-      const promessas = pendentes.map(async (sku) => {
-        const endereco = await fetchSKU(sku);
-
-        if (endereco !== null) {
-          resultados.set(sku, endereco || "SEM LOCAL");
-          return { sku, ok: true };
-        } else {
-          return { sku, ok: false };
-        }
-      });
-
-      const respostas = await Promise.all(promessas);
-
-      // Remove os que deram certo
-      pendentes = respostas.filter((r) => !r.ok).map((r) => r.sku);
-
-      processados += respostas.length;
-
-      // Atualiza UI
-      const percent = Math.round((processados / total) * 100);
-
-      if (loaderProgress) {
-        loaderProgress.textContent = `Atualizando endereços (${processados}/${total})`;
+  const resultsGas = await promisePool(
+    faltandoSupabase,
+    async (sku) => {
+      for (let t = 1; t <= 3; t++) {
+        try {
+          const resp = await fetch(`${baseURL}?sku=${encodeURIComponent(sku)}`);
+          if (resp.ok) return await resp.text();
+        } catch {}
+        await new Promise((r) => setTimeout(r, 200));
       }
-      if (loaderBar) loaderBar.style.width = `${percent}%`;
+      return "SEM LOCAL";
+    },
+    10
+  );
 
-      if (pendentes.length > 0) {
-        console.warn(
-          `⚠️ Ainda faltam ${pendentes.length} SKUs. Repetindo lote...`
-        );
-        await new Promise((r) => setTimeout(r, 600)); // cooldown anti-GAS
-      }
-    }
-
-    console.log(`✅ Lote ${i + 1} concluído`);
+  // Atualiza caches (local + supabase)
+  for (const { item: sku, res: endereco } of resultsGas) {
+    resultados.set(sku, endereco || "SEM LOCAL");
+    cacheLocal_setEndereco(sku, endereco);
+    salvarEnderecoCacheSupabase(sku, endereco); // persistente
   }
 
-  console.log("🏁 Endereços obtidos:", resultados);
   return resultados;
 }
