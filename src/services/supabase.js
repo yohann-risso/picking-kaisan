@@ -378,7 +378,7 @@ export async function carregarProdutos() {
 async function buscarEnderecoCacheSupabase(skus) {
   const { data, error } = await supabase
     .from("produtos_endereco_cache")
-    .select("sku, endereco")
+    .select("sku, endereco, valido_ate")
     .in("sku", skus);
 
   if (error) {
@@ -386,17 +386,33 @@ async function buscarEnderecoCacheSupabase(skus) {
     return new Map();
   }
 
+  const agora = Date.now();
   const mapa = new Map();
-  data.forEach((r) => mapa.set(r.sku.trim().toUpperCase(), r.endereco));
+
+  data.forEach((r) => {
+    const expira = r.valido_ate ? new Date(r.valido_ate).getTime() : 0;
+
+    if (expira > agora) {
+      // válido
+      mapa.set(r.sku.trim().toUpperCase(), r.endereco);
+    } else {
+      // expirado → precisa revalidar com GAS
+      console.log(`⏳ Cache expirado para SKU ${r.sku}`);
+    }
+  });
 
   return mapa;
 }
 
 async function salvarEnderecoCacheSupabase(sku, endereco) {
+  const agora = Date.now();
+  const validoAte = new Date(agora + 1 * 60 * 60 * 1000); // 1h
+
   await supabase.from("produtos_endereco_cache").upsert({
     sku,
     endereco,
     atualizado_em: new Date().toISOString(),
+    valido_ate: validoAte.toISOString(),
   });
 }
 
@@ -406,7 +422,7 @@ function cacheLocal_getEndereco(sku) {
 
   if (!item) return null;
 
-  const expirou = Date.now() - item.timestamp > 60 * 60 * 1000;
+  const expirou = Date.now() - item.timestamp > 1 * 60 * 60 * 1000; // 1h
   return expirou ? null : item.endereco;
 }
 
@@ -419,19 +435,26 @@ function cacheLocal_setEndereco(sku, endereco) {
   localStorage.setItem("cacheEnderecos", JSON.stringify(data));
 }
 
-async function promisePool(items, handler, concurrency = 10) {
+async function promisePool(items, handler, concurrency = 10, onItemDone) {
   const queue = [...items];
   let active = 0;
+  let completed = 0;
 
   return new Promise((resolve) => {
     const results = [];
+
     function next() {
       while (active < concurrency && queue.length > 0) {
         const item = queue.shift();
         active++;
 
         handler(item)
-          .then((res) => results.push({ item, res }))
+          .then((res) => {
+            results.push({ item, res });
+
+            completed++;
+            if (onItemDone) onItemDone(completed, items.length);
+          })
           .finally(() => {
             active--;
             if (queue.length === 0 && active === 0) resolve(results);
@@ -439,6 +462,7 @@ async function promisePool(items, handler, concurrency = 10) {
           });
       }
     }
+
     next();
   });
 }
@@ -479,6 +503,10 @@ async function obterEnderecosInteligente(listaSkus) {
   const baseURL =
     "https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec";
 
+  const loaderProgress = document.getElementById("loaderProgress");
+  const loaderBar = document.getElementById("loaderBar");
+
+  // 🔥 Controle real
   const resultsGas = await promisePool(
     faltandoSupabase,
     async (sku) => {
@@ -491,7 +519,13 @@ async function obterEnderecosInteligente(listaSkus) {
       }
       return "SEM LOCAL";
     },
-    10
+    10,
+    // 🔥 callback de progresso
+    (completed, total) => {
+      const percent = Math.round((completed / total) * 100);
+      loaderBar.style.width = `${percent}%`;
+      loaderProgress.textContent = `Atualizando endereços (${completed}/${total})`;
+    }
   );
 
   // Atualiza caches (local + supabase)
