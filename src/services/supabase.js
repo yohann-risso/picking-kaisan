@@ -375,38 +375,95 @@ export async function carregarProdutos() {
   }
 }
 
-async function buscarEnderecosEmLote(listaSkus) {
-  // Filtra SKUs únicos e válidos
-  const skus = [
-    ...new Set(listaSkus.map((s) => s?.trim().toUpperCase())),
-  ].filter(Boolean);
-  if (skus.length === 0) return new Map();
-
-  console.log(`🔎 Buscando endereços para ${skus.length} SKUs únicos...`);
-
-  const resultados = new Map();
+async function buscarEnderecosEmLoteEmBatch(listaSkus, tamanhoBatch = 10) {
   const baseURL =
     "https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec";
 
-  // Rodar em série é mais seguro pro GAS
-  for (const sku of skus) {
-    const url = `${baseURL}?sku=${encodeURIComponent(sku)}`;
+  const skus = [
+    ...new Set(listaSkus.map((s) => s?.trim().toUpperCase())),
+  ].filter(Boolean);
+  const total = skus.length;
+  const resultados = new Map();
 
-    try {
-      const resp = await fetch(url, { method: "GET" });
+  const loaderProgress = document.getElementById("loaderProgress");
+  const loaderBar = document.getElementById("loaderBar");
 
-      if (!resp.ok) {
-        console.warn(`⚠️ Erro HTTP para SKU ${sku}:`, resp.status);
-        resultados.set(sku, "SEM LOCAL");
-        continue;
+  let processados = 0;
+
+  // Divide em lotes
+  const batches = [];
+  for (let i = 0; i < skus.length; i += tamanhoBatch) {
+    batches.push(skus.slice(i, i + tamanhoBatch));
+  }
+
+  console.log(`🚀 Iniciando busca de endereços em ${batches.length} batches`);
+
+  // Função auxiliar que busca 1 SKU com retry
+  async function fetchSKU(sku, tentativas = 3) {
+    for (let t = 1; t <= tentativas; t++) {
+      try {
+        const resp = await fetch(`${baseURL}?sku=${encodeURIComponent(sku)}`);
+
+        if (resp.ok) return await resp.text();
+
+        console.warn(
+          `⚠️ Erro HTTP (tentativa ${t}) para SKU ${sku}`,
+          resp.status
+        );
+      } catch (err) {
+        console.warn(`❌ Erro de rede para SKU ${sku} (tentativa ${t}):`, err);
       }
-
-      const endereco = await resp.text();
-      resultados.set(sku, endereco || "SEM LOCAL");
-    } catch (err) {
-      console.error(`❌ Erro buscando endereço de ${sku}:`, err);
-      resultados.set(sku, "SEM LOCAL");
+      await new Promise((r) => setTimeout(r, 300)); // evita spam no GAS
     }
+    return null; // Falhou mesmo após retries
+  }
+
+  // Processa lote por lote
+  for (let i = 0; i < batches.length; i++) {
+    const lote = batches[i];
+    console.log(`📦 Processando lote ${i + 1}/${batches.length}`, lote);
+
+    let pendentes = [...lote];
+
+    // Enquanto houver SKUs que falharam, repete o lote
+    while (pendentes.length > 0) {
+      console.log(`🔄 Tentando SKUs pendentes`, pendentes);
+
+      const promessas = pendentes.map(async (sku) => {
+        const endereco = await fetchSKU(sku);
+
+        if (endereco !== null) {
+          resultados.set(sku, endereco || "SEM LOCAL");
+          return { sku, ok: true };
+        } else {
+          return { sku, ok: false };
+        }
+      });
+
+      const respostas = await Promise.all(promessas);
+
+      // Remove os que deram certo
+      pendentes = respostas.filter((r) => !r.ok).map((r) => r.sku);
+
+      processados += respostas.length;
+
+      // Atualiza UI
+      const percent = Math.round((processados / total) * 100);
+
+      if (loaderProgress) {
+        loaderProgress.textContent = `Atualizando endereços (${processados}/${total})`;
+      }
+      if (loaderBar) loaderBar.style.width = `${percent}%`;
+
+      if (pendentes.length > 0) {
+        console.warn(
+          `⚠️ Ainda faltam ${pendentes.length} SKUs. Repetindo lote...`
+        );
+        await new Promise((r) => setTimeout(r, 600)); // cooldown anti-GAS
+      }
+    }
+
+    console.log(`✅ Lote ${i + 1} concluído`);
   }
 
   console.log("🏁 Endereços obtidos:", resultados);
