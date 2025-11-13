@@ -206,6 +206,8 @@ export async function carregarProdutos() {
       { headers }
     );
     const linhas = await resProdutos.json();
+    const listaSkus = linhas.map((l) => l.sku?.trim().toUpperCase());
+    const mapaEnderecosAtualizados = await buscarEnderecosEmLote(listaSkus);
 
     // 2. Buscar retiradas já feitas
     const resRet = await fetch(
@@ -232,7 +234,8 @@ export async function carregarProdutos() {
       const romaneio = linha.romaneio;
       const caixa = (linha.caixa || "").toUpperCase();
       const qtd = parseInt(linha.qtd || 0, 10);
-      const enderecoCompleto = linha.endereco || "";
+      const enderecoGAS = mapaEnderecosAtualizados.get(sku);
+      const enderecoCompleto = enderecoGAS || linha.endereco || "SEM LOCAL";
       const [endPrimario = "SEM ENDEREÇO"] = enderecoCompleto
         .split("•")
         .map((e) => e.trim());
