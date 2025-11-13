@@ -191,6 +191,7 @@ export async function carregarProdutos() {
 
   if (!grupo || !operador) {
     console.warn("🚫 Grupo ou operador não definidos.");
+    document.getElementById("loaderGlobal").style.display = "none";
     return toast("Grupo ou operador não selecionado", "warning");
   }
 
@@ -206,8 +207,6 @@ export async function carregarProdutos() {
       { headers }
     );
     const linhas = await resProdutos.json();
-    const listaSkus = linhas.map((l) => l.sku?.trim().toUpperCase());
-    const mapaEnderecosAtualizados = await obterEnderecosInteligente(listaSkus);
 
     // 2. Buscar retiradas já feitas
     const resRet = await fetch(
@@ -229,19 +228,18 @@ export async function carregarProdutos() {
     state.retirados = [];
     const mapaSKUs = {};
 
+    // --- 3A. Montar mapaSKUs com distribuição original ---
     for (const linha of linhas) {
       const sku = (linha.sku || "").trim().toUpperCase();
       const romaneio = linha.romaneio;
       const caixa = (linha.caixa || "").toUpperCase();
       const qtd = parseInt(linha.qtd || 0, 10);
-      const enderecoGAS = mapaEnderecosAtualizados.get(sku);
-      const enderecoCompleto = enderecoGAS || linha.endereco || "SEM LOCAL";
-      const [endPrimario = "SEM ENDEREÇO"] = enderecoCompleto
+      const enderecoOriginal = linha.endereco || "SEM LOCAL";
+      const [endPrimario = "SEM ENDEREÇO"] = enderecoOriginal
         .split("•")
         .map((e) => e.trim());
 
       const ref = mapaRef.get(sku);
-
       const key = `${sku}__${romaneio}`;
 
       if (!mapaSKUs[key]) {
@@ -250,7 +248,7 @@ export async function carregarProdutos() {
           ...linha,
           sku,
           romaneio,
-          endereco: enderecoCompleto,
+          endereco: enderecoOriginal, // será atualizado depois
           imagem: ref?.imagem || "https://placehold.co/120x120?text=Sem+Img",
           colecao: ref?.colecao || "—",
           distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
@@ -271,22 +269,25 @@ export async function carregarProdutos() {
       p.distribuicaoAtual = { ...p.distribuicaoOriginal };
     }
 
+    // --- 3B. Aplicar retiradas + preencher state.produtos / state.retirados ---
+    const skusPendentesSet = new Set();
+
     for (const prod of Object.values(mapaSKUs)) {
       const key = `${prod.sku}__${prod.romaneio}`;
       const caixasRetiradas = mapaRetiradas.get(key) || [];
 
-      const retiradas = { A: 0, B: 0, C: 0, D: 0 };
+      const retiradasPorCaixa = { A: 0, B: 0, C: 0, D: 0 };
       caixasRetiradas.forEach((caixa) => {
         const c = caixa.toUpperCase();
-        if (["A", "B", "C", "D"].includes(c)) retiradas[c]++;
+        if (["A", "B", "C", "D"].includes(c)) retiradasPorCaixa[c]++;
       });
 
       // Atualiza quantidade restante
       prod.distribuicaoAtual = {
-        A: prod.distribuicaoOriginal.A - retiradas.A,
-        B: prod.distribuicaoOriginal.B - retiradas.B,
-        C: prod.distribuicaoOriginal.C - retiradas.C,
-        D: prod.distribuicaoOriginal.D - retiradas.D,
+        A: prod.distribuicaoOriginal.A - retiradasPorCaixa.A,
+        B: prod.distribuicaoOriginal.B - retiradasPorCaixa.B,
+        C: prod.distribuicaoOriginal.C - retiradasPorCaixa.C,
+        D: prod.distribuicaoOriginal.D - retiradasPorCaixa.D,
       };
 
       const totalRestante =
@@ -296,24 +297,52 @@ export async function carregarProdutos() {
         prod.distribuicaoAtual.D;
 
       const totalRetirado =
-        retiradas.A + retiradas.B + retiradas.C + retiradas.D;
+        retiradasPorCaixa.A +
+        retiradasPorCaixa.B +
+        retiradasPorCaixa.C +
+        retiradasPorCaixa.D;
 
       if (totalRetirado > 0) {
         const retirado = {
           ...structuredClone(prod),
           grupo,
-          retiradas,
+          retiradas: retiradasPorCaixa,
         };
-
         state.retirados.push(retirado);
       }
 
       if (totalRestante > 0) {
         state.produtos.push(prod);
+        skusPendentesSet.add(prod.sku); // 👈 só pendentes entram aqui
       }
     }
 
-    // 4. Ordenar os produtos com base na posição atual do operador
+    // --- 4. Buscar endereços SOMENTE dos pendentes ---
+    const listaSkusPendentes = [...skusPendentesSet].map((s) =>
+      s.trim().toUpperCase()
+    );
+    const mapaEnderecosAtualizados = await obterEnderecosInteligente(
+      listaSkusPendentes
+    );
+
+    // --- 5. Aplicar endereços atualizados nos produtos pendentes ---
+    for (const prod of state.produtos) {
+      const sku = prod.sku?.trim().toUpperCase();
+      const enderecoGAS = mapaEnderecosAtualizados.get(sku);
+      if (enderecoGAS && enderecoGAS !== prod.endereco) {
+        prod.endereco = enderecoGAS;
+
+        const [endPrimario = "SEM ENDEREÇO"] = enderecoGAS
+          .split("•")
+          .map((e) => e.trim());
+        const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endPrimario);
+        prod.ordemEndereco = match
+          ? match.slice(1).map(Number)
+          : [999, 999, 999, 999, 999];
+      }
+    }
+
+    // --- 6. Ordenar os produtos com base na posição atual do operador ---
     function compararOrdem(a, b) {
       for (let i = 0; i < a.length; i++) {
         if (a[i] !== b[i]) return a[i] - b[i];
@@ -345,10 +374,10 @@ export async function carregarProdutos() {
     aindaNaRota.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
     foraDaRota.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
 
-    // 👉 Atualiza lista ordenada
+    // 👉 Atualiza lista ordenada final
     state.produtos = [...aindaNaRota, ...foraDaRota];
 
-    // 5. Calcular e armazenar total de peças (Fixo)
+    // 7. Calcular e armazenar total de peças (Fixo)
     const totalPecas = Object.values(mapaSKUs).reduce((acc, p) => {
       const dist = p.distribuicaoOriginal || { A: 0, B: 0, C: 0, D: 0 };
       return acc + dist.A + dist.B + dist.C + dist.D;
@@ -474,15 +503,22 @@ async function obterEnderecosInteligente(listaSkus) {
 
   const resultados = new Map();
 
+  // 📊 CONTADORES DE ORIGEM
+  let usadosLocal = 0;
+  let usadosSupabase = 0;
+  let usadosGas = 0;
+
   // 1️⃣ Primeiro tenta LOCAL
   const faltandoLocal = [];
   for (const sku of skus) {
     const local = cacheLocal_getEndereco(sku);
-    if (local) resultados.set(sku, local);
-    else faltandoLocal.push(sku);
+    if (local) {
+      resultados.set(sku, local);
+      usadosLocal++;
+    } else {
+      faltandoLocal.push(sku);
+    }
   }
-
-  if (faltandoLocal.length === 0) return resultados;
 
   // 2️⃣ Depois tenta SUPABASE
   const mapaSupabase = await buscarEnderecoCacheSupabase(faltandoLocal);
@@ -492,48 +528,83 @@ async function obterEnderecosInteligente(listaSkus) {
     if (mapaSupabase.has(sku)) {
       resultados.set(sku, mapaSupabase.get(sku));
       cacheLocal_setEndereco(sku, mapaSupabase.get(sku));
+      usadosSupabase++;
     } else {
       faltandoSupabase.push(sku);
     }
   }
 
-  if (faltandoSupabase.length === 0) return resultados;
-
   // 3️⃣ Por último, busca no GAS com PromisePool
-  const baseURL =
-    "https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec";
+  if (faltandoSupabase.length > 0) {
+    const baseURL =
+      "https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec";
 
-  const loaderProgress = document.getElementById("loaderProgress");
-  const loaderBar = document.getElementById("loaderBar");
+    const resultsGas = await promisePool(
+      faltandoSupabase,
+      async (sku) => {
+        for (let t = 1; t <= 3; t++) {
+          try {
+            const resp = await fetch(
+              `${baseURL}?sku=${encodeURIComponent(sku)}`
+            );
+            if (resp.ok) return await resp.text();
+          } catch {}
+          await new Promise((r) => setTimeout(r, 200));
+        }
+        return "SEM LOCAL";
+      },
+      10,
+      // Progresso
+      (completed, total) => {
+        const loaderProgress = document.getElementById("loaderProgress");
+        const loaderBar = document.getElementById("loaderBar");
+        const percent = Math.round((completed / total) * 100);
 
-  // 🔥 Controle real
-  const resultsGas = await promisePool(
-    faltandoSupabase,
-    async (sku) => {
-      for (let t = 1; t <= 3; t++) {
-        try {
-          const resp = await fetch(`${baseURL}?sku=${encodeURIComponent(sku)}`);
-          if (resp.ok) return await resp.text();
-        } catch {}
-        await new Promise((r) => setTimeout(r, 200));
+        if (loaderBar) loaderBar.style.width = `${percent}%`;
+        if (loaderProgress)
+          loaderProgress.textContent = `Atualizando endereços (${completed}/${total})`;
       }
-      return "SEM LOCAL";
-    },
-    10,
-    // 🔥 callback de progresso
-    (completed, total) => {
-      const percent = Math.round((completed / total) * 100);
-      loaderBar.style.width = `${percent}%`;
-      loaderProgress.textContent = `Atualizando endereços (${completed}/${total})`;
-    }
-  );
+    );
 
-  // Atualiza caches (local + supabase)
-  for (const { item: sku, res: endereco } of resultsGas) {
-    resultados.set(sku, endereco || "SEM LOCAL");
-    cacheLocal_setEndereco(sku, endereco);
-    salvarEnderecoCacheSupabase(sku, endereco); // persistente
+    for (const { item: sku, res: endereco } of resultsGas) {
+      resultados.set(sku, endereco || "SEM LOCAL");
+      cacheLocal_setEndereco(sku, endereco);
+      salvarEnderecoCacheSupabase(sku, endereco);
+      usadosGas++;
+    }
   }
 
+  // 📊 LOG FINAL
+  console.log(
+    `%c📦 ENDEREÇOS RESOLVIDOS`,
+    "font-weight: bold; font-size: 16px; color: #1976d2"
+  );
+  console.log(`🟩 Cache Local:     ${usadosLocal}`);
+  console.log(`🟦 Supabase Cache: ${usadosSupabase}`);
+  console.log(`🟨 GAS:            ${usadosGas}`);
+  console.log(`📊 Total SKUs:     ${skus.length}`);
+
   return resultados;
+}
+
+function getMapaSkusPendentes() {
+  const mapa = new Map();
+
+  for (const prod of state.produtos) {
+    const sku = prod.sku?.trim().toUpperCase();
+    if (!sku) continue;
+
+    // Evita sobrescrever produtos com mesmo SKU mas romaneio diferente
+    if (!mapa.has(sku)) {
+      mapa.set(sku, []);
+    }
+
+    mapa.get(sku).push(prod);
+  }
+
+  return mapa;
+}
+
+function getListaSkusPendentes() {
+  return [...new Set(state.produtos.map((p) => p.sku.trim().toUpperCase()))];
 }
