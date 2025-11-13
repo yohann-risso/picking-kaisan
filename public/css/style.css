@@ -613,3 +613,19 @@ textarea {
 .list::-webkit-scrollbar-thumb:hover {
   background: #999;
 }
+
+.btn-esvaziar-cesto {
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 6px;
+  line-height: 1.2;
+  transition: all 0.2s ease;
+}
+
+.btn-esvaziar-cesto:hover {
+  transform: scale(1.03);
+}
+
+.btn-esvaziar-cesto:active {
+  transform: scale(0.97);
+}

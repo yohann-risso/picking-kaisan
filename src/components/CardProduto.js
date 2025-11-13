@@ -46,6 +46,21 @@ export function criarCardProduto(produto, destaque = false) {
         <div class="mb-1 fw-bold fs-6" style="word-break: break-word;">
           ENDEREÇO:
           <span class="badge-endereco">${end1}</span>
+
+          <!-- 🔹 Novo botão "Esvaziar Cesto" -->
+          <button
+            class="btn btn-outline-danger btn-sm ms-2 py-0 px-2 btn-esvaziar-cesto"
+            title="Esvaziar este cesto e avançar para o próximo endereço"
+            onclick="zerarEnderecoExterno('${end1}')"
+          >
+            Esvaziar Cesto
+          </button>
+
+          <span
+            class="spinner-border spinner-border-sm text-primary ms-2 d-none"
+            role="status"
+            id="loader-zerar-${end1}"
+          ></span>
         </div>
 
         <div class="text-muted mb-1"><strong>Endereço secundário:</strong> ${end2}</div>
