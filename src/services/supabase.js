@@ -534,43 +534,52 @@ async function obterEnderecosInteligente(listaSkus) {
     }
   }
 
-  // 3️⃣ Por último, busca no GAS com PromisePool
+  // 3️⃣ BUSCA EM BATCH (ZUADA 1 → 80 requisições) AGORA 1 ÚNICA REQUISIÇÃO
   if (faltandoSupabase.length > 0) {
     const baseURL =
       "https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec";
 
-    const resultsGas = await promisePool(
-      faltandoSupabase,
-      async (sku) => {
-        for (let t = 1; t <= 3; t++) {
-          try {
-            const resp = await fetch(
-              `${baseURL}?sku=${encodeURIComponent(sku)}`
-            );
-            if (resp.ok) return await resp.text();
-          } catch {}
-          await new Promise((r) => setTimeout(r, 200));
-        }
-        return "SEM LOCAL";
-      },
-      10,
-      // Progresso
-      (completed, total) => {
-        const loaderProgress = document.getElementById("loaderProgress");
-        const loaderBar = document.getElementById("loaderBar");
-        const percent = Math.round((completed / total) * 100);
+    // Atualiza loader inicial
+    const loaderBar = document.getElementById("loaderBar");
+    const loaderProgress = document.getElementById("loaderProgress");
 
-        if (loaderBar) loaderBar.style.width = `${percent}%`;
-        if (loaderProgress)
-          loaderProgress.textContent = `Atualizando endereços (${completed}/${total})`;
+    if (loaderProgress)
+      loaderProgress.textContent = `Atualizando endereços (0/${faltandoSupabase.length})`;
+    if (loaderBar) loaderBar.style.width = `0%`;
+
+    // 🔥 1 única chamada GAS com TODOS os SKUs faltantes
+    const url = `${baseURL}?skus=${faltandoSupabase.join(",")}`;
+
+    let json = {};
+    try {
+      const resp = await fetch(url, { method: "GET" });
+      if (resp.ok) json = await resp.json();
+      else {
+        console.warn("⚠️ Erro HTTP do GAS:", resp.status);
       }
-    );
+    } catch (err) {
+      console.error("❌ Erro no GAS:", err);
+    }
 
-    for (const { item: sku, res: endereco } of resultsGas) {
-      resultados.set(sku, endereco || "SEM LOCAL");
+    // Progress real por item
+    let completed = 0;
+    const total = faltandoSupabase.length;
+
+    for (const sku of faltandoSupabase) {
+      const endereco = json?.[sku] || "SEM LOCAL";
+
+      resultados.set(sku, endereco);
       cacheLocal_setEndereco(sku, endereco);
       salvarEnderecoCacheSupabase(sku, endereco);
       usadosGas++;
+
+      // Atualizar loader
+      completed++;
+      const percent = Math.round((completed / total) * 100);
+
+      if (loaderBar) loaderBar.style.width = `${percent}%`;
+      if (loaderProgress)
+        loaderProgress.textContent = `Atualizando endereços (${completed}/${total})`;
     }
   }
 
