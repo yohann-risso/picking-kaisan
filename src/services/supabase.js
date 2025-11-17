@@ -508,7 +508,7 @@ async function obterEnderecosInteligente(listaSkus) {
   let usadosSupabase = 0;
   let usadosGas = 0;
 
-  // 1️⃣ Primeiro tenta LOCAL
+  // 1️⃣ LOCAL CACHE
   const faltandoLocal = [];
   for (const sku of skus) {
     const local = cacheLocal_getEndereco(sku);
@@ -520,47 +520,54 @@ async function obterEnderecosInteligente(listaSkus) {
     }
   }
 
-  // 2️⃣ Depois tenta SUPABASE
+  // 2️⃣ SUPABASE CACHE
   const mapaSupabase = await buscarEnderecoCacheSupabase(faltandoLocal);
   const faltandoSupabase = [];
 
   for (const sku of faltandoLocal) {
     if (mapaSupabase.has(sku)) {
-      resultados.set(sku, mapaSupabase.get(sku));
-      cacheLocal_setEndereco(sku, mapaSupabase.get(sku));
+      const endereco = mapaSupabase.get(sku);
+      resultados.set(sku, endereco);
+      cacheLocal_setEndereco(sku, endereco);
       usadosSupabase++;
     } else {
       faltandoSupabase.push(sku);
     }
   }
 
-  // 3️⃣ BUSCA EM BATCH (ZUADA 1 → 80 requisições) AGORA 1 ÚNICA REQUISIÇÃO
+  // 3️⃣ GAS — AGORA VIA POST (SEM LIMITES, SEM REDIRECTS)
   if (faltandoSupabase.length > 0) {
-    const baseURL = window.env?.GAS_ENDERECOS_URL;
+    const url = window.env?.GAS_ENDERECOS_URL;
+    if (!url) {
+      console.error("❌ GAS_ENDERECOS_URL não encontrada no env");
+      return resultados;
+    }
 
-    // Atualiza loader inicial
+    // Loader de progresso
     const loaderBar = document.getElementById("loaderBar");
     const loaderProgress = document.getElementById("loaderProgress");
-
     if (loaderProgress)
       loaderProgress.textContent = `Atualizando endereços (0/${faltandoSupabase.length})`;
     if (loaderBar) loaderBar.style.width = `0%`;
 
-    // 🔥 1 única chamada GAS com TODOS os SKUs faltantes
-    const url = `${baseURL}?skus=${faltandoSupabase.join(",")}`;
-
     let json = {};
     try {
-      const resp = await fetch(url, { method: "GET" });
-      if (resp.ok) json = await resp.json();
-      else {
-        console.warn("⚠️ Erro HTTP do GAS:", resp.status);
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skus: faltandoSupabase }),
+      });
+
+      if (resp.ok) {
+        json = await resp.json();
+      } else {
+        console.warn("⚠️ Erro HTTP no GAS:", resp.status, await resp.text());
       }
     } catch (err) {
       console.error("❌ Erro no GAS:", err);
     }
 
-    // Progress real por item
+    // Processar retorno um por um
     let completed = 0;
     const total = faltandoSupabase.length;
 
@@ -572,7 +579,6 @@ async function obterEnderecosInteligente(listaSkus) {
       salvarEnderecoCacheSupabase(sku, endereco);
       usadosGas++;
 
-      // Atualizar loader
       completed++;
       const percent = Math.round((completed / total) * 100);
 
@@ -582,15 +588,14 @@ async function obterEnderecosInteligente(listaSkus) {
     }
   }
 
-  // 📊 LOG FINAL
   console.log(
     `%c📦 ENDEREÇOS RESOLVIDOS`,
     "font-weight: bold; font-size: 16px; color: #1976d2"
   );
   console.log(`🟩 Cache Local:     ${usadosLocal}`);
-  console.log(`🟦 Supabase Cache: ${usadosSupabase}`);
-  console.log(`🟨 GAS:            ${usadosGas}`);
-  console.log(`📊 Total SKUs:     ${skus.length}`);
+  console.log(`🟦 Supabase Cache:  ${usadosSupabase}`);
+  console.log(`🟨 GAS:             ${usadosGas}`);
+  console.log(`📊 Total SKUs:      ${skus.length}`);
 
   return resultados;
 }
