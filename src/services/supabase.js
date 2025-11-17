@@ -536,8 +536,7 @@ async function obterEnderecosInteligente(listaSkus) {
 
   // 3️⃣ BUSCA EM BATCH (ZUADA 1 → 80 requisições) AGORA 1 ÚNICA REQUISIÇÃO
   if (faltandoSupabase.length > 0) {
-    const baseURL =
-      "https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec";
+    const baseURL = window.env?.GAS_ENDERECOS_URL;
 
     // Atualiza loader inicial
     const loaderBar = document.getElementById("loaderBar");
