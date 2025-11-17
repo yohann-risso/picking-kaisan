@@ -537,7 +537,7 @@ async function obterEnderecosInteligente(listaSkus) {
 
   // 3️⃣ GAS — AGORA VIA POST (SEM LIMITES, SEM REDIRECTS)
   if (faltandoSupabase.length > 0) {
-    const url = window.env?.GAS_ENDERECOS_URL;
+    const url = "/api/gas-enderecos";
     if (!url) {
       console.error("❌ GAS_ENDERECOS_URL não encontrada no env");
       return resultados;
