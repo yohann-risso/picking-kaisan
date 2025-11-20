@@ -100,4 +100,22 @@ function moverProdutoParaFimPorEndereco(enderecoZerado) {
 
   atualizarInterface();
   salvarProgressoLocal();
+
+  setTimeout(async () => {
+    try {
+      produto.endereco = novo;
+      produto.ordemEndereco = extrairOrdemEndereco(novo);
+
+      console.log(
+        `💾 Endereço atualizado no cache local: ${produto.sku} → ${novo}`
+      );
+
+      salvarProgressoLocal();
+      atualizarInterface();
+
+      await atualizarEnderecoCacheSupabase(produto.sku, novo);
+    } catch (err) {
+      console.error("❌ Erro ao atualizar cache:", err);
+    }
+  }, 5000);
 }

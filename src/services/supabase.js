@@ -621,3 +621,32 @@ function getMapaSkusPendentes() {
 function getListaSkusPendentes() {
   return [...new Set(state.produtos.map((p) => p.sku.trim().toUpperCase()))];
 }
+
+export async function atualizarEnderecoCacheSupabase(sku, novoEndereco) {
+  try {
+    const payload = {
+      sku,
+      endereco: novoEndereco,
+      atualizado_em: new Date().toISOString(),
+    };
+
+    console.log("📤 Atualizando produtos_endereco_cache:", payload);
+
+    const res = await fetch(
+      "/api/proxy?endpoint=/rest/v1/produtos_endereco_cache",
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+
+    console.log("✅ produtos_endereco_cache atualizado com sucesso!");
+  } catch (err) {
+    console.error("❌ Erro ao atualizar produtos_endereco_cache:", err);
+  }
+}
