@@ -50,6 +50,17 @@ aguardarElemento("btnBipar", (btn) => {
   btn.addEventListener("click", biparProduto);
 });
 
+aguardarElemento("filtroArmazem", (select) => {
+  select.addEventListener("change", (e) => {
+    window.filtroArmazemSelecionado = e.target.value;
+
+    const bloco = document.getElementById("filtroBloco");
+    if (bloco) bloco.value = "";
+
+    atualizarInterface();
+  });
+});
+
 aguardarElemento("filtroBloco", (select) => {
   select.addEventListener("change", () => atualizarInterface());
 });
@@ -366,6 +377,7 @@ Object.assign(window, {
   aguardarElemento,
   desfazerRetirada,
   atualizarFiltroBlocos,
+  atualizarFiltroArmazem,
   pularProduto,
   lockInterface: () => {
     document.getElementById("loaderGlobal").style.display = "flex";
@@ -385,3 +397,43 @@ function gerarPlaquinhas(grupo) {
   const url = `/plaquinhas.html?grupo=${grupo}`;
   window.open(url, "_blank");
 }
+
+function atualizarFiltroArmazem() {
+  const select = document.getElementById("filtroArmazem");
+  if (!select) return;
+
+  const armazens = new Set();
+
+  state.produtos.forEach((p) => {
+    const endPrimario = (p.endereco || "").split("•")[0];
+
+    // Ex: A1-B03-R02-C01-N05
+    const match = /^A(\d+)/i.exec(endPrimario);
+    if (match) {
+      armazens.add(`A${match[1]}`);
+    } else {
+      armazens.add("SEM LOCAL");
+    }
+  });
+
+  const options = [`<option value="">Todos</option>`];
+
+  if (armazens.has("SEM LOCAL")) {
+    options.push(`<option value="SEM LOCAL">Sem Local</option>`);
+  }
+
+  [...armazens]
+    .filter((a) => a !== "SEM LOCAL")
+    .sort((a, b) => {
+      const na = parseInt(a.replace("A", ""), 10);
+      const nb = parseInt(b.replace("A", ""), 10);
+      return na - nb;
+    })
+    .forEach((a) => {
+      options.push(`<option value="${a}">${a}</option>`);
+    });
+
+  select.innerHTML = options.join("");
+}
+
+window.filtroArmazemSelecionado = "";

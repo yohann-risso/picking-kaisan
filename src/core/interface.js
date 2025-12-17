@@ -63,6 +63,9 @@ export function atualizarInterface() {
   const filtroBlocoNum = parseInt(filtroBlocoValor, 10);
   const usarFiltroBloco = filtroBlocoValor !== "";
 
+  const filtroArmazem = window.filtroArmazemSelecionado || "";
+  const usarFiltroArmazem = filtroArmazem !== "";
+
   // === CARDS VISÍVEIS (filtrados por Bloco ou Sem Local) ===
   const visiveis = state.produtos
     .filter((p) => {
@@ -71,17 +74,30 @@ export function atualizarInterface() {
         (dist.A || 0) + (dist.B || 0) + (dist.C || 0) + (dist.D || 0);
       if (total <= 0) return false;
 
+      const endPrimario = (p.endereco || "").split("•")[0] || "";
+
+      // 🏬 FILTRO DE ARMAZÉM (A1, A2…)
+      if (usarFiltroArmazem) {
+        const matchA = /^A(\d+)/i.exec(endPrimario);
+
+        if (filtroArmazem === "SEM LOCAL") {
+          if (matchA) return false;
+        } else {
+          const armazemAtual = matchA ? `A${matchA[1]}` : null;
+          if (armazemAtual !== filtroArmazem) return false;
+        }
+      }
+
+      // 🧱 FILTRO DE BLOCO (B1, B2…)
       if (usarFiltroBloco) {
-        // Endereço primário no formato Axx-Bxx-Rxx-Cxx-Nxx (pode vir sem zero à esquerda)
-        const endPrimario = (p.endereco || "").split("•")[0] || "";
-        const match = /B(\d+)/i.exec(endPrimario);
+        const matchB = /B(\d+)/i.exec(endPrimario);
 
         if (filtroBlocoValor === "SEM LOCAL") {
-          return !match; // só produtos sem Bxx no endereço
+          if (matchB) return false;
+        } else {
+          const blocoNum = matchB ? parseInt(matchB[1], 10) : NaN;
+          if (blocoNum !== filtroBlocoNum) return false;
         }
-
-        const blocoNum = match ? parseInt(match[1], 10) : NaN;
-        return blocoNum === filtroBlocoNum;
       }
 
       return true;

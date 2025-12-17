@@ -402,6 +402,9 @@ export async function carregarProdutos() {
   } finally {
     document.getElementById("loaderGlobal").style.display = "none";
   }
+
+  window.atualizarFiltroArmazem?.();
+  window.atualizarFiltroBlocos?.();
 }
 
 async function buscarEnderecoCacheSupabase(skus) {
