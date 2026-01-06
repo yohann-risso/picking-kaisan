@@ -531,12 +531,12 @@ export async function desfazerRetiradaV2(sku, romaneio, caixa, ctx) {
       const grupo = parseInt(ctx.grupo ?? window.grupoSelecionado);
       query = `/rest/v1/retiradas?sku=eq.${skuN}&romaneio=eq.${romaneio}&caixa=eq.${cx}&grupo=eq.${grupo}`;
     } else {
-      query =
+      query = query =
         `/rest/v1/retiradas?sku=eq.${skuN}` +
         `&romaneio=eq.${romaneio}` +
         `&caixa=eq.${cx}` +
         `&modo=eq.AVULSO` +
-        `&chave=eq.${encodeURIComponent(String(ctx.chave).trim())}` +
+        `&chave=eq.${String(ctx.chave).trim()}` +
         `&nl=eq.${ctx.nl ? "true" : "false"}`;
     }
 
