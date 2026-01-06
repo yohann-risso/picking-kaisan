@@ -263,10 +263,48 @@
             </h5>
           </div>
           <div class="modal-body">
+            <!-- NOVO: Tipo de picking -->
             <div class="mb-3">
+              <label for="tipoPicking" class="form-label fw-bold">Tipo:</label>
+              <select id="tipoPicking" class="form-select">
+                <option value="GRUPO" selected>Picking por Grupo</option>
+                <option value="AVULSO">Picking Avulso (Romaneio/Pedido)</option>
+              </select>
+            </div>
+
+            <!-- Modo grupo (existente) -->
+            <div class="mb-3" id="wrapGrupo">
               <label for="grupoModal" class="form-label fw-bold">Grupo:</label>
               <select id="grupoModal" class="form-select"></select>
             </div>
+
+            <!-- NOVO: Modo avulso -->
+            <div class="mb-3 d-none" id="wrapAvulso">
+              <label for="chaveAvulsa" class="form-label fw-bold">
+                Romaneio ou Pedido:
+              </label>
+              <input
+                id="chaveAvulsa"
+                class="form-control"
+                placeholder="Ex: 40106 (romaneio) ou 25520858453 (pedido)"
+                inputmode="numeric"
+                autocomplete="off"
+              />
+
+              <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="chkNl" />
+                <label class="form-check-label fw-semibold" for="chkNl">
+                  É NL?
+                </label>
+              </div>
+
+              <div class="small text-muted mt-1">
+                Marcado = buscar na tabela NL. Desmarcado = tabela padrão do
+                picking.
+              </div>
+            </div>
+
+            <!-- Operador (existente) -->
             <div class="mb-3">
               <label for="operadorModal" class="form-label fw-bold"
                 >Operador:</label
@@ -274,6 +312,7 @@
               <select id="operadorModal" class="form-select"></select>
             </div>
           </div>
+
           <div class="modal-footer">
             <button
               id="btnConfirmarInicio"

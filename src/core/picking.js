@@ -1,6 +1,9 @@
 import { state } from "../config.js";
 import { mostrarToast, feedbackVisual } from "./interface.js";
 import { registrarRetirada } from "../services/supabase.js";
+import { registrarRetiradaV2 } from "../services/supabase.js";
+import { registrarRetiradaV2 } from "../services/supabase.js";
+
 import { atualizarInterface } from "./interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
 import { mostrarAnimacaoCaixa } from "./interface.js";
@@ -31,8 +34,12 @@ export function carregarOperadores() {
 export async function biparProduto() {
   const input = document.getElementById("skuInput");
   const valor = input.value.trim().toUpperCase();
-  const grupo = window.grupoSelecionado;
   const operador = window.operadorSelecionado;
+
+  // ctx único (novo). fallback para grupo (compatibilidade)
+  const ctx = window.pickingContexto?.tipo
+    ? window.pickingContexto
+    : { tipo: "GRUPO", grupo: window.grupoSelecionado, operador };
 
   input.disabled = true;
   document.querySelector(".input-group .btn").disabled = true;
@@ -77,16 +84,30 @@ export async function biparProduto() {
     return liberar();
   }
 
-  await registrarRetirada(produto, operador, grupo, caixa);
+  if (!ctx || !operador) {
+    mostrarToast("Operador não definido", "error");
+    return liberar();
+  }
+
+  await registrarRetiradaV2(produto, operador, ctx, caixa);
 
   const total = dist.A + dist.B + dist.C + dist.D;
   if (total === 0) {
-    state.retirados.unshift({
+    const registroRetirado = {
       ...produto,
       caixa,
-      grupo,
       distribuicaoOriginal: { ...produto.distribuicaoOriginal },
-    });
+    };
+
+    if (ctx.tipo === "GRUPO") {
+      registroRetirado.grupo = ctx.grupo;
+    } else {
+      registroRetirado.modo = "AVULSO";
+      registroRetirado.chave = String(ctx.chave || "").trim();
+      registroRetirado.nl = !!ctx.nl;
+    }
+
+    state.retirados.unshift(registroRetirado);
     state.produtos.splice(idx, 1);
   }
 

@@ -220,6 +220,11 @@ async function inicializarApp() {
   }, 3000);
 
   new bootstrap.Modal(document.getElementById("modalInicio")).show();
+
+  aguardarElemento("tipoPicking", (el) => {
+    el.addEventListener("change", atualizarModalInicioPorTipo);
+    atualizarModalInicioPorTipo(); // estado inicial
+  });
 }
 
 function simularBipagem(sku) {
@@ -248,30 +253,87 @@ function simularBipagem(sku) {
 window.simularBipagem = simularBipagem;
 // Torna acessível globalmente
 
-// 🎯 Confirmação no modal
+// 🎯 Confirmação no modal// 🎯 Confirmação no modal
 aguardarElemento("btnConfirmarInicio", (btn) => {
   btn.addEventListener("click", async () => {
-    const grupo = document.getElementById("grupoModal").value;
-    const operador = document.getElementById("operadorModal").value;
+    const tipo = document.getElementById("tipoPicking")?.value || "GRUPO";
+    const operador = document.getElementById("operadorModal")?.value;
 
-    if (!grupo || !operador) {
-      toast("Selecione grupo e operador", "warning");
+    const grupo = document.getElementById("grupoModal")?.value;
+    const chave = document.getElementById("chaveAvulsa")?.value?.trim();
+    const nl = !!document.getElementById("chkNl")?.checked;
+
+    if (!operador) {
+      mostrarToast("Selecione o operador", "warning");
       return;
+    }
+
+    if (tipo === "GRUPO") {
+      if (!grupo) {
+        mostrarToast("Selecione o grupo", "warning");
+        return;
+      }
+    } else {
+      if (!chave) {
+        mostrarToast("Informe Romaneio ou Pedido", "warning");
+        return;
+      }
     }
 
     document.getElementById("loaderGlobal").style.display = "flex";
 
-    document.getElementById("grupoAtivo").textContent = `Grupo ${grupo}`;
-    document.getElementById("nomeOperador").textContent = operador;
+    // 📌 Contexto único do picking (novo)
+    window.pickingContexto = {
+      tipo, // "GRUPO" | "AVULSO"
+      grupo: tipo === "GRUPO" ? grupo : null,
+      chave: tipo === "AVULSO" ? chave : null, // romaneio/pedido informado
+      nl: tipo === "AVULSO" ? nl : false,
+      operador,
+    };
 
-    window.grupoSelecionado = grupo;
+    // compat: mantém variáveis existentes (se ainda usadas em outros módulos)
+    window.grupoSelecionado = tipo === "GRUPO" ? grupo : null;
     window.operadorSelecionado = operador;
+
+    // label do topo (mantém o mesmo span id="grupoAtivo")
+    const label =
+      tipo === "GRUPO"
+        ? `Grupo ${grupo}`
+        : `${nl ? "NL" : "Avulso"} | ${chave}`;
+
+    document.getElementById("grupoAtivo").textContent = label;
+    document.getElementById("nomeOperador").textContent = operador;
 
     bootstrap.Modal.getInstance(document.getElementById("modalInicio")).hide();
 
     try {
-      await carregarRefsPorGrupo(grupo);
-      await carregarProdutos();
+      // ✅ GRUPO (fluxo atual)
+      if (tipo === "GRUPO") {
+        await carregarRefsPorGrupo(grupo);
+        await carregarProdutos(); // mantém como está hoje
+        return;
+      }
+
+      // ✅ AVULSO (novo fluxo)
+      // Você vai criar essas duas funções no supabase.js:
+      //  - carregarRefsPorAvulso(contexto)
+      //  - carregarProdutosPorContexto(contexto)
+      if (typeof window.carregarRefsPorAvulso === "function") {
+        await window.carregarRefsPorAvulso(window.pickingContexto);
+      } else {
+        // fallback: se refs não forem obrigatórios no avulso, não trava o app
+        console.warn("⚠️ carregarRefsPorAvulso não implementado ainda.");
+      }
+
+      if (typeof window.carregarProdutosPorContexto === "function") {
+        await window.carregarProdutosPorContexto(window.pickingContexto);
+      } else {
+        console.warn("⚠️ carregarProdutosPorContexto não implementado ainda.");
+        mostrarToast(
+          "⚠️ Avulso ainda não implementado no Supabase.js",
+          "warning"
+        );
+      }
     } finally {
       document.getElementById("loaderGlobal").style.display = "none";
     }
@@ -437,3 +499,24 @@ function atualizarFiltroArmazem() {
 }
 
 window.filtroArmazemSelecionado = "";
+
+function atualizarModalInicioPorTipo() {
+  const tipoEl = document.getElementById("tipoPicking");
+  const wrapGrupo = document.getElementById("wrapGrupo");
+  const wrapAvulso = document.getElementById("wrapAvulso");
+  const inputChave = document.getElementById("chaveAvulsa");
+
+  if (!tipoEl || !wrapGrupo || !wrapAvulso) return;
+
+  const tipo = tipoEl.value;
+
+  if (tipo === "AVULSO") {
+    wrapGrupo.classList.add("d-none");
+    wrapAvulso.classList.remove("d-none");
+    setTimeout(() => inputChave?.focus(), 50);
+  } else {
+    wrapAvulso.classList.add("d-none");
+    wrapGrupo.classList.remove("d-none");
+  }
+}
+window.atualizarModalInicioPorTipo = atualizarModalInicioPorTipo;

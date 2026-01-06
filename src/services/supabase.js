@@ -58,6 +58,540 @@ export async function carregarGrupos() {
 
 let refsCarregadas = false;
 
+// ===============================
+// CONFIG: tabelas do picking
+// ===============================
+const TABELA_PADRAO = "produtos";
+const TABELA_NL = "produtos_nl"; // <- TROQUE se sua tabela NL tiver outro nome
+
+function normalizarSku(s) {
+  return (s || "").trim().toUpperCase();
+}
+
+// Heurística simples: se for grande, trata como pedido; senão, romaneio.
+// (Se você preferir um toggle no modal, eu adapto pra ficar explícito.)
+function detectarCampoChave(chave) {
+  const v = String(chave || "").trim();
+  if (!v) return { campo: null, valor: null };
+  const digits = v.replace(/\D+/g, "");
+  const valor = digits || v;
+  const campo = valor.length >= 10 ? "pedido" : "romaneio";
+  return { campo, valor };
+}
+
+function resolverFontePorContexto(ctx) {
+  // ctx: { tipo:"GRUPO"|"AVULSO", grupo, chave, nl }
+  if (!ctx || ctx.tipo === "GRUPO") {
+    return {
+      tabela: TABELA_PADRAO,
+      filtro: { campo: "grupo", valor: ctx?.grupo ?? window.grupoSelecionado },
+      label: `Grupo ${ctx?.grupo ?? window.grupoSelecionado}`,
+    };
+  }
+
+  const { campo, valor } = detectarCampoChave(ctx.chave);
+  return {
+    tabela: ctx.nl ? TABELA_NL : TABELA_PADRAO,
+    filtro: { campo, valor },
+    label: `${ctx.nl ? "NL" : "Avulso"} | ${campo} ${valor}`,
+  };
+}
+
+export async function carregarRefsPorContexto(ctx) {
+  const { tabela, filtro } = resolverFontePorContexto(ctx);
+
+  if (!filtro?.campo || !filtro?.valor) {
+    console.warn("⚠️ carregarRefsPorContexto: filtro inválido", ctx, filtro);
+    return;
+  }
+
+  // 1) Buscar SKUs únicos só da seleção atual (grupo/romaneio/pedido)
+  const { data: produtos, error: erroProdutos } = await supabase
+    .from(tabela)
+    .select("sku")
+    .eq(filtro.campo, filtro.valor);
+
+  if (erroProdutos) {
+    console.error("❌ Erro ao buscar SKUs:", erroProdutos);
+    return;
+  }
+
+  const skuList = [
+    ...new Set((produtos || []).map((p) => normalizarSku(p.sku))),
+  ].filter(Boolean);
+
+  if (!skuList.length) {
+    console.warn("⚠️ Nenhum SKU encontrado para:", tabela, filtro);
+    return;
+  }
+
+  // 2) Buscar refs
+  const { data: refs, error: erroRefs } = await supabase
+    .from("produtos_ref")
+    .select("sku, imagem, colecao")
+    .in("sku", skuList);
+
+  if (erroRefs) {
+    console.error("❌ Erro ao buscar produtos_ref:", erroRefs);
+    return;
+  }
+
+  // 3) Montar mapa
+  window.mapaRefGlobal = new Map();
+  (refs || []).forEach((r) => {
+    const key = normalizarSku(r.sku);
+    window.mapaRefGlobal.set(key, r);
+    window.mapaRefGlobal.set(key.toLowerCase(), r);
+  });
+
+  console.log("✅ mapaRefGlobal carregado:", window.mapaRefGlobal.size);
+}
+
+// compat (mantém sua API atual)
+export async function carregarRefsPorGrupo(grupo) {
+  return carregarRefsPorContexto({ tipo: "GRUPO", grupo });
+}
+
+// atalho pro main.js (caso você queira chamar window.carregarRefsPorAvulso)
+window.carregarRefsPorAvulso = (ctx) => carregarRefsPorContexto(ctx);
+
+export async function carregarProdutosPorContexto(ctx) {
+  console.log("⚙️ carregarProdutosPorContexto chamado", ctx);
+
+  const loader = document.getElementById("loaderGlobal");
+  if (loader) loader.style.display = "flex";
+
+  const operador = ctx?.operador || window.operadorSelecionado;
+
+  if (!operador) {
+    if (loader) loader.style.display = "none";
+    console.warn("🚫 Operador não definido.");
+    return toast("Operador não selecionado", "warning");
+  }
+
+  const fonte = resolverFontePorContexto(ctx);
+  if (!fonte?.tabela || !fonte?.filtro?.campo || !fonte?.filtro?.valor) {
+    if (loader) loader.style.display = "none";
+    console.warn("🚫 Fonte/filtro inválido:", fonte);
+    return toast("Filtro inválido (grupo/romaneio/pedido).", "warning");
+  }
+
+  // UI
+  document.getElementById("btnFinalizar")?.classList.remove("d-none");
+  document.getElementById("card-tempo")?.classList.remove("d-none");
+
+  const headers = getHeaders();
+
+  try {
+    // ------------------------------------------------------------
+    // 1) Buscar produtos do recorte (grupo OU romaneio/pedido)
+    // ------------------------------------------------------------
+    const endpointProdutos =
+      `/rest/v1/${fonte.tabela}?` +
+      `${fonte.filtro.campo}=eq.${encodeURIComponent(fonte.filtro.valor)}` +
+      `&select=*`;
+
+    const resProdutos = await fetch(
+      `/api/proxy?endpoint=${encodeURIComponent(endpointProdutos)}`,
+      { headers }
+    );
+
+    if (!resProdutos.ok) {
+      throw new Error(await resProdutos.text());
+    }
+
+    const linhasRaw = await resProdutos.json();
+
+    // ------------------------------------------------------------
+    // 1A) Normalizar linhas NL -> formato padrão (caixa virtual "A")
+    //     Esperado na tabela NL: romaneio, sku, qtd, pedido (endereco opcional)
+    // ------------------------------------------------------------
+    const linhas = Array.isArray(linhasRaw) ? linhasRaw : [];
+    const isNL = String(fonte.tabela).toLowerCase() === "produtos_nl"; // ajuste se seu nome for outro
+
+    const linhasNormalizadas = isNL
+      ? linhas.map((l) => ({
+          ...l,
+          caixa: "A",
+          endereco: l.endereco || "SEM LOCAL",
+          // mantém pedido se existir (pode ser usado em telas/relatórios)
+          pedido: l.pedido ?? null,
+        }))
+      : linhas;
+
+    // ------------------------------------------------------------
+    // 2) Buscar retiradas já feitas (grupo OU avulso por chave)
+    // ------------------------------------------------------------
+    let endpointRet = null;
+
+    if (!ctx || ctx.tipo === "GRUPO") {
+      const grupo = ctx?.grupo ?? window.grupoSelecionado;
+      if (!grupo) {
+        throw new Error("Grupo não definido para modo GRUPO.");
+      }
+      endpointRet =
+        `/rest/v1/retiradas?grupo=eq.${encodeURIComponent(grupo)}` +
+        `&select=sku,caixa,romaneio,pedido,modo,chave,nl`;
+    } else {
+      const chave = String(ctx.chave || "").trim();
+      if (!chave) throw new Error("Chave avulsa inválida.");
+
+      endpointRet =
+        `/rest/v1/retiradas?modo=eq.AVULSO` +
+        `&chave=eq.${encodeURIComponent(chave)}` +
+        `&nl=eq.${ctx.nl ? "true" : "false"}` +
+        `&select=sku,caixa,romaneio,pedido,modo,chave,nl`;
+    }
+
+    const resRet = await fetch(
+      `/api/proxy?endpoint=${encodeURIComponent(endpointRet)}`,
+      { headers }
+    );
+
+    if (!resRet.ok) {
+      throw new Error(await resRet.text());
+    }
+
+    const retiradas = await resRet.json();
+
+    // ------------------------------------------------------------
+    // 3) Mapear retiradas por sku + romaneio
+    // ------------------------------------------------------------
+    const mapaRetiradas = new Map();
+    (Array.isArray(retiradas) ? retiradas : []).forEach((r) => {
+      const key = `${normalizarSku(r.sku)}__${r.romaneio}`;
+      if (!mapaRetiradas.has(key)) mapaRetiradas.set(key, []);
+      mapaRetiradas.get(key).push((r.caixa || "").toUpperCase());
+    });
+
+    const mapaRef = window.mapaRefGlobal || new Map();
+
+    state.produtos = [];
+    state.retirados = [];
+    const mapaSKUs = {};
+
+    // ------------------------------------------------------------
+    // 3A) Montar mapaSKUs com distribuição original
+    // ------------------------------------------------------------
+    for (const linha of linhasNormalizadas) {
+      const sku = normalizarSku(linha.sku);
+      const romaneio = linha.romaneio;
+      const caixa = (linha.caixa || "").toUpperCase();
+      const qtd = parseInt(linha.qtd || 0, 10);
+
+      if (!sku || !romaneio || !qtd || qtd <= 0) continue;
+
+      const enderecoOriginal = linha.endereco || "SEM LOCAL";
+      const [endPrimario = "SEM ENDEREÇO"] = enderecoOriginal
+        .split("•")
+        .map((e) => e.trim());
+
+      const ref = mapaRef.get(sku);
+      const key = `${sku}__${romaneio}`;
+
+      if (!mapaSKUs[key]) {
+        const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endPrimario);
+        mapaSKUs[key] = {
+          ...linha,
+          sku,
+          romaneio,
+          endereco: enderecoOriginal,
+          imagem: ref?.imagem || "https://placehold.co/120x120?text=Sem+Img",
+          colecao: ref?.colecao || "—",
+          distribuicaoAtual: { A: 0, B: 0, C: 0, D: 0 },
+          distribuicaoOriginal: { A: 0, B: 0, C: 0, D: 0 },
+          ordemEndereco: match
+            ? match.slice(1).map(Number)
+            : [999, 999, 999, 999, 999],
+        };
+      }
+
+      const p = mapaSKUs[key];
+
+      // padrão (grupo): A/B/C/D conforme linha.caixa
+      // NL (normalizado): sempre cai aqui como "A"
+      if (caixa === "A") p.distribuicaoOriginal.A += qtd;
+      if (caixa === "B") p.distribuicaoOriginal.B += qtd;
+      if (caixa === "C") p.distribuicaoOriginal.C += qtd;
+      if (caixa === "D") p.distribuicaoOriginal.D += qtd;
+
+      p.distribuicaoAtual = { ...p.distribuicaoOriginal };
+    }
+
+    // ------------------------------------------------------------
+    // 3B) Aplicar retiradas + preencher state.produtos/state.retirados
+    // ------------------------------------------------------------
+    const skusPendentesSet = new Set();
+
+    for (const prod of Object.values(mapaSKUs)) {
+      const key = `${prod.sku}__${prod.romaneio}`;
+      const caixasRetiradas = mapaRetiradas.get(key) || [];
+
+      const retiradasPorCaixa = { A: 0, B: 0, C: 0, D: 0 };
+      caixasRetiradas.forEach((cx) => {
+        const c = (cx || "").toUpperCase();
+        if (["A", "B", "C", "D"].includes(c)) retiradasPorCaixa[c]++;
+      });
+
+      prod.distribuicaoAtual = {
+        A: prod.distribuicaoOriginal.A - retiradasPorCaixa.A,
+        B: prod.distribuicaoOriginal.B - retiradasPorCaixa.B,
+        C: prod.distribuicaoOriginal.C - retiradasPorCaixa.C,
+        D: prod.distribuicaoOriginal.D - retiradasPorCaixa.D,
+      };
+
+      const totalRestante =
+        prod.distribuicaoAtual.A +
+        prod.distribuicaoAtual.B +
+        prod.distribuicaoAtual.C +
+        prod.distribuicaoAtual.D;
+
+      const totalRetirado =
+        retiradasPorCaixa.A +
+        retiradasPorCaixa.B +
+        retiradasPorCaixa.C +
+        retiradasPorCaixa.D;
+
+      if (totalRetirado > 0) {
+        const retirado = {
+          ...structuredClone(prod),
+          retiradas: retiradasPorCaixa,
+        };
+
+        if (!ctx || ctx.tipo === "GRUPO") {
+          retirado.grupo = ctx?.grupo ?? window.grupoSelecionado;
+        } else {
+          retirado.modo = "AVULSO";
+          retirado.chave = String(ctx.chave || "").trim();
+          retirado.nl = !!ctx.nl;
+        }
+
+        state.retirados.push(retirado);
+      }
+
+      if (totalRestante > 0) {
+        state.produtos.push(prod);
+        skusPendentesSet.add(prod.sku);
+      }
+    }
+
+    // ------------------------------------------------------------
+    // 4) Buscar endereços SOMENTE dos pendentes (GAS/cache)
+    // ------------------------------------------------------------
+    const listaSkusPendentes = [...skusPendentesSet].map((s) =>
+      normalizarSku(s)
+    );
+
+    const mapaEnderecosAtualizados = await obterEnderecosInteligente(
+      listaSkusPendentes
+    );
+
+    // ------------------------------------------------------------
+    // 5) Aplicar endereços atualizados nos produtos pendentes
+    // ------------------------------------------------------------
+    for (const prod of state.produtos) {
+      const sku = normalizarSku(prod.sku);
+      const enderecoGAS = mapaEnderecosAtualizados.get(sku);
+      if (enderecoGAS && enderecoGAS !== prod.endereco) {
+        prod.endereco = enderecoGAS;
+
+        const [endPrimario = "SEM ENDEREÇO"] = enderecoGAS
+          .split("•")
+          .map((e) => e.trim());
+        const match = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/.exec(endPrimario);
+        prod.ordemEndereco = match
+          ? match.slice(1).map(Number)
+          : [999, 999, 999, 999, 999];
+      }
+    }
+
+    // ------------------------------------------------------------
+    // 6) Ordenação por posição atual (última retirada)
+    // ------------------------------------------------------------
+    function compararOrdem(a, b) {
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return a[i] - b[i];
+      }
+      return 0;
+    }
+
+    const ultimaRetirada = state.retirados.at(-1);
+    const posicaoAtual = ultimaRetirada?.ordemEndereco || [0, 0, 0, 0, 0];
+    state.ordemAtual = posicaoAtual;
+
+    const aindaNaRota = [];
+    const foraDaRota = [];
+
+    for (const p of state.produtos) {
+      const comp = compararOrdem(
+        p.ordemEndereco || [999, 999, 999, 999, 999],
+        posicaoAtual
+      );
+      if (comp >= 0) aindaNaRota.push(p);
+      else foraDaRota.push(p);
+    }
+
+    aindaNaRota.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
+    foraDaRota.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
+    state.produtos = [...aindaNaRota, ...foraDaRota];
+
+    // ------------------------------------------------------------
+    // 7) Total de peças (fixo)
+    // ------------------------------------------------------------
+    const totalPecas = Object.values(mapaSKUs).reduce((acc, p) => {
+      const dist = p.distribuicaoOriginal || { A: 0, B: 0, C: 0, D: 0 };
+      return acc + dist.A + dist.B + dist.C + dist.D;
+    }, 0);
+
+    state.totalPecas = totalPecas;
+
+    const idealEl = document.getElementById("ideal");
+    const qtdTotalEl = document.getElementById("qtdTotal");
+    if (idealEl) idealEl.textContent = calcularTempoIdeal(totalPecas);
+    if (qtdTotalEl) qtdTotalEl.textContent = totalPecas;
+
+    state.tempoInicio = new Date();
+    iniciarCronometro();
+
+    window.atualizarFiltroBlocos?.();
+    atualizarInterface();
+    salvarProgressoLocal();
+  } catch (err) {
+    console.error("❌ Erro ao carregar produtos (contexto):", err);
+    toast("Erro ao carregar dados do Supabase", "error");
+  } finally {
+    if (loader) loader.style.display = "none";
+  }
+
+  window.atualizarFiltroArmazem?.();
+  window.atualizarFiltroBlocos?.();
+}
+
+// atalho pro main.js
+window.carregarProdutosPorContexto = (ctx) => carregarProdutosPorContexto(ctx);
+
+export async function registrarRetiradaV2(prod, operador, ctx, caixa) {
+  const timestamp = new Date()
+    .toLocaleString("sv-SE", { timeZone: "America/Sao_Paulo" })
+    .replace(" ", "T");
+
+  const payload = {
+    timestamp,
+    operador,
+    sku: prod.sku,
+    romaneio: prod.romaneio,
+    caixa,
+    status: "RETIRADO",
+  };
+
+  if (ctx?.tipo === "GRUPO") {
+    payload.grupo = parseInt(ctx.grupo ?? window.grupoSelecionado);
+  } else {
+    payload.modo = "AVULSO";
+    payload.chave = String(ctx?.chave || "").trim();
+    payload.nl = !!ctx?.nl;
+
+    // opcional: se você quiser gravar pedido separado (quando chave for pedido)
+    const det = detectarCampoChave(ctx?.chave);
+    if (det.campo === "pedido") payload.pedido = det.valor;
+
+    // grupo vira null (ou 0 se sua coluna for NOT NULL)
+    payload.grupo = null;
+  }
+
+  console.log("📤 Enviando retirada:", payload);
+
+  try {
+    const res = await fetch("/api/proxy?endpoint=/rest/v1/retiradas", {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+  } catch (err) {
+    console.error("❌ Falha ao registrar retirada:", err);
+    toast("Erro ao registrar retirada", "error");
+  }
+}
+
+// wrapper compat (se seu picking.js ainda chama o antigo)
+export async function registrarRetirada(prod, operador, grupo, caixa) {
+  return registrarRetiradaV2(prod, operador, { tipo: "GRUPO", grupo }, caixa);
+}
+
+export async function desfazerRetiradaV2(sku, romaneio, caixa, ctx) {
+  try {
+    const skuN = normalizarSku(sku);
+    const cx = (caixa || "").toUpperCase();
+
+    let query = null;
+
+    if (ctx?.tipo === "GRUPO") {
+      const grupo = parseInt(ctx.grupo ?? window.grupoSelecionado);
+      query = `/rest/v1/retiradas?sku=eq.${skuN}&romaneio=eq.${romaneio}&caixa=eq.${cx}&grupo=eq.${grupo}`;
+    } else {
+      query =
+        `/rest/v1/retiradas?sku=eq.${skuN}` +
+        `&romaneio=eq.${romaneio}` +
+        `&caixa=eq.${cx}` +
+        `&modo=eq.AVULSO` +
+        `&chave=eq.${encodeURIComponent(String(ctx.chave).trim())}` +
+        `&nl=eq.${ctx.nl ? "true" : "false"}`;
+    }
+
+    const res = await fetch(
+      `/api/proxy?endpoint=${encodeURIComponent(query)}`,
+      {
+        method: "DELETE",
+        headers: getHeaders(),
+      }
+    );
+    if (!res.ok) throw new Error(await res.text());
+
+    // remove do state.retirados (ajusta chave de busca conforme contexto)
+    const idx = state.retirados.findIndex((p) => {
+      const okBase =
+        normalizarSku(p.sku) === skuN &&
+        p.romaneio == romaneio &&
+        (p.caixa || "").toUpperCase() === cx;
+
+      if (!okBase) return false;
+
+      if (ctx?.tipo === "GRUPO") {
+        return p.grupo == parseInt(ctx.grupo ?? window.grupoSelecionado);
+      }
+      return (
+        p.modo === "AVULSO" &&
+        String(p.chave || "").trim() === String(ctx.chave || "").trim() &&
+        !!p.nl === !!ctx.nl
+      );
+    });
+
+    if (idx !== -1) {
+      const item = state.retirados.splice(idx, 1)[0];
+      item.distribuicaoAtual = { ...item.distribuicaoOriginal };
+      inserirProdutoNaRota(item);
+      salvarProgressoLocal();
+      atualizarInterface();
+      toast(
+        `✔️ Retirada de ${skuN} (Romaneio ${romaneio}) desfeita.`,
+        "success"
+      );
+    } else {
+      toast("Item não encontrado para desfazer.", "warning");
+    }
+  } catch (e) {
+    console.error("Erro ao desfazer retirada:", e);
+    toast("❌ Não foi possível desfazer retirada.", "error");
+  }
+}
+
+// wrapper compat
+export async function desfazerRetirada(sku, romaneio, caixa, grupo) {
+  return desfazerRetiradaV2(sku, romaneio, caixa, { tipo: "GRUPO", grupo });
+}
+
 export async function carregarRefsPorGrupo(grupo) {
   // 1. Buscar SKUs únicos do grupo atual
   const { data: produtos, error: erroProdutos } = await supabase
