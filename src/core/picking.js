@@ -1,7 +1,5 @@
 import { state } from "../config.js";
 import { mostrarToast, feedbackVisual } from "./interface.js";
-import { registrarRetirada } from "../services/supabase.js";
-import { registrarRetiradaV2 } from "../services/supabase.js";
 import { registrarRetiradaV2 } from "../services/supabase.js";
 
 import { atualizarInterface } from "./interface.js";
