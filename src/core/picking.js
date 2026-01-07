@@ -9,12 +9,14 @@ import { inserirProdutoNaRota } from "../utils/roteamento.js";
 
 export function carregarOperadores() {
   const ops = [
+    "Bryan GOmes",
     "Deygles Matos",
     "Filipe Lopes",
     "Gabriel Lagoa",
+    "Heitor Zavoli",
     "Kaique Teixeira",
     "Lucas Paiva",
-    "Marrony Portugal",
+    "Yohann RIsso",
   ];
 
   if (!window.aguardarElemento) {
