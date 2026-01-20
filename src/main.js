@@ -207,6 +207,8 @@ function atualizarFiltroBlocos() {
     });
 
   select.innerHTML = options.join("");
+
+  atualizarVisibilidadeFiltros();
 }
 
 Object.assign(window, {
@@ -344,7 +346,8 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
       // ✅ GRUPO (fluxo atual)
       if (tipo === "GRUPO") {
         await carregarRefsPorGrupo(grupo);
-        await carregarProdutos(); // mantém como está hoje
+        await carregarProdutos();
+        setTimeout(atualizarVisibilidadeFiltros, 0);
         return;
       }
 
@@ -537,6 +540,7 @@ function atualizarFiltroArmazem() {
     });
 
   select.innerHTML = options.join("");
+  atualizarVisibilidadeFiltros();
 }
 
 window.filtroArmazemSelecionado = "";
@@ -610,6 +614,55 @@ function atualizarBadgeFiltros() {
   } else {
     badge.textContent = `ON (${ativos.length})`;
     badge.className = "badge bg-warning text-dark";
+  }
+}
+
+function countOpcoesReais(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return 0;
+
+  // conta opções úteis:
+  // - ignora "Todos" (value vazio)
+  // - ignora "SEM LOCAL" (value/texto)
+  const reais = [...sel.options].filter((o) => {
+    const v = (o.value || "").trim().toUpperCase();
+    const t = (o.textContent || "").trim().toUpperCase();
+
+    if (!v) return false; // "Todos"
+    if (v === "SEM LOCAL" || t.includes("SEM LOCAL")) return false;
+
+    return true;
+  });
+
+  return reais.length;
+}
+
+function atualizarVisibilidadeFiltros() {
+  const wrapA = document.getElementById("wrapFiltroArmazem");
+  const wrapB = document.getElementById("wrapFiltroBloco");
+
+  const btnToggle = document.getElementById("btnToggleFiltros");
+  const wrapCollapse = document.getElementById("filtrosWrap");
+  const btnLimpar = document.getElementById("btnLimparFiltros");
+
+  const nA = countOpcoesReais("filtroArmazem");
+  const nB = countOpcoesReais("filtroBloco");
+
+  const showA = nA > 1;
+  const showB = nB > 1;
+
+  if (wrapA) wrapA.classList.toggle("d-none", !showA);
+  if (wrapB) wrapB.classList.toggle("d-none", !showB);
+
+  // botão limpar só faz sentido se existir algum filtro visível
+  const algumVisivel = showA || showB;
+  if (btnLimpar) btnLimpar.classList.toggle("d-none", !algumVisivel);
+
+  // se nenhum filtro for útil, esconde o botão "Filtros" e colapsa
+  if (btnToggle) btnToggle.classList.toggle("d-none", !algumVisivel);
+
+  if (!algumVisivel && wrapCollapse?.classList.contains("show")) {
+    bootstrap.Collapse.getOrCreateInstance(wrapCollapse).hide();
   }
 }
 
