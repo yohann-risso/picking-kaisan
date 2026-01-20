@@ -226,7 +226,7 @@ export function mostrarAnimacaoCaixa(letra) {
     overlay.classList.remove("show");
     overlay.classList.add("hide");
     setTimeout(() => (overlay.style.display = "none"), 500);
-  }, 1000);
+  }, 500);
 }
 
 export function mostrarLoaderInline(id) {
