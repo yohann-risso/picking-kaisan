@@ -149,24 +149,47 @@
 
         <div class="row g-3 justify-content-center" id="cards"></div>
 
-        <div class="mb-3">
-          <label for="filtroArmazem" class="form-label fw-bold">
-            <i class="bi bi-filter"></i> Filtrar por Armazém:
-          </label>
-          <select id="filtroArmazem" class="form-select">
-            <option value="">Todos</option>
-            <!-- opções A1, A2, ... serão inseridas dinamicamente -->
-          </select>
-        </div>
+        <!-- 🔎 FILTROS (colapsável) -->
+        <button
+          class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-between mb-2"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#filtrosWrap"
+          aria-expanded="false"
+          aria-controls="filtrosWrap"
+          id="btnToggleFiltros"
+        >
+          <span><i class="bi bi-funnel"></i> Filtros</span>
+          <span class="badge bg-secondary" id="filtrosBadge">OFF</span>
+        </button>
 
-        <div class="mb-3">
-          <label for="filtroBloco" class="form-label fw-bold">
-            <i class="bi bi-filter"></i> Filtrar por Bloco:
-          </label>
-          <select id="filtroBloco" class="form-select">
-            <option value="">Todos</option>
-            <!-- opções de blocos + "Sem Local" serão inseridas dinamicamente -->
-          </select>
+        <div class="collapse" id="filtrosWrap">
+          <div class="card border-0 shadow-sm p-3 mb-3">
+            <div class="mb-3">
+              <label for="filtroArmazem" class="form-label fw-bold">
+                <i class="bi bi-filter"></i> Filtrar por Armazém:
+              </label>
+              <select id="filtroArmazem" class="form-select">
+                <option value="">Todos</option>
+              </select>
+            </div>
+
+            <div class="mb-0">
+              <label for="filtroBloco" class="form-label fw-bold">
+                <i class="bi bi-filter"></i> Filtrar por Bloco:
+              </label>
+              <select id="filtroBloco" class="form-select">
+                <option value="">Todos</option>
+              </select>
+            </div>
+
+            <button
+              class="btn btn-sm btn-outline-danger mt-3"
+              id="btnLimparFiltros"
+            >
+              Limpar filtros
+            </button>
+          </div>
         </div>
       </div>
 

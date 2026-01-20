@@ -65,11 +65,27 @@ aguardarElemento("filtroArmazem", (select) => {
     if (bloco) bloco.value = "";
 
     atualizarInterface();
+    atualizarBadgeFiltros();
   });
 });
 
 aguardarElemento("filtroBloco", (select) => {
   select.addEventListener("change", () => atualizarInterface());
+  atualizarBadgeFiltros();
+});
+
+aguardarElemento("btnLimparFiltros", (btn) => {
+  btn.addEventListener("click", () => {
+    const armazem = document.getElementById("filtroArmazem");
+    const bloco = document.getElementById("filtroBloco");
+
+    if (armazem) armazem.value = "";
+    if (bloco) bloco.value = "";
+
+    window.filtroArmazemSelecionado = "";
+    atualizarInterface();
+    atualizarBadgeFiltros();
+  });
 });
 
 aguardarElemento("btnFinalizar", (btn) => {
@@ -77,6 +93,11 @@ aguardarElemento("btnFinalizar", (btn) => {
 });
 
 aguardarElemento("skuInput", (input) => {
+  const filtros = document.getElementById("filtrosWrap");
+  if (filtros?.classList.contains("show")) {
+    bootstrap.Collapse.getOrCreateInstance(filtros).hide();
+  }
+
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") biparProduto();
   });
@@ -471,6 +492,10 @@ window.addEventListener("load", () => {
   iniciarPollingProdutos(60); // a cada 60 segundos
 });
 
+window.addEventListener("load", () => {
+  setTimeout(atualizarBadgeFiltros, 300);
+});
+
 function gerarPlaquinhas(grupo) {
   const url = `/plaquinhas.html?grupo=${grupo}`;
   window.open(url, "_blank");
@@ -567,6 +592,24 @@ async function atualizarIndicadorFila() {
   } catch {
     el.textContent = "❌";
     el.title = "Erro ao ler fila local";
+  }
+}
+
+function atualizarBadgeFiltros() {
+  const badge = document.getElementById("filtrosBadge");
+  if (!badge) return;
+
+  const a = document.getElementById("filtroArmazem")?.value || "";
+  const b = document.getElementById("filtroBloco")?.value || "";
+
+  const ativos = [a, b].filter(Boolean);
+
+  if (ativos.length === 0) {
+    badge.textContent = "OFF";
+    badge.className = "badge bg-secondary";
+  } else {
+    badge.textContent = `ON (${ativos.length})`;
+    badge.className = "badge bg-warning text-dark";
   }
 }
 
