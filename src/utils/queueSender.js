@@ -16,6 +16,7 @@ export async function sendQueueEventToSupabase(ev) {
   // evite mandar coisas desconhecidas para não quebrar.
   // Aqui mandamos apenas o que já existe no seu registrarRetiradaV2.
   const minimal = {
+    event_id: ev.id,
     timestamp: payload.timestamp,
     operador: payload.operador,
     sku: payload.sku,
