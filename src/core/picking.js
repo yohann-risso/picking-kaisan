@@ -23,6 +23,7 @@ export function carregarOperadores() {
     "Heitor Zavoli",
     "Kaique Teixeira",
     "Lucas Paiva",
+    "Vinícius Santos",
     "Yohann Risso",
   ];
 
