@@ -1,11 +1,18 @@
+// core/picking.js
 import { state } from "../config.js";
-import { mostrarToast, feedbackVisual } from "./interface.js";
-import { registrarRetiradaV2 } from "../services/supabase.js";
-
+import {
+  mostrarToast,
+  feedbackVisual,
+  mostrarAnimacaoCaixa,
+} from "./interface.js";
 import { atualizarInterface } from "./interface.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
-import { mostrarAnimacaoCaixa } from "./interface.js";
 import { inserirProdutoNaRota } from "../utils/roteamento.js";
+
+import { enqueueEvent } from "../utils/queue.js";
+
+// Mantém import por compat (não usamos mais no fluxo offline-first)
+// import { registrarRetiradaV2 } from "../services/supabase.js";
 
 export function carregarOperadores() {
   const ops = [
@@ -33,7 +40,8 @@ export function carregarOperadores() {
 
 export async function biparProduto() {
   const input = document.getElementById("skuInput");
-  const valor = input.value.trim().toUpperCase();
+  const btn = document.querySelector(".input-group .btn");
+  const valor = (input?.value || "").trim().toUpperCase();
   const operador = window.operadorSelecionado;
 
   // ctx único (novo). fallback para grupo (compatibilidade)
@@ -41,19 +49,33 @@ export async function biparProduto() {
     ? window.pickingContexto
     : { tipo: "GRUPO", grupo: window.grupoSelecionado, operador };
 
-  input.disabled = true;
-  document.querySelector(".input-group .btn").disabled = true;
+  // Trava UI de bipagem (rápido)
+  if (input) input.disabled = true;
+  if (btn) btn.disabled = true;
 
   const liberar = () => {
-    input.value = "";
-    input.disabled = false;
-    document.querySelector(".input-group .btn").disabled = false;
-    input.focus();
+    if (input) {
+      input.value = "";
+      input.disabled = false;
+      input.focus();
+    }
+    if (btn) btn.disabled = false;
   };
+
+  if (!valor) {
+    mostrarToast("Informe um SKU/EAN", "warning");
+    return liberar();
+  }
+
+  if (!ctx || !operador) {
+    mostrarToast("Operador não definido", "error");
+    return liberar();
+  }
 
   const idx = state.produtos.findIndex(
     (p) =>
-      p.sku.toUpperCase() === valor || (p.ean || "").toUpperCase() === valor
+      (p.sku || "").toUpperCase() === valor ||
+      (p.ean || "").toUpperCase() === valor
   );
 
   if (idx === -1) {
@@ -62,9 +84,10 @@ export async function biparProduto() {
   }
 
   const produto = state.produtos[idx];
-  const dist = produto.distribuicaoAtual;
+  const dist = produto.distribuicaoAtual || { A: 0, B: 0, C: 0, D: 0 };
   let caixa = "";
 
+  // Regra atual: retira sempre na ordem A->B->C->D
   if (dist.A > 0) {
     dist.A--;
     caixa = "A";
@@ -84,19 +107,52 @@ export async function biparProduto() {
     return liberar();
   }
 
-  if (!ctx || !operador) {
-    mostrarToast("Operador não definido", "error");
-    return liberar();
-  }
+  // ✅ OFFLINE-FIRST: grava evento local imediatamente (não espera rede)
+  // Observação: sender no main.js transforma esse payload em POST no Supabase.
+  const timestamp = new Date()
+    .toLocaleString("sv-SE", { timeZone: "America/Sao_Paulo" })
+    .replace(" ", "T");
 
-  await registrarRetiradaV2(produto, operador, ctx, caixa);
+  const payload = {
+    timestamp,
+    operador,
+    sku: produto.sku,
+    romaneio: produto.romaneio,
+    caixa,
 
-  const total = dist.A + dist.B + dist.C + dist.D;
+    // Contexto do picking (grupo/avulso)
+    grupo:
+      ctx.tipo === "GRUPO"
+        ? parseInt(ctx.grupo ?? window.grupoSelecionado)
+        : null,
+    modo: ctx.tipo === "AVULSO" ? "AVULSO" : null,
+    chave: ctx.tipo === "AVULSO" ? String(ctx.chave || "").trim() : null,
+    nl: ctx.tipo === "AVULSO" ? !!ctx.nl : null,
+
+    // Se existir no seu dataset (não obrigatório)
+    pedido: produto.pedido ?? null,
+  };
+
+  enqueueEvent("RETIRADA", payload).catch((e) => {
+    console.error("❌ Falha ao enfileirar evento:", e);
+    // IMPORTANTE: mesmo se falhar a fila, a operação já alterou o estado local.
+    // Aqui você pode opcionalmente reverter dist, mas eu NÃO recomendo,
+    // pois isso reintroduz dependência/instabilidade na UX.
+    mostrarToast(
+      "⚠️ Ação feita, mas falhou ao registrar na fila local.",
+      "warning"
+    );
+  });
+
+  // Move para retirados caso tenha zerado o total local
+  const total = (dist.A || 0) + (dist.B || 0) + (dist.C || 0) + (dist.D || 0);
   if (total === 0) {
     const registroRetirado = {
       ...produto,
       caixa,
-      distribuicaoOriginal: { ...produto.distribuicaoOriginal },
+      distribuicaoOriginal: {
+        ...(produto.distribuicaoOriginal || { A: 0, B: 0, C: 0, D: 0 }),
+      },
     };
 
     if (ctx.tipo === "GRUPO") {
@@ -111,6 +167,7 @@ export async function biparProduto() {
     state.produtos.splice(idx, 1);
   }
 
+  // UI feedback imediato
   mostrarAnimacaoCaixa(caixa);
   feedbackVisual(produto.sku, "success");
   atualizarInterface();
@@ -120,11 +177,11 @@ export async function biparProduto() {
 
 export function moverProdutoParaTopo(sku) {
   const idx = state.produtos.findIndex(
-    (p) => p.sku.toUpperCase() === sku.toUpperCase()
+    (p) => (p.sku || "").toUpperCase() === (sku || "").toUpperCase()
   );
   if (idx !== -1) {
     const [item] = state.produtos.splice(idx, 1);
-    inserirProdutoNaRota(item);
+    inserirProdutoNaRota(item, state);
   }
 }
 
@@ -134,7 +191,7 @@ export function moverProdutoParaTopo(sku) {
  */
 export function pularProduto(sku) {
   const idx = state.produtos.findIndex(
-    (p) => p.sku.toUpperCase() === sku.toUpperCase()
+    (p) => (p.sku || "").toUpperCase() === (sku || "").toUpperCase()
   );
   if (idx === -1) {
     console.warn("Produto não encontrado para pular:", sku);
@@ -144,7 +201,7 @@ export function pularProduto(sku) {
   const [produto] = state.produtos.splice(idx, 1);
 
   // Verifica se há endereço secundário
-  const [_, novoEndereco] = (produto.endereco || "").split("•");
+  const [, novoEndereco] = (produto.endereco || "").split("•");
   const novo = novoEndereco?.trim();
 
   if (novo && /A\d+-B\d+-R\d+-C\d+-N\d+/.test(novo)) {

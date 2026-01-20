@@ -369,6 +369,77 @@
       </div>
     </div>
 
+    <!-- ✅ Modal: Painel da Fila Offline -->
+    <div
+      class="modal fade"
+      id="modalFila"
+      tabindex="-1"
+      aria-labelledby="modalFilaLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="modalFilaLabel">
+              🧾 Fila Offline (Sync)
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+              <span class="badge bg-dark" id="filaStats">Carregando...</span>
+
+              <button
+                class="btn btn-sm btn-outline-primary"
+                id="btnFilaSyncAgora"
+              >
+                🔄 Tentar sync agora
+              </button>
+
+              <button
+                class="btn btn-sm btn-outline-success"
+                id="btnFilaLimparOk"
+              >
+                🧹 Limpar OK
+              </button>
+
+              <button
+                class="btn btn-sm btn-outline-danger"
+                id="btnFilaLimparTudo"
+              >
+                🧨 Limpar OK + ERRO
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-sm table-striped align-middle">
+                <thead>
+                  <tr>
+                    <th>Hora</th>
+                    <th>Tipo</th>
+                    <th>Status</th>
+                    <th>SKU</th>
+                    <th>Romaneio</th>
+                    <th>Caixa</th>
+                    <th>Tent.</th>
+                    <th>Próx retry</th>
+                    <th>Erro</th>
+                  </tr>
+                </thead>
+                <tbody id="filaTabela"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 🔄 Botão Flutuante: Atualizar Endereços -->
     <button
       id="btnAtualizarEnderecos"

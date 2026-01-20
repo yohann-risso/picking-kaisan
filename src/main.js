@@ -26,6 +26,13 @@ import {
   verificarMudancaProdutos,
 } from "./utils/polling.js";
 import { state } from "./config.js";
+import {
+  setQueueSender,
+  startQueueProcessor,
+  getQueueStats,
+} from "./utils/queue.js";
+import { sendQueueEventToSupabase } from "./utils/queueSender.js";
+import { setupQueuePanel } from "./core/queuePanel.js";
 
 // 🔧 Aguarda um elemento existir no DOM
 function aguardarElemento(id, callback) {
@@ -200,6 +207,10 @@ async function inicializarApp() {
 
   window.env = env;
 
+  // ✅ Queue (offline-first)
+  setQueueSender(sendQueueEventToSupabase);
+  startQueueProcessor({ intervalMs: 2000 });
+
   try {
     const grupos = await carregarGrupos();
 
@@ -248,6 +259,8 @@ function simularBipagem(sku) {
   } else {
     console.warn("❌ Elemento de bipagem não encontrado.");
   }
+
+  setupQueuePanel();
 }
 
 window.simularBipagem = simularBipagem;
@@ -342,6 +355,9 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 
 // 🔁 Loader on load
 window.addEventListener("load", () => {
+  setInterval(atualizarIndicadorFila, 1200);
+  atualizarIndicadorFila();
+
   console.log("💡 Entrou no window.load");
   inicializarApp();
 
@@ -519,4 +535,39 @@ function atualizarModalInicioPorTipo() {
     wrapGrupo.classList.remove("d-none");
   }
 }
+
+async function atualizarIndicadorFila() {
+  const el = document.getElementById("pollingStatus");
+  if (!el) return;
+
+  try {
+    const { stats } = await getQueueStats();
+    const pend = stats.pending + stats.sending + stats.error;
+
+    if (!navigator.onLine) {
+      el.textContent = pend > 0 ? `📴${pend}` : "📴";
+      el.title = pend > 0 ? `Offline • ${pend} ações na fila` : "Offline";
+      return;
+    }
+
+    if (stats.error > 0) {
+      el.textContent = `⚠️${stats.error}`;
+      el.title = `${stats.error} ações com erro (tocável p/ ver painel)`;
+      return;
+    }
+
+    if (pend > 0) {
+      el.textContent = `⏳${pend}`;
+      el.title = `${pend} ações pendentes na fila (tocável p/ ver painel)`;
+      return;
+    }
+
+    el.textContent = "🛰️";
+    el.title = "Sincronização OK";
+  } catch {
+    el.textContent = "❌";
+    el.title = "Erro ao ler fila local";
+  }
+}
+
 window.atualizarModalInicioPorTipo = atualizarModalInicioPorTipo;

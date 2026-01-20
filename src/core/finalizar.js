@@ -2,6 +2,7 @@ import { state } from "../config.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
 import { toast } from "../components/Toast.js";
 import { calcularDuracao } from "./cronometro.js";
+import { flushQueue } from "../utils/queue.js";
 
 export async function finalizarPicking() {
   const confirmacao = confirm("Tem certeza que deseja finalizar o picking?");
@@ -40,6 +41,14 @@ export async function finalizarPicking() {
   } catch (e) {
     console.warn("⚠️ Falha ao enviar resumo ao Google Apps Script:", e.message);
     toast("⚠️ Relatório não foi enviado ao Drive", "warning");
+  }
+
+  const ok = await flushQueue({ timeoutMs: 8000 });
+  if (!ok) {
+    toast(
+      "📴 Finalizado localmente — pendências ficarão na fila para sync.",
+      "warning"
+    );
   }
 
   // Reset local
