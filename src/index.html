@@ -107,43 +107,44 @@
             </div>
           </div>
         </div>
-
-        <!-- PROGRESSO -->
-        <div class="mb-4">
-          <label class="fw-bold">Progresso:</label>
-          <div class="progress mb-1">
-            <div
-              id="progressoPicking"
-              class="progress-bar bg-success"
-              role="progressbar"
-              style="width: 0%"
-            >
-              0%
+        <div id="stickyBipagem">
+          <!-- PROGRESSO -->
+          <div class="mb-4">
+            <label class="fw-bold">Progresso:</label>
+            <div class="progress mb-1">
+              <div
+                id="progressoPicking"
+                class="progress-bar bg-success"
+                role="progressbar"
+                style="width: 0%"
+              >
+                0%
+              </div>
+            </div>
+            <div class="text-muted small">
+              <span id="qtdRetiradas">0</span> de
+              <span id="qtdTotal">0</span> peças
             </div>
           </div>
-          <div class="text-muted small">
-            <span id="qtdRetiradas">0</span> de
-            <span id="qtdTotal">0</span> peças
-          </div>
-        </div>
 
-        <!-- INPUT SKU -->
-        <div class="input-group mb-4">
-          <span class="input-group-text">SKU/EAN</span>
-          <input
-            type="text"
-            id="skuInput"
-            class="form-control"
-            placeholder="Bipe o código de barras ou digite a SKU"
-          />
-          <button id="btnBipar" class="btn btn-success">
-            <i class="bi bi-check2-all"></i> Bipar
-          </button>
-          <span
-            id="loaderBipagem"
-            class="spinner-border spinner-border-sm text-light d-none ms-2"
-            role="status"
-          ></span>
+          <!-- INPUT SKU -->
+          <div class="input-group mb-4">
+            <span class="input-group-text">SKU/EAN</span>
+            <input
+              type="text"
+              id="skuInput"
+              class="form-control"
+              placeholder="Bipe o código de barras ou digite a SKU"
+            />
+            <button id="btnBipar" class="btn btn-success">
+              <i class="bi bi-check2-all"></i> Bipar
+            </button>
+            <span
+              id="loaderBipagem"
+              class="spinner-border spinner-border-sm text-light d-none ms-2"
+              role="status"
+            ></span>
+          </div>
         </div>
 
         <div class="row g-3 justify-content-center" id="cards"></div>
@@ -170,12 +171,43 @@
       </div>
 
       <div class="card shadow-sm p-4 mb-4">
-        <h3>🛒 Pendentes</h3>
-        <div class="list mb-4" id="pendentesList"></div>
+        <!-- Pendentes -->
+        <button
+          class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-between"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#pendentesWrap"
+          aria-expanded="false"
+          aria-controls="pendentesWrap"
+          id="btnTogglePendentes"
+        >
+          <span>🛒 Pendentes</span>
+          <span class="badge bg-primary" id="pendentesCount">0</span>
+        </button>
 
-        <h3>✅ Retirados</h3>
-        <div class="list" id="retiradosList"></div>
+        <div class="collapse mt-3" id="pendentesWrap">
+          <div class="list mb-4" id="pendentesList"></div>
+        </div>
+
+        <!-- Retirados -->
+        <button
+          class="btn btn-outline-success w-100 d-flex align-items-center justify-content-between mt-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#retiradosWrap"
+          aria-expanded="false"
+          aria-controls="retiradosWrap"
+          id="btnToggleRetirados"
+        >
+          <span>✅ Retirados</span>
+          <span class="badge bg-success" id="retiradosCount">0</span>
+        </button>
+
+        <div class="collapse mt-3" id="retiradosWrap">
+          <div class="list" id="retiradosList"></div>
+        </div>
       </div>
+
       <!-- Botão no rodapé para limpar cache -->
       <div class="text-center mt-4 mb-2">
         <button

@@ -2,7 +2,7 @@ import { state } from "../config.js";
 import { salvarProgressoLocal } from "../utils/storage.js";
 import { toast } from "../components/Toast.js";
 import { calcularDuracao } from "./cronometro.js";
-import { flushQueue } from "../utils/queue.js";
+import { flushQueue, getQueueStats } from "../utils/queue.js";
 
 export async function finalizarPicking() {
   const confirmacao = confirm("Tem certeza que deseja finalizar o picking?");
@@ -43,12 +43,16 @@ export async function finalizarPicking() {
     toast("⚠️ Relatório não foi enviado ao Drive", "warning");
   }
 
-  const ok = await flushQueue({ timeoutMs: 8000 });
-  if (!ok) {
-    toast(
-      "📴 Finalizado localmente — pendências ficarão na fila para sync.",
-      "warning"
-    );
+  const { stats } = await getQueueStats();
+  const pend = stats.pending + stats.sending + stats.error;
+  if (pend > 0) {
+    const flushed = await flushQueue({ timeoutMs: 8000 });
+    if (!flushed) {
+      toast(
+        "📴 Finalizado localmente — existem pendências para sincronizar.",
+        "warning"
+      );
+    }
   }
 
   // Reset local

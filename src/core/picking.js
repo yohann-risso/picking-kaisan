@@ -39,6 +39,12 @@ export function carregarOperadores() {
   });
 }
 
+function flash(tipo) {
+  const cls = tipo === "error" ? "flash-err" : "flash-ok";
+  document.body.classList.add(cls);
+  setTimeout(() => document.body.classList.remove(cls), 180);
+}
+
 export async function biparProduto() {
   const input = document.getElementById("skuInput");
   const btn = document.querySelector(".input-group .btn");
@@ -81,6 +87,7 @@ export async function biparProduto() {
 
   if (idx === -1) {
     mostrarToast("Produto não encontrado", "error");
+    flash("error");
     return liberar();
   }
 
@@ -170,6 +177,7 @@ export async function biparProduto() {
 
   // UI feedback imediato
   mostrarAnimacaoCaixa(caixa);
+  flash("success");
   feedbackVisual(produto.sku, "success");
   atualizarInterface();
   salvarProgressoLocal();

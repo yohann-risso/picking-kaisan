@@ -158,6 +158,13 @@ export function atualizarInterface() {
     )
     .join("");
 
+  // 🔢 Contadores do collapse
+  const pendCountEl = document.getElementById("pendentesCount");
+  if (pendCountEl) pendCountEl.textContent = String(pendentesVisiveis.length);
+
+  const retCountEl = document.getElementById("retiradosCount");
+  if (retCountEl) retCountEl.textContent = String(state.retirados.length);
+
   // === PROGRESSO ===
   const total = state.totalPecas || 0;
 
