@@ -407,14 +407,17 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 
     document.getElementById("loaderGlobal").style.display = "flex";
 
+    const blocosSelecionadosFinal =
+      tipo === "GRUPO" ? [...blocosSelecionados] : [];
+
     // 📌 Contexto único do picking (novo)
     window.pickingContexto = {
-      tipo, // "GRUPO" | "AVULSO"
+      tipo,
       grupo: tipo === "GRUPO" ? grupo : null,
-      chave: tipo === "AVULSO" ? chave : null, // romaneio/pedido informado
+      chave: tipo === "AVULSO" ? chave : null,
       nl: tipo === "AVULSO" ? nl : false,
       operador,
-      blocosSelecionados: tipo === "GRUPO" ? blocosSelecionados : [],
+      blocosSelecionados: blocosSelecionadosFinal,
     };
 
     // compat: mantém variáveis existentes (se ainda usadas em outros módulos)
@@ -441,9 +444,10 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
       // ✅ GRUPO (fluxo atual)
       if (tipo === "GRUPO") {
         await carregarRefsPorGrupo(grupo);
+
         await window.carregarProdutosPorContexto({
           ...window.pickingContexto,
-          blocosSelecionados: window.pickingContexto?.blocosSelecionados || [],
+          blocosSelecionados: blocosSelecionadosFinal,
         });
 
         setTimeout(atualizarVisibilidadeFiltros, 0);

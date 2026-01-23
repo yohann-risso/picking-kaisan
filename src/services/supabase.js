@@ -532,6 +532,10 @@ export async function carregarProdutosPorContexto(ctx) {
     );
     state.totalPecas = totalPecasEscopo;
 
+    document.getElementById("ideal").textContent =
+      calcularTempoIdeal(totalPecasEscopo);
+    document.getElementById("qtdTotal").textContent = totalPecasEscopo;
+
     if (state.totalPecas === 0) {
       toast("⚠️ Nenhuma peça no escopo selecionado (blocos).", "warning");
     }
