@@ -358,9 +358,9 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 
     // ✅ LOCK DE BLOCOS (somente GRUPO)
     if (tipo === "GRUPO") {
-      const blocos = getBlocosSelecionados();
+      const blocosSelecionados = getBlocosSelecionados(); // ✅ declara aqui
 
-      if (!blocos.length) {
+      if (!blocosSelecionados.length) {
         mostrarToast("Selecione ao menos 1 bloco (ou SL).", "warning");
         document.getElementById("loaderGlobal").style.display = "none";
         return;
@@ -370,7 +370,7 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
         const result = await acquireLocksGrupo({
           grupo,
           operador,
-          blocos,
+          blocos: blocosSelecionados, // ✅ usa o mesmo nome
         });
 
         const falhas = (result || []).filter((r) => !r.acquired);
@@ -387,7 +387,7 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 
         // guarda no contexto para filtrar/progresso depois
         window.pickingContexto = window.pickingContexto || {};
-        window.pickingContexto.blocosSelecionados = blocos;
+        window.pickingContexto.blocosSelecionados = blocosSelecionados;
 
         // mantém locks vivos durante o picking
         startHeartbeatLocks();
