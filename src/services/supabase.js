@@ -473,7 +473,9 @@ export async function carregarProdutosPorContexto(ctx) {
     // aplica escopo APENAS para modo GRUPO (avulso ignora)
     const blocosSelecionados =
       !ctx || ctx.tipo === "GRUPO"
-        ? window.pickingContexto?.blocosSelecionados || []
+        ? (ctx?.blocosSelecionados ??
+          window.pickingContexto?.blocosSelecionados ??
+          [])
         : [];
 
     // filtra state.produtos/state.retirados pelo escopo
@@ -551,6 +553,7 @@ export async function carregarProdutos() {
     tipo: "GRUPO",
     grupo: window.grupoSelecionado,
     operador: window.operadorSelecionado,
+    blocosSelecionados: window.pickingContexto?.blocosSelecionados || [], // ✅
   });
 }
 
