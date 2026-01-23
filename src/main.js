@@ -289,6 +289,8 @@ async function inicializarApp() {
   document
     .getElementById("modalInicio")
     ?.addEventListener("shown.bs.modal", async () => {
+      renderBlocosNoModal();
+
       const grupo = document.getElementById("grupoModal")?.value;
       const operador = document.getElementById("operadorModal")?.value;
 
@@ -577,6 +579,12 @@ function renderBlocosNoModal() {
 
   grid.innerHTML = "";
   BLOCOS_FIXOS.forEach((b) => grid.appendChild(criarChipBloco(b)));
+
+  // marca todos por padrão (exceto SL)
+  ["1", "2", "3", "4", "5", "6"].forEach((b) => {
+    const chk = document.getElementById(`chkBloco_${b}`);
+    if (chk && !chk.disabled) chk.checked = true;
+  });
 }
 
 async function fetchLocksAtivos(grupo) {
