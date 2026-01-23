@@ -447,7 +447,7 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
 
         await window.carregarProdutosPorContexto({
           ...window.pickingContexto,
-          blocosSelecionados: blocosSelecionadosFinal,
+          blocosSelecionados: blocosSelecionados,
         });
 
         setTimeout(atualizarVisibilidadeFiltros, 0);
