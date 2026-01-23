@@ -9,10 +9,10 @@ export function mostrarToast(msg, tipo = "info") {
     tipo === "success"
       ? "bg-success"
       : tipo === "error"
-      ? "bg-danger"
-      : tipo === "warning"
-      ? "bg-warning text-dark"
-      : "bg-primary";
+        ? "bg-danger"
+        : tipo === "warning"
+          ? "bg-warning text-dark"
+          : "bg-primary";
 
   const container = document.getElementById("toast-container");
   if (!container) {
@@ -42,7 +42,7 @@ export function checarModoStandalone() {
     setTimeout(() => {
       mostrarToast(
         "📱 Para instalar como app: use o menu ⋮ e 'Instalar app'",
-        "warning"
+        "warning",
       );
     }, 3000);
   }
@@ -122,10 +122,10 @@ export function atualizarInterface() {
       <div class="pendente-item">
         <div class="sku">SKU: ${p.sku}</div>
         <div class="descricao">${p.descricao} | Ref: ${
-        p.sku.split("-")[0]
-      }</div>
+          p.sku.split("-")[0]
+        }</div>
         <div class="endereco">${(p.endereco || "").split("•")[0]}</div>
-      </div>`
+      </div>`,
     )
     .join("");
 
@@ -142,19 +142,42 @@ export function atualizarInterface() {
                 .filter(([_, qtde]) => qtde > 0)
                 .map(
                   ([cx, qtde]) =>
-                    `<span class="badge bg-secondary">${qtde}x Caixa ${cx}</span>`
+                    `<span class="badge bg-secondary">${qtde}x Caixa ${cx}</span>`,
                 )
                 .join(" ")
             : `<span class="badge bg-secondary">Caixa ${p.caixa}</span>`
         }
-        <button
-          class="btn btn-sm btn-outline-light ms-3"
-          title="Desfazer"
-          onclick="desfazerRetirada('${p.sku}', ${p.romaneio}, '', ${p.grupo})"
-        >
+        ${(() => {
+          // determina uma caixa válida para desfazer
+          let cx = p.caixa;
+
+          if (!cx && p.retiradas) {
+            const entry = Object.entries(p.retiradas).find(([_, q]) => q > 0);
+            cx = entry ? entry[0] : "";
+          }
+
+          cx = String(cx || "").toUpperCase();
+
+          // se não achou caixa, desabilita (não quebra)
+          if (!cx) {
+            return `
+        <button class="btn btn-sm btn-outline-light ms-3" disabled title="Sem caixa para desfazer">
           🔄
         </button>
-      </div>`
+      `;
+          }
+
+          return `
+      <button
+        class="btn btn-sm btn-outline-light ms-3"
+        title="Desfazer 1 unidade (Caixa ${cx})"
+        onclick="desfazerRetirada('${p.sku}', ${p.romaneio}, '${cx}', ${p.grupo})"
+      >
+        🔄
+      </button>
+    `;
+        })()}
+      </div>`,
     )
     .join("");
 

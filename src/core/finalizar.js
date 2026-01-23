@@ -1,5 +1,4 @@
 import { state } from "../config.js";
-import { salvarProgressoLocal } from "../utils/storage.js";
 import { toast } from "../components/Toast.js";
 import { calcularDuracao } from "./cronometro.js";
 import { flushQueue, getQueueStats } from "../utils/queue.js";
@@ -8,6 +7,22 @@ export async function finalizarPicking() {
   const confirmacao = confirm("Tem certeza que deseja finalizar o picking?");
   if (!confirmacao) return;
 
+  // 1) tenta sincronizar fila ANTES de consolidar o resumo
+  const { stats } = await getQueueStats();
+  const pend = stats.pending + stats.sending + stats.error;
+
+  if (pend > 0) {
+    toast(`⏳ Sincronizando ${pend} ações pendentes...`, "info");
+    const flushed = await flushQueue({ timeoutMs: 8000 });
+    if (!flushed) {
+      toast(
+        "📴 Não foi possível sincronizar tudo. Finalizando localmente mesmo assim.",
+        "warning",
+      );
+    }
+  }
+
+  // 2) monta resumo (agora mais consistente)
   const tempoFinal = new Date();
   const tempoExecucao = calcularDuracao(state.tempoInicio, tempoFinal);
 
@@ -18,10 +33,13 @@ export async function finalizarPicking() {
     retirados: state.retirados,
     total: state.totalPecas || 0,
     data: tempoFinal.toLocaleString(),
+    escopo: window.pickingContexto?.blocosSelecionados || [], // opcional: bom pra auditoria
   };
 
-  gerarPDF(resumo); // local (jsPDF)
+  // 3) PDF local
+  gerarPDF(resumo);
 
+  // 4) tenta enviar pro GAS
   try {
     const GAS_URL = window.env?.GAS_FINALIZAR_URL;
     if (!GAS_URL) throw new Error("URL do GAS_FINALIZAR_URL não definida.");
@@ -32,30 +50,14 @@ export async function finalizarPicking() {
       body: JSON.stringify(resumo),
     });
 
-    if (!res.ok) {
-      const msg = await res.text();
-      throw new Error(msg);
-    }
-
+    if (!res.ok) throw new Error(await res.text());
     console.log("📩 Relatório enviado ao Google Apps Script com sucesso.");
   } catch (e) {
-    console.warn("⚠️ Falha ao enviar resumo ao Google Apps Script:", e.message);
+    console.warn("⚠️ Falha ao enviar resumo ao GAS:", e.message);
     toast("⚠️ Relatório não foi enviado ao Drive", "warning");
   }
 
-  const { stats } = await getQueueStats();
-  const pend = stats.pending + stats.sending + stats.error;
-  if (pend > 0) {
-    const flushed = await flushQueue({ timeoutMs: 8000 });
-    if (!flushed) {
-      toast(
-        "📴 Finalizado localmente — existem pendências para sincronizar.",
-        "warning"
-      );
-    }
-  }
-
-  // Reset local
+  // 5) Reset local
   localStorage.removeItem("pickingProgresso");
   state.produtos = [];
   state.retirados = [];
@@ -95,14 +97,18 @@ function gerarPDF(resumo) {
   doc.text(`Tempo: ${resumo.tempoExecucao}`, 20, 49);
   doc.text(`Data: ${new Date().toLocaleString()}`, 20, 56);
 
-  doc.text("✅ Retirados:", 20, 70);
+  if (resumo.escopo?.length) {
+    doc.text(`Escopo: ${resumo.escopo.join(", ")}`, 20, 63);
+  }
+
+  doc.text("✅ Retirados:", 20, 75);
   resumo.retirados.forEach((p, i) => {
     doc.text(
       `${i + 1}. SKU: ${p.sku} | Produto: ${p.descricao || "-"} | Caixa: ${
-        p.caixa
+        p.caixa || "-"
       }`,
       20,
-      80 + i * 7
+      85 + i * 7,
     );
   });
 

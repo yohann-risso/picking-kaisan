@@ -3,7 +3,6 @@ import {
   carregarRefsPorGrupo,
   carregarProdutos,
   desfazerRetirada,
-  supabase,
 } from "./services/supabase.js";
 import { restaurarCacheLocal, salvarProgressoLocal } from "./utils/storage.js";
 import {
@@ -33,6 +32,7 @@ import {
 } from "./utils/queue.js";
 import { sendQueueEventToSupabase } from "./utils/queueSender.js";
 import { setupQueuePanel } from "./core/queuePanel.js";
+import { getHeaders } from "./config.js";
 
 // 🔧 Aguarda um elemento existir no DOM
 function aguardarElemento(id, callback) {
@@ -70,8 +70,10 @@ aguardarElemento("filtroArmazem", (select) => {
 });
 
 aguardarElemento("filtroBloco", (select) => {
-  select.addEventListener("change", () => atualizarInterface());
-  atualizarBadgeFiltros();
+  select.addEventListener("change", () => {
+    atualizarInterface();
+    atualizarBadgeFiltros();
+  });
 });
 
 aguardarElemento("btnLimparFiltros", (btn) => {
@@ -89,14 +91,26 @@ aguardarElemento("btnLimparFiltros", (btn) => {
 });
 
 aguardarElemento("btnFinalizar", (btn) => {
-  btn.addEventListener("click", finalizarPicking);
+  btn.addEventListener("click", async () => {
+    try {
+      await finalizarPicking();
+    } finally {
+      stopHeartbeatLocks();
+      await releaseLocks();
+    }
+  });
 });
 
 aguardarElemento("skuInput", (input) => {
-  const filtros = document.getElementById("filtrosWrap");
-  if (filtros?.classList.contains("show")) {
-    bootstrap.Collapse.getOrCreateInstance(filtros).hide();
-  }
+  const fecharFiltros = () => {
+    const filtros = document.getElementById("filtrosWrap");
+    if (filtros?.classList.contains("show")) {
+      bootstrap.Collapse.getOrCreateInstance(filtros).hide();
+    }
+  };
+
+  input.addEventListener("focus", fecharFiltros);
+  input.addEventListener("click", fecharFiltros);
 
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") biparProduto();
@@ -160,7 +174,7 @@ aguardarElemento("btnAtualizarEnderecos", (btn) => {
 
 async function buscarEnderecosPorSku(sku) {
   const url = `https://script.google.com/macros/s/AKfycbzEYYSWfRKYGxAkNFBBV9C6qlMDXlDkEQIBNwKOtcvGEdbl4nfaHD5usa89ZoV2gMcEgA/exec?sku=${encodeURIComponent(
-    sku
+    sku,
   )}`;
   try {
     const resp = await fetch(url);
@@ -230,9 +244,17 @@ async function inicializarApp() {
 
   window.env = env;
 
+  window.sessionId =
+    window.sessionId ||
+    crypto?.randomUUID?.() ||
+    `sess_${Date.now()}_${Math.random()}`;
+
   // ✅ Queue (offline-first)
   setQueueSender(sendQueueEventToSupabase);
   startQueueProcessor({ intervalMs: 2000 });
+
+  // ✅ Painel da fila (clicar no ícone do canto)
+  setupQueuePanel();
 
   try {
     const grupos = await carregarGrupos();
@@ -257,8 +279,40 @@ async function inicializarApp() {
 
   aguardarElemento("tipoPicking", (el) => {
     el.addEventListener("change", atualizarModalInicioPorTipo);
-    atualizarModalInicioPorTipo(); // estado inicial
+    atualizarModalInicioPorTipo();
   });
+
+  renderBlocosNoModal();
+
+  let lockTimer = null;
+
+  document
+    .getElementById("modalInicio")
+    ?.addEventListener("shown.bs.modal", async () => {
+      const grupo = document.getElementById("grupoModal")?.value;
+      const operador = document.getElementById("operadorModal")?.value;
+
+      if (!grupo) return;
+
+      const refresh = async () => {
+        try {
+          const locks = await fetchLocksAtivos(grupo);
+          aplicarLocksNaUI(locks, operador);
+        } catch (e) {
+          console.warn("Falha ao atualizar locks:", e.message);
+        }
+      };
+
+      await refresh();
+      lockTimer = setInterval(refresh, 5000);
+    });
+
+  document
+    .getElementById("modalInicio")
+    ?.addEventListener("hidden.bs.modal", () => {
+      if (lockTimer) clearInterval(lockTimer);
+      lockTimer = null;
+    });
 }
 
 function simularBipagem(sku) {
@@ -282,8 +336,6 @@ function simularBipagem(sku) {
   } else {
     console.warn("❌ Elemento de bipagem não encontrado.");
   }
-
-  setupQueuePanel();
 }
 
 window.simularBipagem = simularBipagem;
@@ -304,9 +356,45 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
       return;
     }
 
+    // ✅ LOCK DE BLOCOS (somente GRUPO)
     if (tipo === "GRUPO") {
-      if (!grupo) {
-        mostrarToast("Selecione o grupo", "warning");
+      const blocos = getBlocosSelecionados();
+
+      if (!blocos.length) {
+        mostrarToast("Selecione ao menos 1 bloco (ou SL).", "warning");
+        document.getElementById("loaderGlobal").style.display = "none";
+        return;
+      }
+
+      try {
+        const result = await acquireLocksGrupo({
+          grupo,
+          operador,
+          blocos,
+        });
+
+        const falhas = (result || []).filter((r) => !r.acquired);
+
+        if (falhas.length > 0) {
+          const msg = falhas
+            .map((f) => `${f.bloco} (lock: ${f.locked_by || "?"})`)
+            .join(", ");
+
+          mostrarToast(`❌ Blocos indisponíveis: ${msg}`, "warning");
+          document.getElementById("loaderGlobal").style.display = "none";
+          return;
+        }
+
+        // guarda no contexto para filtrar/progresso depois
+        window.pickingContexto = window.pickingContexto || {};
+        window.pickingContexto.blocosSelecionados = blocos;
+
+        // mantém locks vivos durante o picking
+        startHeartbeatLocks();
+      } catch (e) {
+        console.error("Erro ao adquirir locks:", e);
+        mostrarToast("❌ Falha ao reservar blocos. Tente novamente.", "error");
+        document.getElementById("loaderGlobal").style.display = "none";
         return;
       }
     } else {
@@ -325,6 +413,7 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
       chave: tipo === "AVULSO" ? chave : null, // romaneio/pedido informado
       nl: tipo === "AVULSO" ? nl : false,
       operador,
+      blocosSelecionados,
     };
 
     // compat: mantém variáveis existentes (se ainda usadas em outros módulos)
@@ -343,6 +432,11 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
     bootstrap.Modal.getInstance(document.getElementById("modalInicio")).hide();
 
     try {
+      if (tipo === "GRUPO" && !grupo) {
+        mostrarToast("Selecione o grupo", "warning");
+        return;
+      }
+
       // ✅ GRUPO (fluxo atual)
       if (tipo === "GRUPO") {
         await carregarRefsPorGrupo(grupo);
@@ -368,7 +462,7 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
         console.warn("⚠️ carregarProdutosPorContexto não implementado ainda.");
         mostrarToast(
           "⚠️ Avulso ainda não implementado no Supabase.js",
-          "warning"
+          "warning",
         );
       }
     } finally {
@@ -403,7 +497,7 @@ aguardarElemento("btnLimparCache", (btn) => {
       btn.classList.remove("long-pressing");
 
       const confirmar = confirm(
-        "🧹 Deseja realmente limpar o cache da aplicação?"
+        "🧹 Deseja realmente limpar o cache da aplicação?",
       );
       if (!confirmar) return;
 
@@ -460,6 +554,163 @@ if ("serviceWorker" in navigator) {
     console.log("♻️ controllerchange → reload");
     window.location.reload();
   });
+}
+
+const BLOCOS_FIXOS = ["1", "2", "3", "4", "5", "6", "SL"];
+
+function criarChipBloco(bloco) {
+  const id = `chkBloco_${bloco}`;
+  const el = document.createElement("div");
+  el.className = "form-check form-check-inline";
+
+  el.innerHTML = `
+    <input class="form-check-input" type="checkbox" id="${id}" value="${bloco}">
+    <label class="form-check-label fw-semibold" for="${id}">
+      ${bloco === "SL" ? "SL" : `B${bloco}`}
+      <span class="small text-muted ms-1" id="lockInfo_${bloco}"></span>
+    </label>
+  `;
+  return el;
+}
+
+function renderBlocosNoModal() {
+  const grid = document.getElementById("blocosGrid");
+  if (!grid) return;
+
+  grid.innerHTML = "";
+  BLOCOS_FIXOS.forEach((b) => grid.appendChild(criarChipBloco(b)));
+}
+
+async function fetchLocksAtivos(grupo) {
+  const headers = getHeaders();
+  const nowIso = new Date().toISOString();
+
+  const endpoint =
+    `/rest/v1/picking_locks?` +
+    `grupo=eq.${grupo}` +
+    `&expires_at=gt.${encodeURIComponent(nowIso)}` +
+    `&select=bloco,operador,expires_at,session_id`;
+
+  const res = await fetch(
+    `/api/proxy?endpoint=${encodeURIComponent(endpoint)}`,
+    {
+      headers,
+    },
+  );
+
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+
+function aplicarLocksNaUI(locks, operadorAtual) {
+  const map = new Map();
+  locks.forEach((l) => map.set(String(l.bloco).toUpperCase(), l));
+
+  BLOCOS_FIXOS.forEach((b) => {
+    const chk = document.getElementById(`chkBloco_${b}`);
+    const info = document.getElementById(`lockInfo_${b}`);
+    if (!chk) return;
+
+    const lock = map.get(b.toUpperCase());
+    if (!lock) {
+      chk.disabled = false;
+      if (info) info.textContent = "";
+      return;
+    }
+
+    const lockedByMe =
+      String(lock.operador || "") === String(operadorAtual || "") ||
+      String(lock.session_id || "") === String(window.sessionId || "");
+
+    if (lockedByMe) {
+      chk.disabled = false;
+      if (info) info.textContent = "(seu)";
+    } else {
+      chk.disabled = true;
+      chk.checked = false;
+      if (info) info.textContent = `(lock: ${lock.operador})`;
+    }
+  });
+}
+
+function getBlocosSelecionados() {
+  return BLOCOS_FIXOS.filter(
+    (b) => document.getElementById(`chkBloco_${b}`)?.checked,
+  );
+}
+
+async function acquireLocksGrupo({ grupo, operador, blocos }) {
+  const headers = getHeaders();
+
+  // payload conforme RPC sugerida
+  const body = {
+    p_grupo: Number(grupo),
+    p_blocos: blocos,
+    p_operador: operador,
+    p_session_id: window.sessionId,
+    p_ttl_seconds: 120,
+    p_modo: "GRUPO",
+    p_chave: null,
+    p_nl: false,
+  };
+
+  const endpoint = "/rest/v1/rpc/acquire_picking_locks";
+  const res = await fetch(
+    `/api/proxy?endpoint=${encodeURIComponent(endpoint)}`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    },
+  );
+
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json(); // [{bloco, acquired, locked_by, expires_at}, ...]
+}
+
+let hbTimer = null;
+
+function startHeartbeatLocks() {
+  if (hbTimer) clearInterval(hbTimer);
+
+  hbTimer = setInterval(async () => {
+    try {
+      const headers = getHeaders();
+      const endpoint = "/rest/v1/rpc/heartbeat_picking_locks";
+
+      await fetch(`/api/proxy?endpoint=${encodeURIComponent(endpoint)}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          p_session_id: window.sessionId,
+          p_ttl_seconds: 120,
+        }),
+      });
+    } catch (e) {
+      // offline = ok. TTL segura e quando voltar, heartbeat retoma.
+      console.warn("Heartbeat locks falhou:", e?.message || e);
+    }
+  }, 30000); // 30s
+}
+
+function stopHeartbeatLocks() {
+  if (hbTimer) clearInterval(hbTimer);
+  hbTimer = null;
+}
+
+async function releaseLocks() {
+  try {
+    const headers = getHeaders();
+    const endpoint = "/rest/v1/rpc/release_picking_locks";
+
+    await fetch(`/api/proxy?endpoint=${encodeURIComponent(endpoint)}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ p_session_id: window.sessionId }),
+    });
+  } catch (e) {
+    console.warn("Release locks falhou:", e?.message || e);
+  }
 }
 
 // 🌍 Exportações globais para debug
@@ -667,3 +918,9 @@ function atualizarVisibilidadeFiltros() {
 }
 
 window.atualizarModalInicioPorTipo = atualizarModalInicioPorTipo;
+
+window.addEventListener("beforeunload", () => {
+  stopHeartbeatLocks();
+  // best-effort: TTL cobre os casos onde isso não roda
+  releaseLocks();
+});

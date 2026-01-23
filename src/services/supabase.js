@@ -14,6 +14,38 @@ const supabaseKey =
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+function extrairBlocoDoEndereco(endereco = "") {
+  const [endPrimario = ""] = String(endereco)
+    .split("•")
+    .map((e) => e.trim());
+
+  // pega Bxx (aceita B03, B3, A1-B03-R..., etc.)
+  const m = /(?:^|-)B(\d+)/i.exec(endPrimario);
+  if (!m) return "SL";
+
+  const n = parseInt(m[1], 10);
+  return Number.isFinite(n) ? String(n) : "SL";
+}
+
+function emEscopoPorBloco(produto, blocosSelecionados = []) {
+  if (!Array.isArray(blocosSelecionados) || blocosSelecionados.length === 0) {
+    return true; // sem escopo → tudo
+  }
+
+  const bloco = extrairBlocoDoEndereco(produto?.endereco || "");
+  const sel = blocosSelecionados.map((x) => String(x).toUpperCase());
+
+  if (bloco === "SL") return sel.includes("SL");
+  return sel.includes(String(bloco));
+}
+
+function somarPecasOriginais(lista = []) {
+  return lista.reduce((acc, p) => {
+    const o = p.distribuicaoOriginal || { A: 0, B: 0, C: 0, D: 0 };
+    return acc + (o.A || 0) + (o.B || 0) + (o.C || 0) + (o.D || 0);
+  }, 0);
+}
+
 export async function carregarGrupos() {
   const pageSize = 1000;
   let offset = 0;
@@ -38,7 +70,7 @@ export async function carregarGrupos() {
     }
 
     console.log(
-      `🔁 Página ${i + 1} (offset ${offset}) → ${dados.length} registros`
+      `🔁 Página ${i + 1} (offset ${offset}) → ${dados.length} registros`,
     );
     todosGrupos.push(...dados.map((d) => d.grupo));
     offset += pageSize;
@@ -48,7 +80,7 @@ export async function carregarGrupos() {
     ...new Set(
       todosGrupos
         .map((g) => Number(String(g).trim()))
-        .filter((g) => Number.isInteger(g) && g > 0)
+        .filter((g) => Number.isInteger(g) && g > 0),
     ),
   ].sort((a, b) => a - b);
 
@@ -193,7 +225,7 @@ export async function carregarProdutosPorContexto(ctx) {
 
     const resProdutos = await fetch(
       `/api/proxy?endpoint=${encodeURIComponent(endpointProdutos)}`,
-      { headers }
+      { headers },
     );
 
     if (!resProdutos.ok) {
@@ -245,7 +277,7 @@ export async function carregarProdutosPorContexto(ctx) {
 
     const resRet = await fetch(
       `/api/proxy?endpoint=${encodeURIComponent(endpointRet)}`,
-      { headers }
+      { headers },
     );
 
     if (!resRet.ok) {
@@ -379,12 +411,11 @@ export async function carregarProdutosPorContexto(ctx) {
     // 4) Buscar endereços SOMENTE dos pendentes (GAS/cache)
     // ------------------------------------------------------------
     const listaSkusPendentes = [...skusPendentesSet].map((s) =>
-      normalizarSku(s)
+      normalizarSku(s),
     );
 
-    const mapaEnderecosAtualizados = await obterEnderecosInteligente(
-      listaSkusPendentes
-    );
+    const mapaEnderecosAtualizados =
+      await obterEnderecosInteligente(listaSkusPendentes);
 
     // ------------------------------------------------------------
     // 5) Aplicar endereços atualizados nos produtos pendentes
@@ -425,7 +456,7 @@ export async function carregarProdutosPorContexto(ctx) {
     for (const p of state.produtos) {
       const comp = compararOrdem(
         p.ordemEndereco || [999, 999, 999, 999, 999],
-        posicaoAtual
+        posicaoAtual,
       );
       if (comp >= 0) aindaNaRota.push(p);
       else foraDaRota.push(p);
@@ -436,19 +467,63 @@ export async function carregarProdutosPorContexto(ctx) {
     state.produtos = [...aindaNaRota, ...foraDaRota];
 
     // ------------------------------------------------------------
-    // 7) Total de peças (fixo)
+    // 7) Total de peças (FIXO) — agora respeita ESCOPO por blocos
     // ------------------------------------------------------------
-    const totalPecas = Object.values(mapaSKUs).reduce((acc, p) => {
-      const dist = p.distribuicaoOriginal || { A: 0, B: 0, C: 0, D: 0 };
-      return acc + dist.A + dist.B + dist.C + dist.D;
-    }, 0);
 
-    state.totalPecas = totalPecas;
+    // aplica escopo APENAS para modo GRUPO (avulso ignora)
+    const blocosSelecionados =
+      !ctx || ctx.tipo === "GRUPO"
+        ? window.pickingContexto?.blocosSelecionados || []
+        : [];
+
+    // filtra state.produtos/state.retirados pelo escopo
+    if (Array.isArray(blocosSelecionados) && blocosSelecionados.length > 0) {
+      state.produtos = state.produtos.filter((p) =>
+        emEscopoPorBloco(p, blocosSelecionados),
+      );
+      state.retirados = state.retirados.filter((p) =>
+        emEscopoPorBloco(p, blocosSelecionados),
+      );
+
+      // reordena rota após filtrar (mantém lógica de “posição atual”)
+      const ultimaRetiradaEscopo = state.retirados.at(-1);
+      const posicaoAtualEscopo = ultimaRetiradaEscopo?.ordemEndereco || [
+        0, 0, 0, 0, 0,
+      ];
+
+      const ainda = [];
+      const fora = [];
+
+      for (const p of state.produtos) {
+        const comp = compararOrdem(
+          p.ordemEndereco || [999, 999, 999, 999, 999],
+          posicaoAtualEscopo,
+        );
+        if (comp >= 0) ainda.push(p);
+        else fora.push(p);
+      }
+
+      ainda.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
+      fora.sort((a, b) => compararOrdem(a.ordemEndereco, b.ordemEndereco));
+      state.produtos = [...ainda, ...fora];
+
+      state.ordemAtual = posicaoAtualEscopo;
+    }
+
+    // total de peças agora é DO ESCOPO (originais)
+    const totalPecasEscopo = somarPecasOriginais(
+      state.produtos.concat(state.retirados),
+    );
+    state.totalPecas = totalPecasEscopo;
+
+    if (state.totalPecas === 0) {
+      toast("⚠️ Nenhuma peça no escopo selecionado (blocos).", "warning");
+    }
 
     const idealEl = document.getElementById("ideal");
     const qtdTotalEl = document.getElementById("qtdTotal");
-    if (idealEl) idealEl.textContent = calcularTempoIdeal(totalPecas);
-    if (qtdTotalEl) qtdTotalEl.textContent = totalPecas;
+    if (idealEl) idealEl.textContent = calcularTempoIdeal(totalPecasEscopo);
+    if (qtdTotalEl) qtdTotalEl.textContent = totalPecasEscopo;
 
     state.tempoInicio = new Date();
     iniciarCronometro();
@@ -554,7 +629,7 @@ export async function desfazerRetiradaV2(sku, romaneio, caixa, ctx) {
       {
         method: "DELETE",
         headers: getHeaders(),
-      }
+      },
     );
     if (!res.ok) throw new Error(await res.text());
 
@@ -585,7 +660,7 @@ export async function desfazerRetiradaV2(sku, romaneio, caixa, ctx) {
       atualizarInterface();
       toast(
         `✔️ Retirada de ${skuN} (Romaneio ${romaneio}) desfeita.`,
-        "success"
+        "success",
       );
     } else {
       toast("Item não encontrado para desfazer.", "warning");
@@ -787,7 +862,7 @@ async function obterEnderecosInteligente(listaSkus) {
 
   console.log(
     `%c📦 ENDEREÇOS RESOLVIDOS`,
-    "font-weight: bold; font-size: 16px; color: #1976d2"
+    "font-weight: bold; font-size: 16px; color: #1976d2",
   );
   console.log(`🟩 Cache Local:     ${usadosLocal}`);
   console.log(`🟦 Supabase Cache:  ${usadosSupabase}`);
@@ -835,7 +910,7 @@ export async function atualizarEnderecoCacheSupabase(sku, novoEndereco) {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify(payload),
-      }
+      },
     );
 
     if (!res.ok) {
