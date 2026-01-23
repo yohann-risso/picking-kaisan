@@ -650,7 +650,7 @@ async function acquireLocksGrupo({ grupo, operador, blocos }) {
     p_session_id: window.sessionId,
     p_ttl_seconds: 120,
     p_modo: "GRUPO",
-    p_chave: null,
+    p_chave: "",
     p_nl: false,
   };
 
