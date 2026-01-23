@@ -351,6 +351,8 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
     const chave = document.getElementById("chaveAvulsa")?.value?.trim();
     const nl = !!document.getElementById("chkNl")?.checked;
 
+    let blocosSelecionados = [];
+
     if (!operador) {
       mostrarToast("Selecione o operador", "warning");
       return;
@@ -385,10 +387,6 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
           return;
         }
 
-        // guarda no contexto para filtrar/progresso depois
-        window.pickingContexto = window.pickingContexto || {};
-        window.pickingContexto.blocosSelecionados = blocosSelecionados;
-
         // mantém locks vivos durante o picking
         startHeartbeatLocks();
       } catch (e) {
@@ -413,7 +411,7 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
       chave: tipo === "AVULSO" ? chave : null, // romaneio/pedido informado
       nl: tipo === "AVULSO" ? nl : false,
       operador,
-      blocosSelecionados,
+      blocosSelecionados: tipo === "GRUPO" ? blocosSelecionados : [],
     };
 
     // compat: mantém variáveis existentes (se ainda usadas em outros módulos)
