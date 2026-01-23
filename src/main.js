@@ -440,7 +440,11 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
       // ✅ GRUPO (fluxo atual)
       if (tipo === "GRUPO") {
         await carregarRefsPorGrupo(grupo);
-        await carregarProdutos();
+        await window.carregarProdutosPorContexto({
+          ...window.pickingContexto,
+          blocosSelecionados: window.pickingContexto?.blocosSelecionados || [],
+        });
+
         setTimeout(atualizarVisibilidadeFiltros, 0);
         return;
       }
