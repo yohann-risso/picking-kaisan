@@ -363,6 +363,7 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
     // ✅ LOCK DE BLOCOS (somente GRUPO)
     if (tipo === "GRUPO") {
       const blocosSelecionados = getBlocosSelecionados(); // ✅ declara aqui
+      console.log("BLOCOS selecionados no modal:", blocosSelecionados);
 
       if (!blocosSelecionados.length) {
         mostrarToast("Selecione ao menos 1 bloco (ou SL).", "warning");

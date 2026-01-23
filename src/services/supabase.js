@@ -19,12 +19,10 @@ function extrairBlocoDoEndereco(endereco = "") {
     .split("•")
     .map((e) => e.trim());
 
-  // pega Bxx (aceita B03, B3, A1-B03-R..., etc.)
-  const m = /(?:^|-)B(\d+)/i.exec(endPrimario);
+  const m = /B\s*0*(\d+)/i.exec(endPrimario);
   if (!m) return "SL";
 
-  const n = parseInt(m[1], 10);
-  return Number.isFinite(n) ? String(n) : "SL";
+  return String(parseInt(m[1], 10));
 }
 
 function emEscopoPorBloco(produto, blocosSelecionados = []) {
@@ -188,6 +186,13 @@ export async function carregarRefsPorGrupo(grupo) {
 window.carregarRefsPorAvulso = (ctx) => carregarRefsPorContexto(ctx);
 
 export async function carregarProdutosPorContexto(ctx) {
+  console.log(
+    "CTX blocosSelecionados:",
+    ctx?.blocosSelecionados,
+    "window:",
+    window.pickingContexto?.blocosSelecionados,
+  );
+
   console.log("⚙️ carregarProdutosPorContexto chamado", ctx);
 
   const loader = document.getElementById("loaderGlobal");
@@ -511,6 +516,15 @@ export async function carregarProdutosPorContexto(ctx) {
 
       state.ordemAtual = posicaoAtualEscopo;
     }
+
+    console.log(
+      "ESCOPADO -> produtos:",
+      state.produtos.length,
+      "retirados:",
+      state.retirados.length,
+      "totalPecas:",
+      state.totalPecas,
+    );
 
     // total de peças agora é DO ESCOPO (originais)
     const totalPecasEscopo = somarPecasOriginais(
