@@ -353,33 +353,38 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
     const chave = document.getElementById("chaveAvulsa")?.value?.trim();
     const nl = !!document.getElementById("chkNl")?.checked;
 
-    let blocosSelecionados = [];
-
     if (!operador) {
       mostrarToast("Selecione o operador", "warning");
       return;
     }
 
     // ✅ LOCK DE BLOCOS (somente GRUPO)
+    let blocosSelecionados = []; // ✅ sempre definido
+
     if (tipo === "GRUPO") {
-      const blocosSelecionados = getBlocosSelecionados(); // ✅ declara aqui
+      if (!grupo) {
+        mostrarToast("Selecione o grupo", "warning");
+        return;
+      }
+
+      blocosSelecionados = getBlocosSelecionados();
       console.log("BLOCOS selecionados no modal:", blocosSelecionados);
 
       if (!blocosSelecionados.length) {
         mostrarToast("Selecione ao menos 1 bloco (ou SL).", "warning");
-        document.getElementById("loaderGlobal").style.display = "none";
         return;
       }
+
+      document.getElementById("loaderGlobal").style.display = "flex";
 
       try {
         const result = await acquireLocksGrupo({
           grupo,
           operador,
-          blocos: blocosSelecionados, // ✅ usa o mesmo nome
+          blocos: blocosSelecionados,
         });
 
         const falhas = (result || []).filter((r) => !r.acquired);
-
         if (falhas.length > 0) {
           const msg = falhas
             .map((f) => `${f.bloco} (lock: ${f.locked_by || "?"})`)
@@ -390,7 +395,6 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
           return;
         }
 
-        // mantém locks vivos durante o picking
         startHeartbeatLocks();
       } catch (e) {
         console.error("Erro ao adquirir locks:", e);
@@ -399,35 +403,31 @@ aguardarElemento("btnConfirmarInicio", (btn) => {
         return;
       }
     } else {
+      // AVULSO
       if (!chave) {
         mostrarToast("Informe Romaneio ou Pedido", "warning");
         return;
       }
     }
 
-    document.getElementById("loaderGlobal").style.display = "flex";
-
-    const blocosSelecionadosFinal =
-      tipo === "GRUPO" ? [...blocosSelecionados] : [];
-
-    // 📌 Contexto único do picking (novo)
+    // ✅ Contexto único SEMPRE preserva blocos do GRUPO
     window.pickingContexto = {
       tipo,
       grupo: tipo === "GRUPO" ? grupo : null,
       chave: tipo === "AVULSO" ? chave : null,
       nl: tipo === "AVULSO" ? nl : false,
       operador,
-      blocosSelecionados: blocosSelecionadosFinal,
+      blocosSelecionados: tipo === "GRUPO" ? [...blocosSelecionados] : [],
     };
 
-    // compat: mantém variáveis existentes (se ainda usadas em outros módulos)
+    // compat
     window.grupoSelecionado = tipo === "GRUPO" ? grupo : null;
     window.operadorSelecionado = operador;
 
-    // label do topo (mantém o mesmo span id="grupoAtivo")
+    // label topo
     const label =
       tipo === "GRUPO"
-        ? `Grupo ${grupo}`
+        ? `Grupo ${grupo} | Blocos: ${window.pickingContexto.blocosSelecionados.join(", ")}`
         : `${nl ? "NL" : "Avulso"} | ${chave}`;
 
     document.getElementById("grupoAtivo").textContent = label;
