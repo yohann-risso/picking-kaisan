@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -15,44 +15,307 @@
     <!-- Estilo compartilhado -->
     <link rel="stylesheet" href="../public/css/style.css" />
   </head>
+
   <body>
     <div class="container py-4">
-      <h1 class="mb-4">📊 Painel Administrativo</h1>
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3"
+      >
+        <h1 class="m-0">📊 Painel Administrativo</h1>
 
-      <!-- KPIs -->
-      <div class="row g-4 mb-5">
-        <div class="col-md-4">
-          <div class="card shadow-sm p-3 text-center">
-            <h6>Total Pedidos Hoje</h6>
-            <div id="kpiPedidos" class="fs-2 fw-bold text-primary">0</div>
-          </div>
+        <div class="d-flex gap-2 align-items-center">
+          <span id="adminStatus" class="badge text-bg-secondary">🛰️</span>
+          <button id="btnRefresh" class="btn btn-outline-primary btn-sm">
+            Atualizar agora
+          </button>
         </div>
-        <div class="col-md-4">
-          <div class="card shadow-sm p-3 text-center">
-            <h6>Peças Processadas</h6>
-            <div id="kpiPecas" class="fs-2 fw-bold text-success">0</div>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="card shadow-sm p-3 mb-4">
+        <div class="row g-3 align-items-end">
+          <div class="col-6 col-md-3">
+            <label class="form-label fw-bold">Data início</label>
+            <input id="dtIni" type="date" class="form-control" />
           </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card shadow-sm p-3 text-center">
-            <h6>Operadores Ativos</h6>
-            <div id="kpiOperadores" class="fs-2 fw-bold text-danger">0</div>
+
+          <div class="col-6 col-md-3">
+            <label class="form-label fw-bold">Data fim</label>
+            <input id="dtFim" type="date" class="form-control" />
+          </div>
+
+          <div class="col-6 col-md-3">
+            <label class="form-label fw-bold">Min itens</label>
+            <input
+              id="minItens"
+              type="number"
+              class="form-control"
+              value="50"
+              min="1"
+            />
+          </div>
+
+          <div class="col-6 col-md-3">
+            <label class="form-label fw-bold">Cutoff delta (s)</label>
+            <input
+              id="cutoff"
+              type="number"
+              class="form-control"
+              value="300"
+              min="5"
+            />
+          </div>
+
+          <div class="col-12 d-flex gap-2 flex-wrap">
+            <button id="btnSemana" class="btn btn-sm btn-outline-secondary">
+              Semana atual
+            </button>
+            <button id="btn3dias" class="btn btn-sm btn-outline-secondary">
+              Últimos 3 dias
+            </button>
+            <button id="btnHoje" class="btn btn-sm btn-outline-secondary">
+              Hoje
+            </button>
+
+            <div class="ms-auto d-flex gap-2 align-items-center">
+              <label
+                class="form-check-label small text-muted"
+                for="autoRefresh"
+              >
+                Auto (60s)
+              </label>
+              <input
+                id="autoRefresh"
+                class="form-check-input"
+                type="checkbox"
+                checked
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Gráficos -->
-      <div class="row g-4">
-        <div class="col-md-6">
-          <div class="card shadow-sm p-3">
-            <h6 class="mb-3">Pedidos por Hora</h6>
-            <canvas id="chartPedidosHora"></canvas>
+      <!-- KPIs topo -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-12 col-md-3">
+          <div class="card shadow-sm p-3 text-center">
+            <div class="text-muted small">Retiradas (período)</div>
+            <div id="kpiRetiradas" class="fs-2 fw-bold text-primary">0</div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-12 col-12 col-md-3">
+          <div class="card shadow-sm p-3 text-center">
+            <div class="text-muted small">Operadores ativos</div>
+            <div id="kpiOperadores" class="fs-2 fw-bold text-success">0</div>
+          </div>
+        </div>
+        <div class="col-12 col-12 col-md-3">
+          <div class="card shadow-sm p-3 text-center">
+            <div class="text-muted small">Grupos ativos</div>
+            <div id="kpiGrupos" class="fs-2 fw-bold text-danger">0</div>
+          </div>
+        </div>
+        <div class="col-12 col-12 col-md-3">
+          <div class="card shadow-sm p-3 text-center">
+            <div class="text-muted small">Erros por 1000 itens</div>
+            <div id="kpiErrosPorMil" class="fs-2 fw-bold text-warning">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grupos em execução (hoje) -->
+      <div class="card shadow-sm p-3 mb-4">
+        <div
+          class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+        >
+          <h5 class="m-0">⚙️ Grupos em execução (hoje)</h5>
+          <div class="small text-muted">status = RETIRADO · grupo != null</div>
+        </div>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-sm table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Grupo</th>
+                <th>Retiradas</th>
+                <th>Operadores</th>
+                <th>Última atividade</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tblGruposHoje"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- KPI Ideal vs Real (RPC) -->
+      <div class="card shadow-sm p-3 mb-4">
+        <div
+          class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+        >
+          <h5 class="m-0">
+            🏁 TPS Execução · Ideal vs Real (por operador + grupo)
+          </h5>
+          <div class="small text-muted">
+            RPC fn_tempo_ideal_exec_por_periodo
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-sm table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Operador</th>
+                <th>Grupo</th>
+                <th class="text-end">Itens</th>
+                <th class="text-end">Real (h)</th>
+                <th class="text-end">Ideal p50 (h)</th>
+                <th class="text-end">Gap (h)</th>
+                <th class="text-end">Fator</th>
+                <th class="text-end">p50 (s)</th>
+                <th class="text-end">p90 (s)</th>
+                <th>Badge</th>
+              </tr>
+            </thead>
+            <tbody id="tblIdealReal"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Registrar erro por romaneio -->
+      <div class="card shadow-sm p-3 mb-4">
+        <div
+          class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+        >
+          <h5 class="m-0">🧾 Registrar erro (Expedição)</h5>
+          <span class="text-muted small"
+            >Erros por romaneio (conferência final)</span
+          >
+        </div>
+
+        <form id="formErro" class="row g-2 mt-2">
+          <div class="col-12 col-md-2">
+            <label class="form-label fw-bold">Romaneio</label>
+            <input
+              id="erroRomaneio"
+              class="form-control"
+              placeholder="Ex: 12345"
+              required
+              list="dlRomaneios"
+            />
+            <datalist id="dlRomaneios"></datalist>
+          </div>
+
+          <div class="col-6 col-md-2">
+            <label class="form-label fw-bold">Data</label>
+            <input id="erroData" type="date" class="form-control" required />
+          </div>
+
+          <div class="col-6 col-md-3">
+            <label class="form-label fw-bold">Tipo de erro</label>
+            <select id="erroTipo" class="form-select" required>
+              <option value="">Selecione</option>
+              <option>FALTA</option>
+              <option>SOBRA</option>
+              <option>TROCA_SKU</option>
+              <option>TROCA_VARIACAO</option>
+              <option>DIVERGENCIA_QTD</option>
+              <option>AVARIA</option>
+              <option>ETIQUETA/ROMANEIO</option>
+              <option>OUTRO</option>
+            </select>
+          </div>
+
+          <div class="col-6 col-md-2">
+            <label class="form-label fw-bold">Quantidade</label>
+            <input
+              id="erroQtd"
+              type="number"
+              class="form-control"
+              min="1"
+              value="1"
+              required
+            />
+          </div>
+
+          <div class="col-6 col-md-3">
+            <label class="form-label fw-bold">Conferente</label>
+            <input
+              id="erroConferente"
+              class="form-control"
+              placeholder="Nome"
+              required
+            />
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-bold">Observação (opcional)</label>
+            <input
+              id="erroObs"
+              class="form-control"
+              placeholder="Ex: caixa rasgada / etiqueta duplicada..."
+            />
+          </div>
+
+          <div class="col-12 d-flex gap-2 mt-2">
+            <button class="btn btn-primary btn-sm" type="submit">
+              Salvar erro
+            </button>
+            <button
+              id="btnCarregarErros"
+              class="btn btn-outline-secondary btn-sm"
+              type="button"
+            >
+              Atualizar lista
+            </button>
+            <span id="erroMsg" class="small text-muted ms-auto"></span>
+          </div>
+        </form>
+      </div>
+
+      <!-- Lista de erros -->
+      <div class="card shadow-sm p-3 mb-4">
+        <div
+          class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+        >
+          <h5 class="m-0">🧯 Erros registrados</h5>
+          <span class="text-muted small"
+            >Filtrado pelo período selecionado</span
+          >
+        </div>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-sm table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Romaneio</th>
+                <th>Tipo</th>
+                <th>Grupo</th>
+                <th>Operador</th>
+                <th class="text-end">Qtd</th>
+                <th>Conferente</th>
+                <th>Obs</th>
+              </tr>
+            </thead>
+            <tbody id="tblErros"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="row g-3">
+        <div class="col-12 col-lg-6">
           <div class="card shadow-sm p-3">
-            <h6 class="mb-3">Ranking por Operador</h6>
-            <canvas id="chartRanking"></canvas>
+            <h6 class="mb-3">🏆 Ranking (Fator vs Ideal p50)</h6>
+            <canvas id="chartRankingFator"></canvas>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="card shadow-sm p-3">
+            <h6 class="mb-3">⏱️ Ritmo (p50 vs p90 em segundos)</h6>
+            <canvas id="chartRitmo"></canvas>
           </div>
         </div>
       </div>
