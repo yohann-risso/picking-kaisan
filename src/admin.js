@@ -112,8 +112,6 @@ function destroyCharts() {
   if (chartRitmo) chartRitmo.destroy();
   chartRankingFator = null;
   chartRitmo = null;
-
-  destroyQualityCharts();
 }
 
 function renderCharts(rows) {
