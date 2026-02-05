@@ -273,6 +273,80 @@
         </form>
       </div>
 
+      <!-- QUALIDADE: charts -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-6">
+          <div class="card shadow-sm p-3">
+            <h6 class="mb-3">📈 Erros por dia (últimos 14 dias)</h6>
+            <canvas id="chartErrosDia"></canvas>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+          <div class="card shadow-sm p-3">
+            <h6 class="mb-3">📌 Pareto de erros por tipo (últimos 14 dias)</h6>
+            <canvas id="chartErrosTipo"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUALIDADE: leaderboards -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-4">
+          <div class="card shadow-sm p-3">
+            <h6 class="mb-3">🏅 Leaderboard de erros por Operador (14d)</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Operador</th>
+                    <th class="text-end">Erros</th>
+                    <th class="text-end">Eventos</th>
+                  </tr>
+                </thead>
+                <tbody id="tblLbOperador"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="card shadow-sm p-3">
+            <h6 class="mb-3">🧾 Leaderboard de erros por Conferente (14d)</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Conferente</th>
+                    <th class="text-end">Erros</th>
+                    <th class="text-end">Eventos</th>
+                  </tr>
+                </thead>
+                <tbody id="tblLbConferente"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <div class="card shadow-sm p-3">
+            <h6 class="mb-3">🧩 Erros por Tipo (14d)</h6>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Tipo</th>
+                    <th class="text-end">Erros</th>
+                    <th class="text-end">Eventos</th>
+                  </tr>
+                </thead>
+                <tbody id="tblLbTipo"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Lista de erros -->
       <div class="card shadow-sm p-3 mb-4">
         <div

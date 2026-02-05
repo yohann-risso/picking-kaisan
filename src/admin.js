@@ -97,12 +97,23 @@ async function listarRomaneiosRecentes(limit = 20) {
 // =======================
 let chartRankingFator = null;
 let chartRitmo = null;
+let chartErrosDia = null;
+let chartErrosTipo = null;
+
+function destroyQualityCharts() {
+  if (chartErrosDia) chartErrosDia.destroy();
+  if (chartErrosTipo) chartErrosTipo.destroy();
+  chartErrosDia = null;
+  chartErrosTipo = null;
+}
 
 function destroyCharts() {
   if (chartRankingFator) chartRankingFator.destroy();
   if (chartRitmo) chartRitmo.destroy();
   chartRankingFator = null;
   chartRitmo = null;
+
+  destroyQualityCharts();
 }
 
 function renderCharts(rows) {
@@ -168,6 +179,49 @@ function renderCharts(rows) {
 // =======================
 // Data loaders
 // =======================
+async function carregarErrosPorDia14d() {
+  const { data, error } = await supabase
+    .from("vw_erros_por_dia_14d")
+    .select("dia, erros_qtd, eventos")
+    .order("dia", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+async function carregarLeaderboardOperador14d() {
+  const { data, error } = await supabase
+    .from("vw_erros_por_operador_14d")
+    .select("operador, erros_qtd, eventos")
+    .order("erros_qtd", { ascending: false })
+    .limit(15);
+
+  if (error) throw error;
+  return data || [];
+}
+
+async function carregarLeaderboardConferente14d() {
+  const { data, error } = await supabase
+    .from("vw_erros_por_conferente_14d")
+    .select("conferente, erros_qtd, eventos")
+    .order("erros_qtd", { ascending: false })
+    .limit(15);
+
+  if (error) throw error;
+  return data || [];
+}
+
+async function carregarLeaderboardTipo14d() {
+  const { data, error } = await supabase
+    .from("vw_erros_por_tipo_14d")
+    .select("tipo_erro, erros_qtd, eventos")
+    .order("erros_qtd", { ascending: false })
+    .limit(15);
+
+  if (error) throw error;
+  return data || [];
+}
+
 async function carregarIdealRealRPC({ dtIni, dtFim, minItens, cutoff }) {
   const { data, error } = await supabase.rpc(
     "fn_tempo_ideal_exec_por_periodo",
@@ -250,6 +304,101 @@ async function carregarGruposHoje() {
 // =======================
 // Renderers
 // =======================
+function renderLbOperador(rows) {
+  const el = document.getElementById("tblLbOperador");
+  if (!el) return;
+
+  el.innerHTML = (rows || [])
+    .map(
+      (r) => `
+      <tr>
+        <td>${r.operador || "-"}</td>
+        <td class="text-end fw-semibold">${r.erros_qtd ?? 0}</td>
+        <td class="text-end text-muted">${r.eventos ?? 0}</td>
+      </tr>
+    `,
+    )
+    .join("");
+}
+
+function renderLbConferente(rows) {
+  const el = document.getElementById("tblLbConferente");
+  if (!el) return;
+
+  el.innerHTML = (rows || [])
+    .map(
+      (r) => `
+      <tr>
+        <td>${r.conferente || "-"}</td>
+        <td class="text-end fw-semibold">${r.erros_qtd ?? 0}</td>
+        <td class="text-end text-muted">${r.eventos ?? 0}</td>
+      </tr>
+    `,
+    )
+    .join("");
+}
+
+function renderLbTipo(rows) {
+  const el = document.getElementById("tblLbTipo");
+  if (!el) return;
+
+  el.innerHTML = (rows || [])
+    .map(
+      (r) => `
+      <tr>
+        <td><span class="badge text-bg-secondary">${r.tipo_erro || "-"}</span></td>
+        <td class="text-end fw-semibold">${r.erros_qtd ?? 0}</td>
+        <td class="text-end text-muted">${r.eventos ?? 0}</td>
+      </tr>
+    `,
+    )
+    .join("");
+}
+
+function renderChartsQualidade({ porDia, porTipo }) {
+  // destrói apenas os charts de qualidade
+  destroyQualityCharts();
+
+  // Linha: erros por dia
+  chartErrosDia = new Chart(document.getElementById("chartErrosDia"), {
+    type: "line",
+    data: {
+      labels: (porDia || []).map((r) => r.dia),
+      datasets: [
+        {
+          label: "Erros (qtd)",
+          data: (porDia || []).map((r) => Number(r.erros_qtd || 0)),
+          tension: 0.2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      scales: { y: { beginAtZero: true } },
+    },
+  });
+
+  // Bar: pareto por tipo
+  chartErrosTipo = new Chart(document.getElementById("chartErrosTipo"), {
+    type: "bar",
+    data: {
+      labels: (porTipo || []).map((r) => r.tipo_erro),
+      datasets: [
+        {
+          label: "Erros (qtd)",
+          data: (porTipo || []).map((r) => Number(r.erros_qtd || 0)),
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      scales: { y: { beginAtZero: true } },
+    },
+  });
+}
+
 function renderKPIs({ totalRetiradasPeriodo, operadoresAtivos, gruposAtivos }) {
   document.getElementById("kpiRetiradas").textContent = totalRetiradasPeriodo;
   document.getElementById("kpiOperadores").textContent = operadoresAtivos;
@@ -365,6 +514,23 @@ async function atualizarTudo() {
       (acc, e) => acc + Number(e.quantidade || 0),
       0,
     );
+
+    // QUALIDADE (14d)
+    const [errosDia14d, lbOp14d, lbConf14d, lbTipo14d] = await Promise.all([
+      carregarErrosPorDia14d(),
+      carregarLeaderboardOperador14d(),
+      carregarLeaderboardConferente14d(),
+      carregarLeaderboardTipo14d(),
+    ]);
+
+    renderLbOperador(lbOp14d);
+    renderLbConferente(lbConf14d);
+    renderLbTipo(lbTipo14d);
+
+    renderChartsQualidade({
+      porDia: errosDia14d,
+      porTipo: lbTipo14d,
+    });
 
     // seus KPIs atuais
     const totalRetiradasPeriodo = idealReal.reduce(
