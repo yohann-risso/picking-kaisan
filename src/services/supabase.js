@@ -575,6 +575,25 @@ export async function carregarProdutos() {
   });
 }
 
+function enderecoPrimario(endereco = "") {
+  const [endPrimario = "SEM ENDEREÇO"] = String(endereco)
+    .split("•")
+    .map((e) => e.trim());
+  return endPrimario || "SEM ENDEREÇO";
+}
+
+function parseABRCN(endPrimario = "") {
+  const m = /A(\d+)-B(\d+)-R(\d+)-C(\d+)-N(\d+)/i.exec(String(endPrimario));
+  if (!m) return null;
+  return {
+    a: Number(m[1]),
+    b: Number(m[2]),
+    r: Number(m[3]),
+    c: Number(m[4]),
+    n: Number(m[5]),
+  };
+}
+
 export async function registrarRetiradaV2(prod, operador, ctx, caixa) {
   const timestamp = new Date()
     .toLocaleString("sv-SE", { timeZone: "America/Sao_Paulo" })
@@ -588,6 +607,14 @@ export async function registrarRetiradaV2(prod, operador, ctx, caixa) {
     caixa,
     status: "RETIRADO",
   };
+
+  // ✅ endereço snapshot (momento da coleta)
+  const endPrim = enderecoPrimario(prod.endereco);
+  payload.endereco_coleta = endPrim;
+
+  // ✅ layout completo
+  const abrcn = parseABRCN(endPrim);
+  if (abrcn) Object.assign(payload, abrcn);
 
   if (ctx?.tipo === "GRUPO") {
     payload.grupo = parseInt(ctx.grupo ?? window.grupoSelecionado);
