@@ -182,6 +182,35 @@
         </div>
       </div>
 
+      <!-- Eficiência por operador (período) -->
+      <div class="card shadow-sm p-3 mb-4">
+        <div
+          class="d-flex align-items-center justify-content-between flex-wrap gap-2"
+        >
+          <h5 class="m-0">🎯 Eficiência por Operador (Ideal / Real)</h5>
+          <div class="small text-muted">
+            RPC fn_eficiencia_por_operador_periodo
+          </div>
+        </div>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-sm table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Operador</th>
+                <th class="text-end">Grupos</th>
+                <th class="text-end">Itens</th>
+                <th class="text-end">TPS real (s)</th>
+                <th class="text-end">TPS ideal (s)</th>
+                <th class="text-end">Eficiência</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tblEficienciaOperador"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Registrar erro por romaneio -->
       <div class="card shadow-sm p-3 mb-4">
         <div

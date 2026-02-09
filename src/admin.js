@@ -177,6 +177,26 @@ function renderCharts(rows) {
 // =======================
 // Data loaders
 // =======================
+async function carregarEficienciaOperadorRPC({
+  dtIni,
+  dtFim,
+  minItens,
+  cutoff,
+}) {
+  const { data, error } = await supabase.rpc(
+    "fn_eficiencia_por_operador_periodo",
+    {
+      p_data_ini: dtIni,
+      p_data_fim: dtFim,
+      p_min_itens: Number(minItens),
+      p_cutoff_delta_seg: Number(cutoff),
+    },
+  );
+
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
 async function carregarErrosPorDia14d() {
   const { data, error } = await supabase
     .from("vw_erros_por_dia_14d")
@@ -302,6 +322,38 @@ async function carregarGruposHoje() {
 // =======================
 // Renderers
 // =======================
+function badgeEficiencia(e) {
+  const x = Number(e);
+  if (!Number.isFinite(x)) return { cls: "text-bg-secondary", txt: "—" };
+  if (x >= 1.0) return { cls: "text-bg-success", txt: "🟢 100%+" };
+  if (x >= 0.9) return { cls: "text-bg-warning", txt: "🟡 90%+" };
+  return { cls: "text-bg-danger", txt: "🔴 <90%" };
+}
+
+function renderEficienciaOperador(rows) {
+  const tbody = document.getElementById("tblEficienciaOperador");
+  if (!tbody) return;
+
+  tbody.innerHTML = (rows || [])
+    .map((r) => {
+      const efPct = Number(r.eficiencia) * 100;
+      const b = badgeEficiencia(r.eficiencia);
+
+      return `
+        <tr>
+          <td class="fw-semibold">${r.operador || "-"}</td>
+          <td class="text-end">${r.grupos ?? 0}</td>
+          <td class="text-end">${r.itens ?? 0}</td>
+          <td class="text-end">${fmtNum(r.tps_real_seg, 1)}</td>
+          <td class="text-end text-muted">${fmtNum(r.tps_ideal_seg, 1)}</td>
+          <td class="text-end fw-bold">${Number.isFinite(efPct) ? efPct.toFixed(1) + "%" : "-"}</td>
+          <td><span class="badge ${b.cls}">${b.txt}</span></td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
 function renderLbOperador(rows) {
   const el = document.getElementById("tblLbOperador");
   if (!el) return;
@@ -500,6 +552,14 @@ async function atualizarTudo() {
       minItens,
       cutoff,
     });
+    const eficienciaOp = await carregarEficienciaOperadorRPC({
+      dtIni,
+      dtFim,
+      minItens,
+      cutoff,
+    });
+
+    renderEficienciaOperador(eficienciaOp);
     const gruposHoje = await carregarGruposHoje();
     const locksAtivos = await carregarLocksAtivos();
 
