@@ -1,11 +1,15 @@
 export function carregarOperadores() {
   const operadores = [
+    "Bryan Gomes",
     "Deygles Matos",
     "Filipe Lopes",
     "Gabriel Lagoa",
+    "Heitor Zavoli",
     "Kaique Teixeira",
     "Lucas Paiva",
-    "Marrony Portugal",
+    "Pedro Frossard",
+    "Vinícius Santos",
+    "Yohann Risso",
   ];
 
   const seletor = document.getElementById("operadorModal");
