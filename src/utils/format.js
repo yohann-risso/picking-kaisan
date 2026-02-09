@@ -5,7 +5,7 @@ export function formatarTempo(segundos) {
   return `${hh}:${mm}:${ss}`;
 }
 
-export function calcularTempoIdeal(qtdPecas, tempoPorPeca = 8.116) {
+export function calcularTempoIdeal(qtdPecas, tempoPorPeca = 12.007358) {
   const segundosTotais = Math.round(qtdPecas * tempoPorPeca);
   return formatarTempo(segundosTotais);
 }
