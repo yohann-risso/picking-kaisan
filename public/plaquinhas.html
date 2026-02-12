@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -40,11 +40,13 @@
       async function gerarPDF(grupo) {
         try {
           const grupoNum = Number(grupo);
+
           const { data, error } = await supabase
             .from("romaneios")
-            .select("romaneio, qtd_pedidos, qtd_pecas")
-            .eq("conjunto", grupoNum)
-            .order("romaneio", { ascending: true });
+            .select("romaneio, qtd_pedidos, qtd_pecas, caixa")
+            .eq("conjunto", String(grupoNum))
+            // opcional: estabilidade, mas NÃO é ordem numérica de romaneio
+            .order("caixa", { ascending: true });
 
           if (error || !data || data.length === 0) {
             alert("Erro ao carregar romaneios ou nenhum encontrado.");
@@ -64,21 +66,46 @@
           const espacoX = 15;
           const espacoY = 10;
 
+          // posições fixas (A/B em cima, C/D embaixo)
           const posicoes = [
-            { x: marginLeft, y: marginTop },
-            { x: marginLeft + largura + espacoX, y: marginTop },
-            { x: marginLeft, y: marginTop + altura + espacoY },
+            { x: marginLeft, y: marginTop }, // 0
+            { x: marginLeft + largura + espacoX, y: marginTop }, // 1
+            { x: marginLeft, y: marginTop + altura + espacoY }, // 2
             {
               x: marginLeft + largura + espacoX,
               y: marginTop + altura + espacoY,
-            },
+            }, // 3
           ];
+
+          // mapeia a "caixa" do Supabase para a posição do PDF
+          const posicoesPorCaixa = {
+            A: posicoes[0],
+            B: posicoes[1],
+            C: posicoes[2],
+            D: posicoes[3],
+          };
+
+          // se vier “caixa” diferente (ex: "1","2"...), ajuste aqui.
+          const normalizarCaixa = (v) =>
+            String(v || "")
+              .trim()
+              .toUpperCase();
+
+          // se tiver duplicidade de caixa no banco, pega a primeira e ignora o resto
+          const visto = new Set();
 
           const dataHoje = new Date().toLocaleDateString("pt-BR");
 
-          data.slice(0, 4).forEach((rom, index) => {
-            const { x, y } = posicoes[index];
-            const box = String.fromCharCode(65 + index);
+          for (const rom of data) {
+            const cx = normalizarCaixa(rom.caixa);
+
+            const pos = posicoesPorCaixa[cx];
+            if (!pos) continue; // ignora caixas fora de A/B/C/D
+
+            if (visto.has(cx)) continue; // evita desenhar 2x a mesma caixa
+            visto.add(cx);
+
+            const { x, y } = pos;
 
             // Moldura externa
             doc.setDrawColor(0).setLineWidth(0.4).rect(x, y, largura, altura);
@@ -102,7 +129,7 @@
               faixaY + 14,
               {
                 align: "center",
-              }
+              },
             );
 
             // Tabela com operador
@@ -121,7 +148,7 @@
               doc.setDrawColor(0).rect(x + 8, yLinha, rowWidth, rowHeight);
               doc.setTextColor(0).setFontSize(11);
               doc.text(label, x + 10, yLinha + 6);
-              doc.text(String(valor), x + 8 + rowWidth - 4, yLinha + 6, {
+              doc.text(String(valor ?? "-"), x + 8 + rowWidth - 4, yLinha + 6, {
                 align: "right",
               });
             });
@@ -146,15 +173,19 @@
               letraY += 5;
             });
 
-            // Letra da caixa
+            // Letra da caixa (vem do Supabase!)
             doc.setFontSize(26);
-            doc.text(box, faixaX + 7.5, y + altura - 10, { align: "center" });
-          });
+            doc.text(cx, faixaX + 7.5, y + altura - 10, { align: "center" });
+          }
+
+          // (Opcional) Se quiser “avisar” quando faltar alguma caixa:
+          // const faltando = ["A","B","C","D"].filter(c => !visto.has(c));
+          // if (faltando.length) console.warn("Faltando caixas:", faltando.join(", "));
 
           // Impressão direta
           const blob = doc.output("blob");
           const url = URL.createObjectURL(
-            new Blob([blob], { type: "application/pdf" })
+            new Blob([blob], { type: "application/pdf" }),
           );
           const iframe = document.createElement("iframe");
           iframe.style.display = "none";

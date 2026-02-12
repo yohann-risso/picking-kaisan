@@ -766,9 +766,12 @@ window.addEventListener("load", () => {
 });
 
 function gerarPlaquinhas(grupo) {
-  const url = `/plaquinhas.html?grupo=${grupo}`;
+  const operador = window.operadorSelecionado || "-";
+  const url = `/plaquinhas.html?grupo=${encodeURIComponent(grupo)}&operador=${encodeURIComponent(operador)}`;
   window.open(url, "_blank");
 }
+
+window.gerarPlaquinhas = gerarPlaquinhas;
 
 function atualizarFiltroArmazem() {
   const select = document.getElementById("filtroArmazem");
