@@ -21,6 +21,7 @@ export function carregarOperadores() {
     "Filipe Lopes",
     "Gabriel Lagoa",
     "Heitor Zavoli",
+    "Ivan Vieira",
     "Kaique Teixeira",
     "Lucas Paiva",
     "Pedro Frossard",
@@ -83,7 +84,7 @@ export async function biparProduto() {
   const idx = state.produtos.findIndex(
     (p) =>
       (p.sku || "").toUpperCase() === valor ||
-      (p.ean || "").toUpperCase() === valor
+      (p.ean || "").toUpperCase() === valor,
   );
 
   if (idx === -1) {
@@ -149,7 +150,7 @@ export async function biparProduto() {
     // pois isso reintroduz dependência/instabilidade na UX.
     mostrarToast(
       "⚠️ Ação feita, mas falhou ao registrar na fila local.",
-      "warning"
+      "warning",
     );
   });
 
@@ -187,7 +188,7 @@ export async function biparProduto() {
 
 export function moverProdutoParaTopo(sku) {
   const idx = state.produtos.findIndex(
-    (p) => (p.sku || "").toUpperCase() === (sku || "").toUpperCase()
+    (p) => (p.sku || "").toUpperCase() === (sku || "").toUpperCase(),
   );
   if (idx !== -1) {
     const [item] = state.produtos.splice(idx, 1);
@@ -201,7 +202,7 @@ export function moverProdutoParaTopo(sku) {
  */
 export function pularProduto(sku) {
   const idx = state.produtos.findIndex(
-    (p) => (p.sku || "").toUpperCase() === (sku || "").toUpperCase()
+    (p) => (p.sku || "").toUpperCase() === (sku || "").toUpperCase(),
   );
   if (idx === -1) {
     console.warn("Produto não encontrado para pular:", sku);
@@ -221,7 +222,7 @@ export function pularProduto(sku) {
 
     // Garante que não duplica
     const jaExiste = state.produtos.some(
-      (p) => p.sku === produto.sku && p.romaneio === produto.romaneio
+      (p) => p.sku === produto.sku && p.romaneio === produto.romaneio,
     );
 
     if (!jaExiste) {
@@ -231,7 +232,7 @@ export function pularProduto(sku) {
 
     mostrarToast(
       `➡️ Produto ${produto.sku} avançou para o endereço secundário.`,
-      "info"
+      "info",
     );
   } else {
     // Sem endereço secundário → manda pro fim

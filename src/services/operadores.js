@@ -5,6 +5,7 @@ export function carregarOperadores() {
     "Filipe Lopes",
     "Gabriel Lagoa",
     "Heitor Zavoli",
+    "Ivan Vieira",
     "Kaique Teixeira",
     "Lucas Paiva",
     "Pedro Frossard",
