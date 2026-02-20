@@ -4,6 +4,7 @@ export function carregarOperadores() {
     "Deygles Matos",
     "Filipe Lopes",
     "Gabriel Lagoa",
+    "Hebert Teixeira",
     "Heitor Zavoli",
     "Ivan Vieira",
     "Kaique Teixeira",
