@@ -1,16 +1,18 @@
 export function carregarOperadores() {
   const operadores = [
+    "Arthur Gonçalves",
     "Bryan Gomes",
     "Deygles Matos",
     "Filipe Lopes",
+    "Gabriel Brunhal",
     "Gabriel Lagoa",
     "Hebert Teixeira",
     "Heitor Zavoli",
     "Ivan Vieira",
     "Kaique Teixeira",
     "Lucas Paiva",
+    "Luiz Otávio",
     "Pedro Frossard",
-    "Vinícius Santos",
     "Yohann Risso",
   ];
 
