@@ -24,17 +24,344 @@
       const { jsPDF } = window.jspdf;
 
       const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
-      const SUPABASE_KEY =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
+      const SUPABASE_KEY = "SUA_ANON_KEY";
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const urlParams = new URLSearchParams(location.search);
       const grupo = urlParams.get("grupo");
-      const operador = urlParams.get("operador") || "-";
+      const operador = urlParams.get("operador") || "";
 
       if (!grupo) {
         alert("Grupo não informado.");
         throw new Error("Grupo ausente.");
+      }
+
+      function normalizarCaixa(v) {
+        return String(v || "")
+          .trim()
+          .toUpperCase();
+      }
+
+      function carregarImagem(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "Anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = url;
+        });
+      }
+
+      function imageToBase64(img) {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        return canvas.toDataURL("image/png");
+      }
+
+      function desenharPaginaPlaquinhas(doc, data, grupoNum, operador) {
+        const largura = 130;
+        const altura = 85;
+        const marginLeft = 20;
+        const marginTop = 10;
+        const espacoX = 15;
+        const espacoY = 10;
+
+        const posicoes = [
+          { x: marginLeft, y: marginTop },
+          { x: marginLeft + largura + espacoX, y: marginTop },
+          { x: marginLeft, y: marginTop + altura + espacoY },
+          {
+            x: marginLeft + largura + espacoX,
+            y: marginTop + altura + espacoY,
+          },
+        ];
+
+        const posicoesPorCaixa = {
+          A: posicoes[0],
+          B: posicoes[1],
+          C: posicoes[2],
+          D: posicoes[3],
+        };
+
+        const visto = new Set();
+        const dataHoje = new Date().toLocaleDateString("pt-BR");
+
+        for (const rom of data) {
+          const cx = normalizarCaixa(rom.caixa);
+          const pos = posicoesPorCaixa[cx];
+          if (!pos) continue;
+          if (visto.has(cx)) continue;
+          visto.add(cx);
+
+          const { x, y } = pos;
+
+          doc.setDrawColor(0);
+          doc.setLineWidth(0.4);
+          doc.rect(x, y, largura, altura);
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(16);
+          doc.setTextColor(0);
+          doc.text("ROMANEIO", x + 8, y + 12);
+
+          const faixaY = y + 16;
+          doc.setFillColor(0, 0, 0);
+          doc.rect(x + 8, faixaY, largura - 26, 22, "F");
+
+          doc.setTextColor(255);
+          doc.setFontSize(30);
+          doc.text(`${rom.romaneio}`, x + 8 + (largura - 26) / 2, faixaY + 14, {
+            align: "center",
+          });
+
+          const tableY = faixaY + 26;
+          const rowHeight = 10;
+          const rowWidth = largura - 26;
+          const infos = [
+            ["DATA", dataHoje],
+            ["QTDE. PEDIDOS", rom.qtd_pedidos],
+            ["QTDE. PEÇAS", rom.qtd_pecas],
+            ["OPERADOR", operador || "________________"],
+          ];
+
+          infos.forEach(([label, valor], i) => {
+            const yLinha = tableY + i * rowHeight;
+            doc.setDrawColor(0);
+            doc.rect(x + 8, yLinha, rowWidth, rowHeight);
+            doc.setTextColor(0);
+            doc.setFontSize(11);
+            doc.text(label, x + 10, yLinha + 6);
+            doc.text(String(valor ?? "-"), x + 8 + rowWidth - 4, yLinha + 6, {
+              align: "right",
+            });
+          });
+
+          const faixaX = x + largura - 15;
+          doc.setFillColor(0, 0, 0);
+          doc.rect(faixaX, y, 15, altura, "F");
+
+          doc.setTextColor(255);
+          doc.setFontSize(14);
+          doc.text(String(grupoNum), faixaX + 7.5, y + 12, { align: "center" });
+
+          doc.setFontSize(11);
+          const letras = "CAIXA".split("");
+          let letraY = y + 30;
+          letras.forEach((letra) => {
+            doc.text(letra, faixaX + 7.5, letraY, { align: "center" });
+            letraY += 5;
+          });
+
+          doc.setFontSize(26);
+          doc.text(cx, faixaX + 7.5, y + altura - 10, { align: "center" });
+        }
+      }
+
+      function desenharPaginaControle(
+        doc,
+        romaneios,
+        grupoNum,
+        operador,
+        logoBase64 = null,
+      ) {
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+
+        const preto = [0, 0, 0];
+        const azul = [22, 78, 163];
+        const cinzaClaro = [242, 242, 242];
+
+        const margem = 10;
+
+        // Fundo branco
+        doc.setFillColor(255, 255, 255);
+        doc.rect(0, 0, pageW, pageH, "F");
+
+        // ===== TOPO =====
+        const topY = 8;
+        const topH = 28;
+        const leftW = 110;
+        const rightW = pageW - margem * 2 - leftW;
+
+        // bloco esquerdo
+        doc.setDrawColor(...preto);
+        doc.setLineWidth(0.5);
+        doc.rect(margem, topY, leftW, topH);
+
+        // bloco direito
+        doc.setDrawColor(...azul);
+        doc.rect(margem + leftW, topY, rightW, topH);
+
+        // logo
+        if (logoBase64) {
+          try {
+            doc.addImage(logoBase64, "PNG", margem + 3, topY + 3, 32, 12);
+          } catch (e) {
+            // fallback silencioso
+          }
+        }
+
+        doc.setTextColor(0);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.text("CONTROLE DO PICKING", margem + 42, topY + 13);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.text("Pilts by CodeSaturn™", margem + 3, topY + 23);
+
+        doc.setTextColor(255);
+        doc.setFillColor(...preto);
+        doc.rect(margem + leftW + 18, topY, rightW - 18, 7, "F");
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.text("GRUPO", margem + leftW + rightW / 2, topY + 5, {
+          align: "center",
+        });
+
+        doc.setTextColor(0);
+        doc.setFontSize(14);
+        doc.text(String(grupoNum), margem + leftW + rightW / 2, topY + 19, {
+          align: "center",
+        });
+
+        // ===== OPERADOR =====
+        const opY = topY + topH + 8;
+        doc.setFillColor(...preto);
+        doc.rect(margem, opY, pageW - margem * 2, 6, "F");
+
+        doc.setTextColor(255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.text("OPERADOR", margem + 18, opY + 4);
+
+        doc.setTextColor(0);
+        doc.setDrawColor(0);
+        doc.setFillColor(...cinzaClaro);
+        doc.roundedRect(
+          margem + 42,
+          opY + 1.5,
+          pageW - margem * 2 - 46,
+          11,
+          2,
+          2,
+          "FD",
+        );
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(11);
+        doc.text(operador || "", margem + 46, opY + 9);
+
+        // ===== TABELA ERROS =====
+        const errosTitleY = opY + 20;
+        const tableX = margem;
+        const tableW = pageW - margem * 2;
+        const headH = 6;
+        const rowH = 12;
+
+        doc.setFillColor(...preto);
+        doc.rect(tableX, errosTitleY, tableW, headH, "F");
+        doc.setTextColor(255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.text("ERROS", tableX + tableW / 2, errosTitleY + 4, {
+          align: "center",
+        });
+
+        const headerY = errosTitleY + headH;
+        const col1 = 40;
+        const col2 = 58;
+        const col3 = 75;
+        const col4 = tableW - col1 - col2 - col3;
+
+        doc.setDrawColor(0);
+        doc.setFillColor(255, 255, 255);
+        doc.rect(tableX, headerY, tableW, 6);
+
+        doc.setTextColor(0);
+        doc.setFontSize(8);
+        doc.text("Romaneio", tableX + col1 / 2, headerY + 4, {
+          align: "center",
+        });
+        doc.text("Conferente", tableX + col1 + col2 / 2, headerY + 4, {
+          align: "center",
+        });
+        doc.text("Desc. Erro", tableX + col1 + col2 + col3 / 2, headerY + 4, {
+          align: "center",
+        });
+        doc.text(
+          "Qtde. Erro",
+          tableX + col1 + col2 + col3 + col4 / 2,
+          headerY + 4,
+          {
+            align: "center",
+          },
+        );
+
+        let rowY = headerY + 6;
+        const roms = romaneios.slice(0, 8);
+
+        roms.forEach((rom) => {
+          doc.rect(tableX, rowY, tableW, rowH);
+          doc.line(tableX + col1, rowY, tableX + col1, rowY + rowH);
+          doc.line(
+            tableX + col1 + col2,
+            rowY,
+            tableX + col1 + col2,
+            rowY + rowH,
+          );
+          doc.line(
+            tableX + col1 + col2 + col3,
+            rowY,
+            tableX + col1 + col2 + col3,
+            rowY + rowH,
+          );
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.text(String(rom.romaneio), tableX + col1 / 2, rowY + 7.5, {
+            align: "center",
+          });
+
+          rowY += rowH;
+        });
+
+        // completa linhas vazias até 8
+        for (let i = roms.length; i < 8; i++) {
+          doc.rect(tableX, rowY, tableW, rowH);
+          doc.line(tableX + col1, rowY, tableX + col1, rowY + rowH);
+          doc.line(
+            tableX + col1 + col2,
+            rowY,
+            tableX + col1 + col2,
+            rowY + rowH,
+          );
+          doc.line(
+            tableX + col1 + col2 + col3,
+            rowY,
+            tableX + col1 + col2 + col3,
+            rowY + rowH,
+          );
+          rowY += rowH;
+        }
+
+        // ===== ORIENTAÇÕES GERAIS =====
+        const orientY = rowY + 8;
+        doc.setFillColor(...preto);
+        doc.rect(tableX, orientY, tableW, 6, "F");
+        doc.setTextColor(255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.text("ORIENTAÇÕES GERAIS", tableX + tableW / 2, orientY + 4, {
+          align: "center",
+        });
+
+        const boxY = orientY + 6;
+        const boxH = pageH - boxY - 10;
+        doc.setDrawColor(0);
+        doc.rect(tableX, boxY, tableW, boxH);
       }
 
       async function gerarPDF(grupo) {
@@ -45,7 +372,6 @@
             .from("romaneios")
             .select("romaneio, qtd_pedidos, qtd_pecas, caixa")
             .eq("conjunto", String(grupoNum))
-            // opcional: estabilidade, mas NÃO é ordem numérica de romaneio
             .order("caixa", { ascending: true });
 
           if (error || !data || data.length === 0) {
@@ -59,130 +385,20 @@
             format: "a4",
           });
 
-          const largura = 130;
-          const altura = 85;
-          const marginLeft = 20;
-          const marginTop = 10;
-          const espacoX = 15;
-          const espacoY = 10;
+          desenharPaginaPlaquinhas(doc, data, grupoNum, operador);
 
-          // posições fixas (A/B em cima, C/D embaixo)
-          const posicoes = [
-            { x: marginLeft, y: marginTop }, // 0
-            { x: marginLeft + largura + espacoX, y: marginTop }, // 1
-            { x: marginLeft, y: marginTop + altura + espacoY }, // 2
-            {
-              x: marginLeft + largura + espacoX,
-              y: marginTop + altura + espacoY,
-            }, // 3
-          ];
-
-          // mapeia a "caixa" do Supabase para a posição do PDF
-          const posicoesPorCaixa = {
-            A: posicoes[0],
-            B: posicoes[1],
-            C: posicoes[2],
-            D: posicoes[3],
-          };
-
-          // se vier “caixa” diferente (ex: "1","2"...), ajuste aqui.
-          const normalizarCaixa = (v) =>
-            String(v || "")
-              .trim()
-              .toUpperCase();
-
-          // se tiver duplicidade de caixa no banco, pega a primeira e ignora o resto
-          const visto = new Set();
-
-          const dataHoje = new Date().toLocaleDateString("pt-BR");
-
-          for (const rom of data) {
-            const cx = normalizarCaixa(rom.caixa);
-
-            const pos = posicoesPorCaixa[cx];
-            if (!pos) continue; // ignora caixas fora de A/B/C/D
-
-            if (visto.has(cx)) continue; // evita desenhar 2x a mesma caixa
-            visto.add(cx);
-
-            const { x, y } = pos;
-
-            // Moldura externa
-            doc.setDrawColor(0).setLineWidth(0.4).rect(x, y, largura, altura);
-
-            // Cabeçalho
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.setTextColor(0);
-            doc.text("ROMANEIO", x + 8, y + 12);
-
-            // Faixa preta com número
-            const faixaY = y + 16;
-            doc
-              .setFillColor(0, 0, 0)
-              .rect(x + 8, faixaY, largura - 26, 22, "F");
-            doc.setTextColor(255);
-            doc.setFontSize(30);
-            doc.text(
-              `${rom.romaneio}`,
-              x + 8 + (largura - 26) / 2,
-              faixaY + 14,
-              {
-                align: "center",
-              },
-            );
-
-            // Tabela com operador
-            const tableY = faixaY + 26;
-            const rowHeight = 10;
-            const rowWidth = largura - 26;
-            const infos = [
-              ["DATA", dataHoje],
-              ["QTDE. PEDIDOS", rom.qtd_pedidos],
-              ["QTDE. PEÇAS", rom.qtd_pecas],
-              ["OPERADOR", operador],
-            ];
-
-            infos.forEach(([label, valor], i) => {
-              const yLinha = tableY + i * rowHeight;
-              doc.setDrawColor(0).rect(x + 8, yLinha, rowWidth, rowHeight);
-              doc.setTextColor(0).setFontSize(11);
-              doc.text(label, x + 10, yLinha + 6);
-              doc.text(String(valor ?? "-"), x + 8 + rowWidth - 4, yLinha + 6, {
-                align: "right",
-              });
-            });
-
-            // Faixa lateral
-            const faixaX = x + largura - 15;
-            doc.setFillColor(0, 0, 0).rect(faixaX, y, 15, altura, "F");
-            doc.setTextColor(255);
-
-            // Grupo
-            doc.setFontSize(14);
-            doc.text(String(grupoNum), faixaX + 7.5, y + 12, {
-              align: "center",
-            });
-
-            // "CAIXA" vertical
-            doc.setFontSize(11);
-            const letras = "CAIXA".split("");
-            let letraY = y + 30;
-            letras.forEach((letra) => {
-              doc.text(letra, faixaX + 7.5, letraY, { align: "center" });
-              letraY += 5;
-            });
-
-            // Letra da caixa (vem do Supabase!)
-            doc.setFontSize(26);
-            doc.text(cx, faixaX + 7.5, y + altura - 10, { align: "center" });
+          // tenta carregar logo para a página 2
+          let logoBase64 = null;
+          try {
+            const logo = await carregarImagem("/img/logo_picking.png");
+            logoBase64 = imageToBase64(logo);
+          } catch (e) {
+            console.warn("Não foi possível carregar a logo local.");
           }
 
-          // (Opcional) Se quiser “avisar” quando faltar alguma caixa:
-          // const faltando = ["A","B","C","D"].filter(c => !visto.has(c));
-          // if (faltando.length) console.warn("Faltando caixas:", faltando.join(", "));
+          doc.addPage("a4", "landscape");
+          desenharPaginaControle(doc, data, grupoNum, operador, logoBase64);
 
-          // Impressão direta
           const blob = doc.output("blob");
           const url = URL.createObjectURL(
             new Blob([blob], { type: "application/pdf" }),
@@ -191,6 +407,7 @@
           iframe.style.display = "none";
           iframe.src = url;
           document.body.appendChild(iframe);
+
           iframe.onload = () => {
             setTimeout(() => {
               iframe.contentWindow.focus();
