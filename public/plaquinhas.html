@@ -24,7 +24,8 @@
       const { jsPDF } = window.jspdf;
 
       const SUPABASE_URL = "https://kinpwzuobsmfkjefnrdc.supabase.co";
-      const SUPABASE_KEY = "SUA_ANON_KEY";
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtpbnB3enVvYnNtZmtqZWZucmRjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5OTgwMjcsImV4cCI6MjA2MzU3NDAyN30.btmwaLMSnXCmvKHQvYnw7ZngONqoejqnhbvazLhD1Io";
       const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
       const urlParams = new URLSearchParams(location.search);
@@ -62,6 +63,12 @@
       }
 
       function desenharPaginaPlaquinhas(doc, data, grupoNum, operador) {
+        if (!Array.isArray(data)) {
+          throw new Error(
+            "Os romaneios retornados não estão em formato de lista.",
+          );
+        }
+
         const largura = 130;
         const altura = 85;
         const marginLeft = 20;
@@ -374,7 +381,7 @@
             .eq("grupo", grupoNum)
             .order("caixa", { ascending: true });
 
-          if (!error && (!data || data.length === 0)) {
+          if (!error && (!Array.isArray(data) || data.length === 0)) {
             const retry = await supabase
               .from("romaneios")
               .select("romaneio, qtd_pedidos, qtd_pecas, caixa")
@@ -385,6 +392,20 @@
             error = retry.error;
           }
 
+          console.log("grupo recebido:", grupoNum);
+          console.log("romaneios retornados:", data);
+          console.log("erro supabase:", error);
+
+          if (error) {
+            throw new Error(`Erro Supabase: ${error.message}`);
+          }
+
+          if (!Array.isArray(data) || data.length === 0) {
+            throw new Error(
+              `Nenhum romaneio encontrado para o grupo ${grupoNum}.`,
+            );
+          }
+
           const doc = new jsPDF({
             orientation: "landscape",
             unit: "mm",
@@ -393,7 +414,6 @@
 
           desenharPaginaPlaquinhas(doc, data, grupoNum, operador);
 
-          // tenta carregar logo para a página 2
           let logoBase64 = null;
           try {
             const logo = await carregarImagem("/img/logo_picking.png");
