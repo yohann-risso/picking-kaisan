@@ -183,7 +183,6 @@
 
         const margem = 10;
 
-        // Fundo branco
         doc.setFillColor(255, 255, 255);
         doc.rect(0, 0, pageW, pageH, "F");
 
@@ -193,36 +192,31 @@
         const leftW = 110;
         const rightW = pageW - margem * 2 - leftW;
 
-        // bloco esquerdo
         doc.setDrawColor(...preto);
         doc.setLineWidth(0.5);
         doc.rect(margem, topY, leftW, topH);
 
-        // bloco direito
-        doc.setDrawColor(...azul);
+        doc.setDrawColor(...preto);
         doc.rect(margem + leftW, topY, rightW, topH);
 
-        // logo
         if (logoBase64) {
           try {
-            doc.addImage(logoBase64, "PNG", margem + 3, topY + 3, 32, 12);
-          } catch (e) {
-            // fallback silencioso
-          }
+            doc.addImage(logoBase64, "PNG", margem + 3, topY + 3, 26, 12);
+          } catch (e) {}
         }
 
         doc.setTextColor(0);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(13);
-        doc.text("CONTROLE DO PICKING", margem + 42, topY + 13);
+        doc.text("CONTROLE DO PICKING", margem + 38, topY + 13);
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(8);
         doc.text("Pilts by CodeSaturn™", margem + 3, topY + 23);
 
-        doc.setTextColor(255);
         doc.setFillColor(...preto);
-        doc.rect(margem + leftW + 18, topY, rightW - 18, 7, "F");
+        doc.rect(margem + leftW + 16, topY, rightW - 16, 7, "F");
+        doc.setTextColor(255);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.text("GRUPO", margem + leftW + rightW / 2, topY + 5, {
@@ -231,41 +225,43 @@
 
         doc.setTextColor(0);
         doc.setFontSize(14);
-        doc.text(String(grupoNum), margem + leftW + rightW / 2, topY + 19, {
+        doc.text(String(grupoNum), margem + leftW + rightW / 2, topY + 18, {
           align: "center",
         });
 
         // ===== OPERADOR =====
-        const opY = topY + topH + 8;
+        const opTitleY = topY + topH + 10;
+        const barraH = 6;
+
         doc.setFillColor(...preto);
-        doc.rect(margem, opY, pageW - margem * 2, 6, "F");
+        doc.rect(margem, opTitleY, pageW - margem * 2, barraH, "F");
 
         doc.setTextColor(255);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
-        doc.text("OPERADOR", margem + 18, opY + 4);
+        doc.text("OPERADOR", margem + 18, opTitleY + 4, { align: "center" });
+
+        const campoOpX = margem + 40;
+        const campoOpY = opTitleY + 2;
+        const campoOpW = pageW - margem * 2 - 44;
+        const campoOpH = 11;
+
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.5);
+        doc.setFillColor(...cinzaClaro);
+        doc.roundedRect(campoOpX, campoOpY, campoOpW, campoOpH, 2.5, 2.5, "FD");
 
         doc.setTextColor(0);
-        doc.setDrawColor(0);
-        doc.setFillColor(...cinzaClaro);
-        doc.roundedRect(
-          margem + 42,
-          opY + 1.5,
-          pageW - margem * 2 - 46,
-          11,
-          2,
-          2,
-          "FD",
-        );
         doc.setFont("helvetica", "normal");
         doc.setFontSize(11);
-        doc.text(operador || "", margem + 46, opY + 9);
+        doc.text(operador || "", campoOpX + 4, campoOpY + 7.2);
 
         // ===== TABELA ERROS =====
-        const errosTitleY = opY + 20;
+        const errosTitleY = opTitleY + 18;
         const tableX = margem;
         const tableW = pageW - margem * 2;
         const headH = 6;
+        const headerH = 6;
         const rowH = 12;
 
         doc.setFillColor(...preto);
@@ -278,16 +274,18 @@
         });
 
         const headerY = errosTitleY + headH;
-        const col1 = 40;
-        const col2 = 58;
-        const col3 = 75;
+        const col1 = 38;
+        const col2 = 55;
+        const col3 = 68;
         const col4 = tableW - col1 - col2 - col3;
 
         doc.setDrawColor(0);
+        doc.setLineWidth(0.4);
         doc.setFillColor(255, 255, 255);
-        doc.rect(tableX, headerY, tableW, 6);
+        doc.rect(tableX, headerY, tableW, headerH);
 
         doc.setTextColor(0);
+        doc.setFont("helvetica", "bold");
         doc.setFontSize(8);
         doc.text("Romaneio", tableX + col1 / 2, headerY + 4, {
           align: "center",
@@ -302,15 +300,16 @@
           "Qtde. Erro",
           tableX + col1 + col2 + col3 + col4 / 2,
           headerY + 4,
-          {
-            align: "center",
-          },
+          { align: "center" },
         );
 
-        let rowY = headerY + 6;
-        const roms = romaneios.slice(0, 8);
+        let rowY = headerY + headerH;
+        const roms = Array.isArray(romaneios) ? romaneios : [];
+        const qtdLinhas = roms.length;
 
-        roms.forEach((rom) => {
+        for (let i = 0; i < qtdLinhas; i++) {
+          const rom = roms[i];
+
           doc.rect(tableX, rowY, tableW, rowH);
           doc.line(tableX + col1, rowY, tableX + col1, rowY + rowH);
           doc.line(
@@ -328,34 +327,16 @@
 
           doc.setFont("helvetica", "bold");
           doc.setFontSize(9);
-          doc.text(String(rom.romaneio), tableX + col1 / 2, rowY + 7.5, {
+          doc.text(String(rom.romaneio ?? ""), tableX + col1 / 2, rowY + 7.5, {
             align: "center",
           });
 
-          rowY += rowH;
-        });
-
-        // completa linhas vazias até 8
-        for (let i = roms.length; i < 8; i++) {
-          doc.rect(tableX, rowY, tableW, rowH);
-          doc.line(tableX + col1, rowY, tableX + col1, rowY + rowH);
-          doc.line(
-            tableX + col1 + col2,
-            rowY,
-            tableX + col1 + col2,
-            rowY + rowH,
-          );
-          doc.line(
-            tableX + col1 + col2 + col3,
-            rowY,
-            tableX + col1 + col2 + col3,
-            rowY + rowH,
-          );
           rowY += rowH;
         }
 
         // ===== ORIENTAÇÕES GERAIS =====
         const orientY = rowY + 8;
+
         doc.setFillColor(...preto);
         doc.rect(tableX, orientY, tableW, 6, "F");
         doc.setTextColor(255);
@@ -367,7 +348,9 @@
 
         const boxY = orientY + 6;
         const boxH = pageH - boxY - 10;
+
         doc.setDrawColor(0);
+        doc.setLineWidth(0.5);
         doc.rect(tableX, boxY, tableW, boxH);
       }
 
