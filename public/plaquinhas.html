@@ -368,15 +368,21 @@
         try {
           const grupoNum = Number(grupo);
 
-          const { data, error } = await supabase
+          let { data, error } = await supabase
             .from("romaneios")
             .select("romaneio, qtd_pedidos, qtd_pecas, caixa")
-            .eq("conjunto", String(grupoNum))
+            .eq("grupo", grupoNum)
             .order("caixa", { ascending: true });
 
-          if (error || !data || data.length === 0) {
-            alert("Erro ao carregar romaneios ou nenhum encontrado.");
-            return;
+          if (!error && (!data || data.length === 0)) {
+            const retry = await supabase
+              .from("romaneios")
+              .select("romaneio, qtd_pedidos, qtd_pecas, caixa")
+              .eq("conjunto", String(grupoNum))
+              .order("caixa", { ascending: true });
+
+            data = retry.data;
+            error = retry.error;
           }
 
           const doc = new jsPDF({
