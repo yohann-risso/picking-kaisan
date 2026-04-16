@@ -396,7 +396,13 @@
         });
       }
 
-      function desenharPaginasPlaquinhas(doc, dados, grupoNum, operadorNome) {
+      function desenharPaginasPlaquinhas(
+        doc,
+        dados,
+        grupoNum,
+        operadorNome,
+        logoBase64 = null,
+      ) {
         if (!Array.isArray(dados) || dados.length === 0) {
           throw new Error("Nenhum romaneio válido para desenhar.");
         }
