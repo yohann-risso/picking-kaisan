@@ -343,11 +343,11 @@
         doc.line(x + 23, conferenteY - 0.5, x + largura - 6, conferenteY - 0.5);
 
         // ========= TABELA =========
-        const tableY = conferenteY + 4.6;
+        const tableY = conferenteY + 3.5;
         const tableX = x + 5;
         const tableW = largura - 10;
-        const headerH = 6.5;
-        const rowH = 11;
+        const headerH = 6;
+        const rowH = 9;
         const colDesc = 60;
         const colQtd = tableW - colDesc;
 
@@ -389,8 +389,8 @@
 
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...colors.texto);
-          doc.setFontSize(7.9);
-          doc.text(erro, tableX + 3, rowY + 6.8);
+          doc.setFontSize(7.2);
+          doc.text(erro, tableX + 3, rowY + 5.5);
 
           rowY += rowH;
         });
