@@ -112,7 +112,33 @@
         doc.text(String(texto ?? ""), x, y, { align: "center", ...options });
       }
 
-      function desenharPlaquinha(doc, rom, pos, grupoNum, operadorNome) {
+      function carregarImagem(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "Anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = url;
+        });
+      }
+
+      function imageToBase64(img) {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        return canvas.toDataURL("image/png");
+      }
+
+      function desenharPlaquinha(
+        doc,
+        rom,
+        pos,
+        grupoNum,
+        operadorNome,
+        logoBase64 = null,
+      ) {
         const { x, y } = pos;
 
         const largura = 90;
@@ -122,100 +148,111 @@
 
         const colors = {
           azul: [28, 63, 96],
+          azulEscuro: [46, 46, 46],
           azulClaro: [217, 233, 242],
           azulBorda: [198, 219, 232],
           texto: [26, 29, 32],
           textoSuave: [102, 112, 122],
-          borda: [216, 224, 231],
-          bordaSuave: [232, 237, 242],
+          borda: [198, 198, 198],
+          bordaForte: [142, 142, 142],
+          bordaSuave: [230, 230, 230],
           white: [255, 255, 255],
-          cinzaBox: [243, 246, 248],
-          cinzaHeader: [245, 247, 249],
+          cinzaBox: [246, 246, 246],
+          cinzaHeader: [243, 243, 243],
+          cinzaSection: [232, 232, 232],
         };
 
-        // CARD BASE
-        doc.setDrawColor(...colors.borda);
-        doc.setLineWidth(0.35);
+        // ========= CARD EXTERNO =========
         doc.setFillColor(...colors.white);
-        desenharRoundedRect(doc, x, y, largura, altura, 3, "FD");
+        doc.setDrawColor(...colors.bordaForte);
+        doc.setLineWidth(0.55);
+        desenharRoundedRect(doc, x, y, largura, altura, 3.2, "FD");
 
-        // TOPBAR
-        doc.setFillColor(...colors.azul);
-        desenharRoundedRect(doc, x, y, largura, 5, 3, "F");
+        // ========= BORDA INTERNA SUAVE =========
+        doc.setDrawColor(...colors.bordaSuave);
+        doc.setLineWidth(0.2);
+        desenharRoundedRect(
+          doc,
+          x + 1.4,
+          y + 1.4,
+          largura - 2.8,
+          altura - 2.8,
+          2.6,
+          "S",
+        );
+
+        // ========= TOPBAR =========
+        doc.setFillColor(...colors.azulEscuro);
+        desenharRoundedRect(doc, x, y, largura, 5, 3.2, "F");
         doc.rect(x, y + 2.5, largura, 2.5, "F");
 
-        // HEADER COM GRUPO E CAIXA
+        // ========= LOGO =========
+        if (logoBase64) {
+          try {
+            doc.addImage(logoBase64, "PNG", x + 5, y + 8, 26, 8);
+          } catch (e) {
+            console.warn("Erro ao desenhar logo:", e);
+          }
+        }
+
+        // ========= HEADER GRUPO / CAIXA =========
         const headerY = y + 8;
-        const cardSmallW = 18;
-        const cardSmallH = 12;
+        const boxW = 18;
+        const boxH = 11;
         const gap = 4;
-        const totalSmall = cardSmallW * 2 + gap;
+        const totalW = boxW * 2 + gap;
+        const startX = x + largura - 5 - totalW;
 
-        const startX = x + largura - 5 - totalSmall;
-
+        // Grupo
         doc.setFillColor(...colors.cinzaHeader);
         doc.setDrawColor(...colors.borda);
-        desenharRoundedRect(
-          doc,
-          startX,
-          headerY,
-          cardSmallW,
-          cardSmallH,
-          2.2,
-          "FD",
-        );
-        desenharRoundedRect(
-          doc,
-          startX + cardSmallW + gap,
-          headerY,
-          cardSmallW,
-          cardSmallH,
-          2.2,
-          "FD",
-        );
+        doc.setLineWidth(0.25);
+        desenharRoundedRect(doc, startX, headerY, boxW, boxH, 2.2, "FD");
 
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...colors.azul);
-        doc.setFontSize(5.8);
-        escreverCentro(doc, "GRUPO", startX + cardSmallW / 2, headerY + 4.2);
-        escreverCentro(
-          doc,
-          "CAIXA",
-          startX + cardSmallW + gap + cardSmallW / 2,
-          headerY + 4.2,
-        );
+        doc.setFontSize(5.4);
+        escreverCentro(doc, "GRUPO", startX + boxW / 2, headerY + 4);
 
-        doc.setFontSize(10.5);
-        escreverCentro(doc, grupoNum, startX + cardSmallW / 2, headerY + 9.5);
+        doc.setFontSize(10.2);
+        doc.setTextColor(...colors.texto);
+        escreverCentro(doc, grupoNum, startX + boxW / 2, headerY + 8.8);
 
-        doc.setFillColor(...colors.azul);
+        // Caixa
+        const caixaX = startX + boxW + gap;
+        doc.setFillColor(...colors.cinzaHeader);
+        doc.setDrawColor(...colors.borda);
+        desenharRoundedRect(doc, caixaX, headerY, boxW, boxH, 2.2, "FD");
+
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...colors.azul);
+        doc.setFontSize(5.4);
+        escreverCentro(doc, "CAIXA", caixaX + boxW / 2, headerY + 4);
+
+        doc.setFillColor(...colors.azulEscuro);
         desenharRoundedRect(
           doc,
-          startX + cardSmallW + gap + 3.3,
-          headerY + 4.8,
-          cardSmallW - 6.6,
-          5.4,
+          caixaX + 3.2,
+          headerY + 4.7,
+          boxW - 6.4,
+          5.2,
           1.6,
           "F",
         );
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9.6);
-        escreverCentro(
-          doc,
-          caixa || "-",
-          startX + cardSmallW + gap + cardSmallW / 2,
-          headerY + 9.05,
-        );
 
-        // BLOCO ROMANEIO
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9.8);
+        escreverCentro(doc, caixa || "-", caixaX + boxW / 2, headerY + 8.75);
+
+        // ========= ROMANEIO =========
         const romY = y + 23;
-        doc.setFillColor(...colors.azul);
-        doc.setDrawColor(...colors.azul);
+        doc.setFillColor(...colors.azulEscuro);
+        doc.setDrawColor(...colors.azulEscuro);
         desenharRoundedRect(doc, x + 5, romY, largura - 10, 19, 3, "FD");
 
         doc.setFont("helvetica", "bold");
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(7);
+        doc.setFontSize(6.6);
         escreverCentro(doc, "ROMANEIO", x + largura / 2, romY + 6.2);
 
         doc.setFontSize(21);
@@ -223,114 +260,139 @@
           doc,
           formatarTexto(rom.romaneio),
           x + largura / 2,
-          romY + 15.2,
+          romY + 15.3,
         );
 
-        // META OPERACIONAL
+        // ========= BLOCO DE DADOS =========
         const metaY = romY + 24;
-        const metaH = 25;
+        const metaH = 25.5;
 
-        doc.setDrawColor(...colors.bordaSuave);
         doc.setFillColor(...colors.white);
-        desenharRoundedRect(doc, x + 5, metaY, largura - 10, metaH, 2.5, "FD");
+        doc.setDrawColor(...colors.borda);
+        doc.setLineWidth(0.25);
+        desenharRoundedRect(doc, x + 5, metaY, largura - 10, metaH, 2.4, "FD");
+
+        // Faixa interna sutil
+        doc.setFillColor(...colors.cinzaBox);
+        desenharRoundedRect(
+          doc,
+          x + 6.2,
+          metaY + 1.6,
+          largura - 12.4,
+          metaH - 3.2,
+          1.8,
+          "F",
+        );
 
         const labelX = x + 8;
         const valorX = x + largura - 8;
-        let lineY = metaY + 5.7;
+        let lineY = metaY + 5.9;
 
         const linhas = [
           ["Data", dataHoje],
           ["Qtd. Pedidos", formatarTexto(rom.qtd_pedidos)],
           ["Qtd. Peças", formatarTexto(rom.qtd_pecas)],
-          ["Operador", operadorNome || "________________"],
+          ["Operador", operadorNome || ""],
         ];
 
         linhas.forEach(([label, value], index) => {
           doc.setFont("helvetica", "bold");
           doc.setTextColor(...colors.texto);
-          doc.setFontSize(7.2);
+          doc.setFontSize(7.1);
           doc.text(`${label}:`, labelX, lineY);
 
           if (label === "Operador") {
-            doc.setDrawColor(...colors.textoSuave);
-            doc.setLineWidth(0.2);
-            const startLine = x + 54;
-            const endLine = x + largura - 7;
-            doc.line(startLine, lineY - 0.7, endLine, lineY - 0.7);
+            doc.setDrawColor(150, 150, 150);
+            doc.setLineWidth(0.22);
+            doc.line(x + 54, lineY - 0.6, x + largura - 8, lineY - 0.6);
           } else {
-            doc.setFont("helvetica", "normal");
+            doc.setFont("helvetica", "bold");
             doc.setTextColor(...colors.textoSuave);
             doc.text(String(value), valorX, lineY, { align: "right" });
           }
 
-          lineY += index === linhas.length - 1 ? 5.5 : 5.8;
+          lineY += index === linhas.length - 1 ? 5.7 : 5.9;
         });
 
-        // TÍTULO CONFERÊNCIA
-        const confTitleY = metaY + metaH + 5;
-        doc.setFillColor(...colors.azulClaro);
-        doc.setDrawColor(...colors.azulBorda);
-        desenharRoundedRect(doc, x + 5, confTitleY, largura - 10, 8, 2.5, "FD");
+        // ========= TÍTULO CONFERÊNCIA =========
+        const confTitleY = metaY + metaH + 5.2;
+        doc.setFillColor(...colors.cinzaSection);
+        doc.setDrawColor(...colors.borda);
+        doc.setLineWidth(0.25);
+        desenharRoundedRect(doc, x + 5, confTitleY, largura - 10, 8, 2.4, "FD");
 
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(7);
-        doc.setTextColor(...colors.azul);
+        doc.setFontSize(6.9);
+        doc.setTextColor(...colors.azulEscuro);
         escreverCentro(
           doc,
           "CONTROLE DE CONFERÊNCIA",
           x + largura / 2,
-          confTitleY + 5.3,
+          confTitleY + 5.2,
         );
 
-        // CONFERENTE
-        const conferenteY = confTitleY + 12;
+        // ========= CONFERENTE =========
+        const conferenteY = confTitleY + 12.2;
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(7.3);
+        doc.setFontSize(7.1);
         doc.setTextColor(...colors.texto);
         doc.text("Conferente:", x + 6, conferenteY);
 
-        doc.setDrawColor(...colors.textoSuave);
+        doc.setDrawColor(125, 125, 125);
         doc.setLineWidth(0.22);
         doc.line(x + 23, conferenteY - 0.5, x + largura - 6, conferenteY - 0.5);
 
-        // HEADER TABELA
-        const tableY = conferenteY + 4.5;
+        // ========= TABELA =========
+        const tableY = conferenteY + 4.6;
         const tableX = x + 5;
         const tableW = largura - 10;
+        const headerH = 6.5;
+        const rowH = 11;
         const colDesc = 60;
         const colQtd = tableW - colDesc;
 
-        doc.setFillColor(...colors.azul);
-        doc.setDrawColor(...colors.azul);
-        doc.rect(tableX, tableY, tableW, 6.5, "FD");
+        // Header
+        doc.setFillColor(...colors.azulEscuro);
+        doc.setDrawColor(...colors.azulEscuro);
+        doc.rect(tableX, tableY, tableW, headerH, "FD");
 
         doc.setFont("helvetica", "bold");
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(6.8);
-        doc.text("DESC. ERRO", tableX + 3, tableY + 4.35);
+        doc.setFontSize(6.7);
+        doc.text("DESC. ERRO", tableX + 3, tableY + 4.2);
         escreverCentro(
           doc,
           "QTD.",
           tableX + colDesc + colQtd / 2,
-          tableY + 4.35,
+          tableY + 4.2,
         );
 
-        // LINHAS DE ERRO
+        // Linhas
         const erros = ["Sobra", "Falta", "Outros"];
-        let rowY = tableY + 6.5;
+        let rowY = tableY + headerH;
 
-        erros.forEach((erro) => {
-          doc.setDrawColor(...colors.bordaSuave);
-          doc.setFillColor(...colors.white);
-          doc.rect(tableX, rowY, tableW, 11, "FD");
-          doc.line(tableX + colDesc, rowY, tableX + colDesc, rowY + 11);
+        erros.forEach((erro, idx) => {
+          doc.setFillColor(255, 255, 255);
+          doc.setDrawColor(...colors.borda);
+          doc.setLineWidth(0.2);
+          doc.rect(tableX, rowY, tableW, rowH, "FD");
+          doc.line(tableX + colDesc, rowY, tableX + colDesc, rowY + rowH);
+
+          // zebra leve
+          if (idx % 2 === 0) {
+            doc.setFillColor(250, 250, 250);
+            doc.rect(tableX + 0.2, rowY + 0.2, tableW - 0.4, rowH - 0.4, "F");
+            doc.setDrawColor(...colors.borda);
+            doc.rect(tableX, rowY, tableW, rowH, "S");
+            doc.line(tableX + colDesc, rowY, tableX + colDesc, rowY + rowH);
+          }
 
           doc.setFont("helvetica", "normal");
           doc.setTextColor(...colors.texto);
-          doc.setFontSize(8);
+          doc.setFontSize(7.9);
           doc.text(erro, tableX + 3, rowY + 6.8);
 
-          rowY += 11;
+          rowY += rowH;
         });
       }
 
@@ -343,8 +405,8 @@
         const altura = 128;
         const margemX = 10;
         const margemY = 10;
-        const gapX = 10;
-        const gapY = 10;
+        const gapX = 11;
+        const gapY = 11;
 
         const posicoes = [
           { x: margemX, y: margemY },
@@ -360,7 +422,14 @@
             doc.addPage("a4", "portrait");
           }
 
-          desenharPlaquinha(doc, rom, posicoes[slot], grupoNum, operadorNome);
+          desenharPlaquinha(
+            doc,
+            rom,
+            posicoes[slot],
+            grupoNum,
+            operadorNome,
+            logoBase64,
+          );
         });
       }
 
@@ -394,7 +463,18 @@
             format: "a4",
           });
 
-          desenharPaginasPlaquinhas(doc, data, grupoNum, operador);
+          let logoBase64 = null;
+
+          try {
+            const logo = await carregarImagem(
+              "https://www.kaisan.com.br/skin/frontend/base/default/images/logo/2025.png",
+            );
+            logoBase64 = imageToBase64(logo);
+          } catch (e) {
+            console.warn("Não foi possível carregar a logo.");
+          }
+
+          desenharPaginasPlaquinhas(doc, data, grupoNum, operador, logoBase64);
 
           const blob = doc.output("blob");
           const url = URL.createObjectURL(
